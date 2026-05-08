@@ -25,7 +25,8 @@ const employeeSchema = new mongoose.Schema({
     },
     designation: {
         type: String,
-        enum: ["OWNER", "ADMIN", "DOCTOR", "RECEPTIONIST", "CASHIER", "NURSE", "LAB_TECH", "PHARMACIST"],
+        enum: ["OWNER", "ADMIN", "DOCTOR", "RECEPTIONIST", 
+            "CASHIER", "NURSE", "LAB_TECH", "PHARMACIST"],
         required: true
     },
     status: {
@@ -45,7 +46,8 @@ const employeeSchema = new mongoose.Schema({
         type: String
     },
     qualification: [{
-        type: String
+        type: String,
+        required: true
     }],
     consultationFee: {
         type: String
