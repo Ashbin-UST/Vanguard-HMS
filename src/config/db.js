@@ -1,9 +1,8 @@
-const mongoose = require("mongoose");
+const mongoose=require("mongoose");
 
-const connectDB = async () => {
-  if (mongoose.connection.readyState >= 1) return;
+const connectDB=async() => {
+    if(mongoose.connection.readyState>=1)return;
 
-  await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(process.env.MONGO_URI);
 };
-
-module.exports = connectDB;
+module.exports=connectDB;
