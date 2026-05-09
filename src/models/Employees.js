@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const Counter = require("./Counter");
 
 const employeeSchema = new mongoose.Schema({ 
     employeeCode: {
@@ -32,7 +33,7 @@ const employeeSchema = new mongoose.Schema({
     status: {
         type: String,
         enum: ["ACTIVE", "INACTIVE"],
-        required: true
+        default: "ACTIVE"
     },
     joiningDate: {
         type: Date,
@@ -40,7 +41,8 @@ const employeeSchema = new mongoose.Schema({
     },
     medicalRegistrationNumber: {
         type: String,
-        unique: true
+        unique: true,
+        sparse: true
     },
     specialization: {
         type: String
@@ -52,48 +54,44 @@ const employeeSchema = new mongoose.Schema({
     consultationFee: {
         type: String
     },
-    availabilitySlots: [{
-    day: {
-        type: String,
-        enum: [
-            "MONDAY",
-            "TUESDAY",
-            "WEDNESDAY",
-            "THURSDAY",
-            "FRIDAY",
-            "SATURDAY",
-            "SUNDAY"
-        ],
-        required: true
-    },
-
-    startTime: {
-        type: String,
-        required: true
-    },
-
-    endTime: {
-        type: String,
-        required: true
-    }
-}]
+    availabilitySlots: {
+    type: [{
+        day: {
+            type: String,
+            enum: [
+                "MONDAY",
+                "TUESDAY",
+                "WEDNESDAY",
+                "THURSDAY",
+                "FRIDAY",
+                "SATURDAY",
+                "SUNDAY"
+            ],
+            required: true
+        },
+        startTime: {
+            type: String,
+            required: true
+        },
+        endTime: {
+            type: String,
+            required: true
+        }
+    }],
+    default: undefined
+}
 })
 
 // Pre-save hook to generate sequential ID
-employeeSchema.pre('save', async function (next) {
+employeeSchema.pre('save', async function () {
     if (this.isNew) {
-        try {
             const counter = await Counter.findOneAndUpdate(
                 { name: 'employees' },
                 { $inc: { seq: 1 } }, // Creates sequence
                 { new: true, upsert: true } // upsert is update and insert
             );
             this.employeeCode = `EMP-${String(counter.seq).padStart(6, '0')}`; // create 6 digit sequence number
-        } catch (err) {
-            return next(err);
-        }
     }
-    next();
 });
 
 module.exports = mongoose.model("Employee", employeeSchema);

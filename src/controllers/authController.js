@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
+const crypto = require("node:crypto");
 const User = require("../models/Users");
 const Patient = require("../models/Patients");
 const Employee = require("../models/Employees");
@@ -41,26 +41,43 @@ exports.signup = async (req, res) => {
         const passwordHash = await bcrypt.hash(password, 12);
 
         // Create employee
-        const employee = await Employee.create({
+        const employeeData = {
             name,
             phone,
             email,
             department,
             designation,
             joiningDate,
-            medicalRegistrationNumber,
-            specialization,
-            qualification,
-            consultationFee,
-            availabilitySlots
-        });
+            qualification
+        };
+
+        // Add medical fields only for medical staff
+        if (
+            ["DOCTOR", "NURSE", "LAB_TECH", "PHARMACIST"].includes(designation)
+        ) {
+            employeeData.medicalRegistrationNumber = medicalRegistrationNumber;
+        }
+
+        // Add specialization only for doctors and lab technicians
+        if (
+            ["DOCTOR", "LAB_TECH"].includes(designation)
+        ) {
+            employeeData.specialization = specialization;
+        }
+
+        // Add consultation details only for doctors
+        if (designation === "DOCTOR") {
+            employeeData.consultationFee = consultationFee;
+            employeeData.availabilitySlots = availabilitySlots;
+        }
+
+        // Create employee
+        const employee = await Employee.create(employeeData);
 
         // Generate verification token
-        const verificationToken =
-            crypto.randomBytes(32).toString("hex");
+        const verificationToken =  crypto.randomBytes(32).toString("hex");
 
-        const verificationTokenExpiry =
-            new Date(Date.now() + 24 * 60 * 60 * 1000);
+        const verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
         // Create user
         const user = await User.create({
@@ -73,27 +90,27 @@ exports.signup = async (req, res) => {
             verificationTokenExpiry
         });
 
-        // // Verification URL
-        // const verifyUrl =
-        //     `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}`;
+        // Verification URL
+        const verifyUrl =
+            `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}`;
 
-        // // Send email
-        // await sendEmail({
-        //     to: user.email,
+        // Send email
+        await sendEmail({
+            to: user.email,
 
-        //     subject: "HMS - Verify Your Email",
+            subject: "HMS - Verify Your Email",
 
-        //     html: `
-        //         <h2>Welcome to HMS</h2>
-        //         <p>Hi ${employee.name}, your employee account has been created successfully.</p>
-        //         <p>Please verify your email address using the link below:</p>
-        //         <a href="${verifyUrl}" target="_blank">
-        //             Verify Email
-        //         </a>
-        //         <p>This verification link expires in <strong>24 hours</strong>.</p>
-        //         <p>If you did not create this account, please ignore this email.</p>
-        //     `
-        // });
+            html: `
+                <h2>Welcome to HMS</h2>
+                <p>Hi ${employee.name}, your employee account has been created successfully.</p>
+                <p>Please verify your email address using the link below:</p>
+                <a href="${verifyUrl}" target="_blank">
+                    Verify Email
+                </a>
+                <p>This verification link expires in <strong>24 hours</strong>.</p>
+                <p>If you did not create this account, please ignore this email.</p>
+            `
+        });
 
         // Generate JWT token
         const token = jwt.sign(
@@ -138,7 +155,7 @@ exports.login = async (req, res) => {
             return res.status(404).json({message: "Invalid email"});
         }
 
-        const isMatch = await bcrypt.compare(password, user.passwordHash);
+        const isMatch = Boolean (await bcrypt.compare(password, user.passwordHash));
         if (!isMatch){
             return res.status(401).json({ message: "Invalid password" });
         }
@@ -158,7 +175,8 @@ exports.login = async (req, res) => {
             department: employee.department,
             designation: employee.designation,
             status: employee.status,
-            joiningDate: employee.joiningDate
+            joiningDate: employee.joiningDate,
+            qualification: employee.qualification
         };
 
         // Add medical fields only for medical staff
@@ -166,9 +184,14 @@ exports.login = async (req, res) => {
             ["DOCTOR", "NURSE", "LAB_TECH", "PHARMACIST"]
                 .includes(employee.designation)
         ) {
-            profile.medicalRegistrationNo = employee.medicalRegistrationNo;
+            profile.medicalRegistrationNumber = employee.medicalRegistrationNumber;
+        }
+
+        // Add specialization only for doctors and lab technicians
+        if (
+            ["DOCTOR", "LAB_TECH"].includes(employee.designation)
+        ) {
             profile.specialization = employee.specialization;
-            profile.qualification = employee.qualification;
         }
 
         // Add consultation details only for doctors
@@ -176,6 +199,17 @@ exports.login = async (req, res) => {
             profile.consultationFee = employee.consultationFee;
             profile.availabilitySlots = employee.availabilitySlots;
         }
+
+        const token = jwt.sign(
+            {
+                id: user._id,
+                roles: user.roles
+            },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: process.env.JWT_EXPIRES_IN
+            }
+        );
 
         res.status(200).json({
             message: "Login successful",
@@ -195,3 +229,5 @@ exports.login = async (req, res) => {
         res.status(500).json({message: "Server error during login"});
     }
 }
+
+// Profile (ME)

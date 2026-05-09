@@ -1,9 +1,9 @@
 const mongoose = require("mongoose");
+const Counter = require("./Counter");
 
 const billSchema = new mongoose.Schema({
     billId: {
         type: String,
-        required: true,
         unique: true
     },
     patientId: {
@@ -36,20 +36,15 @@ const billSchema = new mongoose.Schema({
 });
 
 // Pre-save hook to generate sequential ID
-billSchema.pre('save', async function (next) {
+billSchema.pre('save', async function () {
     if (this.isNew) {
-        try {
             const counter = await Counter.findOneAndUpdate(
                 { name: 'bill' },
                 { $inc: { seq: 1 } }, // Creates sequence
                 { new: true, upsert: true } // upsert is update and insert
             );
             this.billId = `B-${String(counter.seq).padStart(6, '0')}`; // create 6 digit sequence number
-        } catch (err) {
-            return next(err);
-        }
     }
-    next();
 });
 
 module.exports = mongoose.model("Bills", billSchema);

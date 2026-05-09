@@ -1,9 +1,9 @@
 const mongoose = require("mongoose");
+const Counter = require("./Counter");
 
 const patientSchema = new mongoose.Schema({
     UHID: {
         type: String,
-        required: true,
         unique: true
     },
     name: {
@@ -30,7 +30,7 @@ const patientSchema = new mongoose.Schema({
     address: {
         houseName: {type: String},
         houseNumber: {type: String},
-        city: {type, String, required: true},
+        city: {type: String, required: true},
         postCode: {type: String, required: true}
     },
     emergencyContact: {
@@ -45,18 +45,13 @@ const patientSchema = new mongoose.Schema({
 // Pre-save hook to generate sequential ID
 patientSchema.pre('save', async function (next) {
     if (this.isNew) {
-        try {
             const counter = await Counter.findOneAndUpdate(
                 { name: 'patients' },
                 { $inc: { seq: 1 } }, // Creates sequence
                 { new: true, upsert: true } // upsert is update and insert
             );
             this.UHID = `UHID-${String(counter.seq).padStart(6, '0')}`; // create 6 digit sequence number
-        } catch (err) {
-            return next(err);
-        }
     }
-    next();
 });
 
 module.exports = mongoose.model("Patients", patientSchema);

@@ -1,9 +1,9 @@
 const mongoose = require("mongoose");
+const Counter = require("./Counter");
 
 const paymentSchema = new mongoose.Schema({
     paymentId: {
         type: String,
-        required: true,
         unique: true
     },
     billId: {

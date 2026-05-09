@@ -2,7 +2,14 @@ const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
     {
-        userName: {
+        username: {
+            type: String,
+            required: true,
+            unique: true,
+            lowercase: true,
+            trim: true
+        },
+        email: {
             type: String,
             required: true,
             unique: true,
@@ -16,7 +23,7 @@ const userSchema = new mongoose.Schema(
         status: {
             type: String,
             enum: ["ACTIVE", "INACTIVE"],
-            required: true
+            default: "ACTIVE"
         },
         roles: [{
             type: String,
@@ -24,7 +31,7 @@ const userSchema = new mongoose.Schema(
                 "CASHIER", "NURSE", "LAB_TECH", "PHARMACIST"],
             required: true
         }],
-        employeeId: {
+        employeeCode: {
             type: String,
             required: true,
             ref: "Employees"
