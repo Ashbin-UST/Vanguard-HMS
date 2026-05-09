@@ -1,19 +1,11 @@
 {
-  "name": "hms",
+  "name": "hms-backend",
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
-    "test": "NODE_ENV=test jest --detectOpenHandles --forceExit --runInBand",
-    "test:unit": "NODE_ENV=test jest tests/unit --detectOpenHandles --forceExit --runInBand",
-    "test:integration": "NODE_ENV=test jest tests/integration --detectOpenHandles --forceExit --runInBand",
-    "test:coverage": "NODE_ENV=test jest --coverage --detectOpenHandles --forceExit --runInBand"
+    "start": "nodemon src/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
@@ -25,13 +17,11 @@
     "mongoose": "^9.5.0",
     "morgan": "^1.10.1",
     "nodemailer": "^8.0.6",
-    "swagger": "^0.7.5",
+    "nodemon": "^3.1.14",
     "swagger-ui-express": "^5.0.1",
     "yamljs": "^0.3.0"
   },
-  "devDependencies": {
-    "jest": "^30.3.0",
-    "nodemon": "^3.1.14",
-    "supertest": "^7.2.2"
-  }
+  "author": "",
+  "license": "ISC",
+  "description": ""
 }
