@@ -4,7 +4,9 @@ const crypto = require("crypto");
 
 
 const Employee = require("../models/Employee");
-const User = require("../models/User")
+const User = require("../models/User");
+const { findOne } = require("../models/Counter");
+const { profile } = require("console");
 
 exports.signup = async (req,res)=>{ 
  
@@ -94,7 +96,7 @@ exports.signup = async (req,res)=>{
     }
     
 }
-
+//-----------------Login----------------------------------------------
 
 exports.login = async (req,res)=>{
   try{
@@ -112,7 +114,7 @@ exports.login = async (req,res)=>{
     await user.save(); 
 
     const token = jwt.sign(
-      { id: user.employeeId, role: user.role },
+      { employeeId: user.employeeId, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN },
     );  
@@ -137,4 +139,26 @@ exports.login = async (req,res)=>{
     res.status(500).json({message:err.message})
 
   }
+} 
+
+//------------------profile-------------------------------
+exports.me = async (req,res)=>{
+  try{
+  const  user = await User.findOne({employeeId:req.user.employeeId}).select("-passwordHash -__v");
+  const profile = await Employee.findOne({employeeId:user.employeeId}).select("-__v");
+  return res.status(200).json({ 
+    user:{
+      id:user.employeeId,
+      email:user.email,
+      role:user.role,
+      lastLoginAt:user.lastLoginAt,
+      
+    },
+    profile
+  })
 }
+catch(err){
+   console.error("Me error:", err);
+    res.status(500).json({ message: err.message });
+}
+};
