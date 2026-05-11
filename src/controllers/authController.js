@@ -152,12 +152,16 @@ exports.login = async (req, res) => {
 
         const user = await User.findOne({ email });
         if (!user){
-            return res.status(404).json({message: "Invalid email"});
+            return res.status(404).json({
+                message: "Invalid email"
+            });
         }
 
         const isMatch = Boolean (await bcrypt.compare(password, user.passwordHash));
         if (!isMatch){
-            return res.status(401).json({ message: "Invalid password" });
+            return res.status(401).json({
+                message: "Invalid password"
+            });
         }
 
         user.lastLoginAt = new Date();
@@ -202,7 +206,7 @@ exports.login = async (req, res) => {
 
         const token = jwt.sign(
             {
-                id: user._id,
+                employeeCode: user.employeeCode,
                 roles: user.roles
             },
             process.env.JWT_SECRET,
@@ -226,8 +230,51 @@ exports.login = async (req, res) => {
     }
     catch(err){
         console.log("Login error: ", err);
-        res.status(500).json({message: "Server error during login"});
+        res.status(500).json({
+            message: "Server error during login"
+        });
     }
 }
 
-// Profile (ME)
+// Logout
+exports.logout = (req, res) => {
+  res.status(200).json({ message: "Logged out successfully" });
+};
+
+// User Profile
+exports.profile = async (req, res) => {
+    try{
+        const user = await User.findOne({
+            employeeCode: req.user.employeeCode
+        }).select("-passwordHash -__v");
+        if (!user){
+            return res.status(404).json({
+                message: "User is not found!!"
+            });
+        }
+        const employee = await Employee.findOne({
+            employeeCode: req.user.employeeCode
+        }).select("-email -__v");
+        if (!employee){
+            return res.status(404).json({
+                message: "Employee not found!!"
+            });
+        }
+        res.status(200).json({
+            user: {
+                username: user.username,
+                email: user.email,
+                roles: user.roles,
+                lastLoginAt: user.lastLoginAt,
+                created_at: user.created_at
+            },
+            employee
+        });
+    }
+    catch(err){
+        console.log("Error during view profile: ", err);
+        res.status(500).json({
+            message: "Server error during view profile"
+        });
+    }
+}
