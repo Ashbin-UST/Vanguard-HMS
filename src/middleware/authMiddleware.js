@@ -2,32 +2,19 @@ const User = require('../models/userModel');
 const { verifyAccessToken } = require('../utils/generateToken');
 
 const protect = async (req, res, next) => {
-  try{
-  let token;
+  try {
+    const token = req.headers.authorization?.startsWith('Bearer ')
+      ? req.headers.authorization.split(' ')[1]
+      : null;
 
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith('Bearer ')
-    ) {
-      token = req.headers.authorization.split(' ')[1];
-    }
-
-  if (!token) {
+    if (!token) {
       return res.status(401).json({
         success: false,
         message: 'Access denied. No token provided. Please login first',
       });
     }
 
-    let decoded;
-    try {
-      decoded = verifyAccessToken(token);
-    } catch (err) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid or expired token. Please login again',
-      });
-    }
+    const decoded = verifyAccessToken(token);
 
     const user = await User.findById(decoded.id);
 
@@ -48,13 +35,22 @@ const protect = async (req, res, next) => {
     req.user = decoded;
     next();
   } catch (error) {
+    if (
+      error.name === 'JsonWebTokenError' ||
+      error.name === 'TokenExpiredError'
+    ) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or expired token. Please login again',
+      });
+    }
+
     return res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 };
-
 
 const authorize = (...allowedRoles) => {
   return (req, res, next) => {

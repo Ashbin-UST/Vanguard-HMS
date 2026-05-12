@@ -39,7 +39,7 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
     employeeId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       ref: "Employee",
       default: null,
     },

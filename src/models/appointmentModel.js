@@ -7,12 +7,12 @@ const appointmentSchema = new mongoose.Schema({
     trim: true,
   },
   patientId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Patient',
-        required: [true, 'Patient Id is required'],
+    type: String,
+    ref: 'Patient',
+    required: [true, 'Patient Id is required'],
   },
   doctorEmployeeId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: String,
     ref: 'Employee',
     required: [true, 'Doctor ID is required'],
   },
@@ -38,7 +38,7 @@ const appointmentSchema = new mongoose.Schema({
     default: 'BOOKED',
   },
   createdByEmployeeId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: String,
     ref: 'Employee',
     required: [true, 'Created by Employee ID is required'],
   },

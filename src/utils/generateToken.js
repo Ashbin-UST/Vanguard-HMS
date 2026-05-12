@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken')
-const crypto = require('crypto')
+const crypto = require('node:crypto')
 
 const generateAccessToken = (payload) => {
   return jwt.sign(

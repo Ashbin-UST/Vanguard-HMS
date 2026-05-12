@@ -27,10 +27,10 @@ const normalizeAndValidateRoles = (roles) => {
 
   const invalidRoles = rolesArray.filter(r => !VALID_ROLES.includes(r));
   if (invalidRoles.length) {
-    throw {
+    return res.status(409).json({
       status: 400,
       message: `Invalid roles: [${invalidRoles.join(', ')}]. Valid: [${VALID_ROLES.join(', ')}]`,
-    };
+    });
   }
 
   return rolesArray;
@@ -41,33 +41,33 @@ const validateEmployeeForRoles = async (roles, employeeId) => {
   if (isOwnerOnly) return null;
 
   if (!employeeId) {
-    throw {
+    return res.status(409).json({
       status: 400,
       message: `employeeId is required for roles: [${roles.join(', ')}]`,
-    };
+    });
   }
 
   const employee = await Employee.findById(employeeId);
   if (!employee) {
-    throw {
+    return res.status(404).json({
       status: 404,
       message: `Employee not found with ID: ${employeeId}`,
-    };
+    });
   }
 
   if (employee.status === 'INACTIVE') {
-    throw {
+    return res.status(400).json({
       status: 400,
       message: `Employee "${employee.name}" is INACTIVE. Cannot create account`,
-    };
+    });
   }
 
   const existingEmployeeUser = await User.findOne({ employeeId });
   if (existingEmployeeUser) {
-    throw {
+    return res.status(409).json({
       status: 409,
       message: `Employee already has a user account: ${existingEmployeeUser.email}`,
-    };
+    });
   }
 
   return employeeId;
@@ -75,17 +75,17 @@ const validateEmployeeForRoles = async (roles, employeeId) => {
 
 const validateRegisterInput = ({ email, password, roles }) => {
   if (!email || !password || !roles) {
-    throw {
+    return res.status(400).json({
       status: 400,
       message: 'email, password, and roles are required',
-    };
+    });
   }
 
   if (password.length < 8) {
-    throw {
+    return res.status(400).json({
       status: 400,
       message: 'Password must be at least 8 characters',
-    };
+    });
   }
 };
 
@@ -239,7 +239,46 @@ const login = async (req, res) => {
   }
 };
 
+const getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).populate(
+      'employeeId',
+      'employeeCode name designation department email phone specialization',
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "User Profile: ",
+      data: {
+        userId: user.userId,
+        email: user.email,
+        roles: user.roles,
+        status: user.status,
+        employee: user.employeeId || null,
+        lastLoginAt: user.lastLoginAt,
+        createdAt: user.createdAt,
+      },
+    });
+  }
+  catch(error) {
+    console.log("Get User profile error: ", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
 module.exports = {
   register,
   login,
+  getMe,
 };
