@@ -36,6 +36,16 @@ const userSchema = new mongoose.Schema(
             required: true,
             ref: "Employees"
         },
+        isVerified: {
+            type: Boolean,
+            default: false
+        },
+        verificationToken: {
+            type: String
+        },
+        verificationTokenExpiry: {
+            type: Date
+        },
         lastLoginAt: {
             type: Date,
             default: null

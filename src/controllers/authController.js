@@ -150,6 +150,12 @@ exports.login = async (req, res) => {
             });
         }
 
+        if (!user.isVerified) {
+            return res.status(403).json({
+                message: "Please verify your email before logging in"
+            });
+        }
+
         user.lastLoginAt = new Date();
         await user.save();
 
@@ -225,6 +231,55 @@ exports.login = async (req, res) => {
 // Logout
 exports.logout = (req, res) => {
     res.status(200).json({ message: "Logged out successfully" });
+};
+
+// Verify Email
+exports.verifyEmail = async (req, res) => {
+    try {
+        const { token } = req.query;
+
+        if (!token) {
+            return res.status(400).json({
+                message: "Verification token is required"
+            });
+        }
+
+        const user = await User.findOne({
+            verificationToken: token,
+            verificationTokenExpiry: {
+                $gt: new Date()
+            }
+        });
+
+        if (!user) {
+            return res.status(400).json({
+                message: "Invalid or expired verification token"
+            });
+        }
+
+        if (user.isVerified) {
+            return res.status(200).json({
+                message: "Email already verified"
+            });
+        }
+
+        user.isVerified = true;
+        user.verificationToken = null;
+        user.verificationTokenExpiry = null;
+
+        await user.save();
+
+        return res.status(200).json({
+            message: "Email verified successfully"
+        });
+
+    }
+    catch (err) {
+        console.error("Verify email error:", err);
+        return res.status(500).json({
+            message: "Server error during email verification"
+        });
+    }
 };
 
 // User Profile
@@ -433,10 +488,10 @@ exports.updateEmployee = async (req, res) => {
     }
 };
 
-// delete employee (only possible for admin)
+// delete employee (only for admin)
 exports.deleteEmployee = async (req, res) => {
     try {
-        const { employeeCode } = req.body;
+        const { employeeCode } = req.params;
 
         const user = await User.findOne({
             employeeCode
@@ -466,7 +521,7 @@ exports.deleteEmployee = async (req, res) => {
             employeeCode
         });
 
-        res.status(204).json({
+        res.status(200).json({
             message: "Employee Deletion successfull"
         });
     }

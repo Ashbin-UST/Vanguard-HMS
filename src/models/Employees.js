@@ -21,7 +21,7 @@ const employeeSchema = new mongoose.Schema({
     },
     department: {
         type: String,
-        enum: ["OPD", "IPD", "Lab", "Pharmacy", "Admin"],
+        enum: ["OPD", "IPD", "Lab", "Pharmacy", "Administration", "Reception", "Billing"],
         required: true
     },
     designation: {

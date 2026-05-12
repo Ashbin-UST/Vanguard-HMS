@@ -8,7 +8,7 @@ const controller = require("../controllers/authController");
 
 const allowedDesignationTypes = ['OWNER', 'ADMIN', 'DOCTOR', 'RECEPTIONIST', 
   'CASHIER', 'NURSE', 'LAB_TECH', 'PHARMACIST'];
-const allowedDepartmentTypes = ["OPD", "IPD", "Lab", "Pharmacy", "Admin"];
+const allowedDepartmentTypes = ["OPD", "IPD", "Lab", "Pharmacy", "Administration", "Reception", "Billing"];
  
 const signUpValidation = [
     body('name').notEmpty().withMessage('Name is required!!'),
