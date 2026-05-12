@@ -1,13 +1,11 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
- 
- 
 const Employee = require("../models/Employee");
 const User = require("../models/User")
  
 exports.signup = async (req,res)=>{
- 
+  
     try{
        const{ email,
         password,
@@ -25,6 +23,10 @@ exports.signup = async (req,res)=>{
          
         const existingUser = await User.findOne({ email });
         if (existingUser) {
+        return res.status(409).json({ message: "Email already registered" });
+        }
+          const existingEmployee = await Employee.findOne({ email });
+        if (existingEmployee) {
         return res.status(409).json({ message: "Email already registered" });
         }
        
@@ -65,16 +67,13 @@ exports.signup = async (req,res)=>{
       passwordHash:password_hash,
       role:designation,
       employeeId: savedEmployee.employeeId,
+      createdAt:Date.now,
+      lastLoginAt:Date.now
       //verification_token,
       //verification_token_expiry,
     });
  
-    // const token = jwt.sign(
-    //   { id: user.employeeId, role: user.role },
-    //   process.env.JWT_SECRET,
-    //   { expiresIn: process.env.JWT_EXPIRES_IN },
-    // );
-   
+    
     res.status(201).json({
       message:
         "Account created successfully. ",
