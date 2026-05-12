@@ -32,20 +32,15 @@ const paymentSchema = new mongoose.Schema({
 });
 
 // Pre-save hook to generate sequential ID
-paymentSchema.pre('save', async function (next) {
+paymentSchema.pre('save', async function () {
     if (this.isNew) {
-        try {
             const counter = await Counter.findOneAndUpdate(
                 { name: 'payment' },
                 { $inc: { seq: 1 } }, // Creates sequence
                 { new: true, upsert: true } // upsert is update and insert
             );
             this.paymentId = `PAY-${String(counter.seq).padStart(6, '0')}`; // create 6 digit sequence number
-        } catch (err) {
-            return next(err);
-        }
     }
-    next();
 });
 
 module.exports = mongoose.model("Payments", paymentSchema);

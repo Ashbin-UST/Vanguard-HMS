@@ -3,6 +3,7 @@ const router = express.Router();
 const { body } = require("express-validator");
 const validate = require("../middlewares/validate");
 const auth = require("../middlewares/authMiddleware");
+const authAdmin = require("../middlewares/authorizeAdminMiddleware")
 const controller = require("../controllers/authController");
 
 const allowedDesignationTypes = ['OWNER', 'ADMIN', 'DOCTOR', 'RECEPTIONIST', 
@@ -44,5 +45,8 @@ const loginValidation = [
 router.post("/signup", signUpValidation, validate, controller.signup);
 router.post("/login", loginValidation, validate, controller.login);
 router.get("/profile", auth, controller.profile);
+router.put("/selfUpdate", auth, controller.updateMyProfile);
+router.put("/updateEmployee/:employeeCode", auth, authAdmin, controller.updateEmployee);
+router.delete("/deleteEmployee/:employeeCode", auth, authAdmin, controller.deleteEmployee);
 
 module.exports = router;

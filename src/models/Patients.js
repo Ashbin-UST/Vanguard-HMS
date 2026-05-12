@@ -43,7 +43,7 @@ const patientSchema = new mongoose.Schema({
 });
 
 // Pre-save hook to generate sequential ID
-patientSchema.pre('save', async function (next) {
+patientSchema.pre('save', async function () {
     if (this.isNew) {
             const counter = await Counter.findOneAndUpdate(
                 { name: 'patients' },

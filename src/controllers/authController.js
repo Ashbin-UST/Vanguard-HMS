@@ -2,9 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("node:crypto");
 const User = require("../models/Users");
-const Patient = require("../models/Patients");
 const Employee = require("../models/Employees");
-const Appointment = require("../models/Appointments");
 const sendEmail = require("../utils/sendEmail");
 require("dotenv").config();
 
@@ -75,7 +73,7 @@ exports.signup = async (req, res) => {
         const employee = await Employee.create(employeeData);
 
         // Generate verification token
-        const verificationToken =  crypto.randomBytes(32).toString("hex");
+        const verificationToken = crypto.randomBytes(32).toString("hex");
 
         const verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
@@ -112,21 +110,9 @@ exports.signup = async (req, res) => {
             `
         });
 
-        // Generate JWT token
-        const token = jwt.sign(
-            {
-                id: user._id,
-                roles: user.roles
-            },
-            process.env.JWT_SECRET,
-            {
-                expiresIn: process.env.JWT_EXPIRES_IN
-            }
-        );
         res.status(201).json({
             message:
                 "Employee account created successfully. Please verify your email.",
-            token,
             user: {
                 id: user._id,
                 username: user.username,
@@ -136,7 +122,7 @@ exports.signup = async (req, res) => {
             },
             employee
         });
-    } 
+    }
     catch (err) {
         console.error("Signup error:", err);
         res.status(500).json({
@@ -147,18 +133,18 @@ exports.signup = async (req, res) => {
 
 // Login
 exports.login = async (req, res) => {
-    try{
-        const {email, password} = req.body;
+    try {
+        const { email, password } = req.body;
 
         const user = await User.findOne({ email });
-        if (!user){
+        if (!user) {
             return res.status(404).json({
                 message: "Invalid email"
             });
         }
 
-        const isMatch = Boolean (await bcrypt.compare(password, user.passwordHash));
-        if (!isMatch){
+        const isMatch = Boolean(await bcrypt.compare(password, user.passwordHash));
+        if (!isMatch) {
             return res.status(401).json({
                 message: "Invalid password"
             });
@@ -228,7 +214,7 @@ exports.login = async (req, res) => {
             }
         });
     }
-    catch(err){
+    catch (err) {
         console.log("Login error: ", err);
         res.status(500).json({
             message: "Server error during login"
@@ -238,16 +224,16 @@ exports.login = async (req, res) => {
 
 // Logout
 exports.logout = (req, res) => {
-  res.status(200).json({ message: "Logged out successfully" });
+    res.status(200).json({ message: "Logged out successfully" });
 };
 
 // User Profile
 exports.profile = async (req, res) => {
-    try{
+    try {
         const user = await User.findOne({
             employeeCode: req.user.employeeCode
         }).select("-passwordHash -__v");
-        if (!user){
+        if (!user) {
             return res.status(404).json({
                 message: "User is not found!!"
             });
@@ -255,7 +241,7 @@ exports.profile = async (req, res) => {
         const employee = await Employee.findOne({
             employeeCode: req.user.employeeCode
         }).select("-email -__v");
-        if (!employee){
+        if (!employee) {
             return res.status(404).json({
                 message: "Employee not found!!"
             });
@@ -271,10 +257,223 @@ exports.profile = async (req, res) => {
             employee
         });
     }
-    catch(err){
+    catch (err) {
         console.log("Error during view profile: ", err);
         res.status(500).json({
             message: "Server error during view profile"
+        });
+    }
+}
+
+// Self updation of employee profile
+exports.updateMyProfile = async (req, res) => {
+    try {
+        const {
+            phone,
+            email,
+            qualification
+        } = req.body;
+
+        const updateData = {};
+
+        if (phone !== undefined) {
+            updateData.phone = phone;
+        }
+
+        if (email !== undefined) {
+            updateData.email = email;
+        }
+
+        if (qualification !== undefined) {
+            updateData.qualification = qualification;
+        }
+
+        const updatedEmployee =
+            await Employee.findOneAndUpdate(
+                {
+                    employeeCode: req.user.employeeCode
+                },
+                updateData,
+                {
+                    new: true,
+                    runValidators: true
+                }
+            );
+
+        if (!updatedEmployee) {
+            return res.status(404).json({
+                message: "Employee not found"
+            });
+        }
+
+        // Update email in User collection also
+        if (email !== undefined) {
+            await User.findOneAndUpdate(
+                {
+                    employeeCode: req.user.employeeCode
+                },
+                {
+                    email
+                }
+            );
+        }
+
+        res.status(200).json({
+            message: "Employee profile updated successfully",
+            updatedEmployee
+        });
+
+    }
+    catch (err) {
+        console.error("Error during updation:", err);
+        res.status(500).json({
+            message: "Server error during updation"
+        });
+    }
+};
+
+// Updation of employee by admin
+exports.updateEmployee = async (req, res) => {
+    try {
+        const {
+            phone,
+            email,
+            department,
+            designation,
+            status,
+            qualification,
+            consultationFee,
+            availabilitySlots
+        } = req.body;
+
+        const updateData = {};
+
+        if (phone !== undefined) {
+            updateData.phone = phone;
+        }
+
+        if (email !== undefined) {
+            updateData.email = email;
+        }
+
+        if (department !== undefined) {
+            updateData.department = department;
+        }
+
+        if (designation !== undefined) {
+            updateData.designation = designation;
+        }
+
+        if (status !== undefined) {
+            updateData.status = status;
+        }
+
+        if (qualification !== undefined) {
+            updateData.qualification = qualification;
+        }
+
+        // Doctor-only fields
+        if (
+            designation === "DOCTOR" ||
+            designation === undefined
+        ) {
+
+            if (consultationFee !== undefined) {
+                updateData.consultationFee = consultationFee;
+            }
+
+            if (availabilitySlots !== undefined) {
+                updateData.availabilitySlots = availabilitySlots;
+            }
+        }
+
+        const updatedEmployee =
+            await Employee.findOneAndUpdate(
+                {
+                    employeeCode: req.params.employeeCode
+                },
+                updateData,
+                {
+                    new: true,
+                    runValidators: true
+                }
+            );
+
+        if (!updatedEmployee) {
+
+            return res.status(404).json({
+                message: "Employee not found"
+            });
+        }
+
+        // Update email in User collection also
+        if (email !== undefined) {
+            await User.findOneAndUpdate(
+                {
+                    employeeCode:
+                        req.params.employeeCode
+                },
+                {
+                    email
+                }
+            );
+        }
+
+        res.status(200).json({
+            message: "Employee updated successfully",
+            updatedEmployee
+        });
+
+    }
+    catch (err) {
+        console.error("Error during updation:", err);
+        res.status(500).json({
+            message: "Server error during updation"
+        });
+    }
+};
+
+// delete employee (only possible for admin)
+exports.deleteEmployee = async (req, res) => {
+    try {
+        const { employeeCode } = req.body;
+
+        const user = await User.findOne({
+            employeeCode
+        });
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User is not found!!"
+            });
+        }
+
+        const employee = await Employee.findOne({
+            employeeCode
+        });
+
+        if (!employee) {
+            return res.status(404).json({
+                message: "Employee is not found!!"
+            });
+        }
+
+        await User.findOneAndDelete({
+            employeeCode
+        });
+
+        await Employee.findOneAndDelete({
+            employeeCode
+        });
+
+        res.status(204).json({
+            message: "Employee Deletion successfull"
+        });
+    }
+    catch (err) {
+        console.error("Error during deletion: ", err);
+        res.status(500).json({
+            message: "Server error during deletion"
         });
     }
 }
