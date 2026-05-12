@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
+const crypto = require("node:crypto");
 const User = require("../models/User");
 const Employee = require("../models/Employee");
 
@@ -45,8 +45,6 @@ exports.signup = async (req, res) => {
 
         const savedEmployee = await employee.save();
 
-        //const employee=await Employee.create(req.body);
-
         res.status(201).json({
             success: true,
             message: "Employee Created Successfully",
@@ -59,7 +57,7 @@ exports.signup = async (req, res) => {
             Date.now() + 24 * 60 * 60 * 1000,
         ); // 24 hours
 
-        const user = await User.create({
+        await User.create({
             email,
             passwordHash: password_hash,
             role: designation,
@@ -68,7 +66,7 @@ exports.signup = async (req, res) => {
             verification_token_expiry,
         });
         const token = jwt.sign(
-            { id: user.employeeId, role: user.role },
+            { id: savedEmployee.employeeId, role: savedEmployee.designation },
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRES_IN }
         );
@@ -97,7 +95,8 @@ exports.login = async (req, res) => {
             return res.status(401).json({ message: "Invalid email or password" });
         }
 
-        const isMatch = await bcrypt.compare(password, user.passwordHash);
+        const isMatch = Boolean(await bcrypt.compare(password, user.passwordHash));
+
         if (!isMatch) {
             return res.status(401).json({ message: "Invalid email or password" });
         }
@@ -106,7 +105,7 @@ exports.login = async (req, res) => {
         await user.save();
 
         const token = jwt.sign(
-            { id: user._id, role: user.role, email: user.email },
+            { id: user._id, role: user.role, email: user.email, employeeId: user.employeeId },
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRES_IN },
         );
@@ -129,6 +128,39 @@ exports.login = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: error.message
+        });
+    }
+};
+// ─── LOGOUT ────────────────────────────────────────────────────────────────
+exports.logout = (req, res) => {
+    res.status(200).json({ message: "Logged out successfully" });
+};
+
+// --Profile ---------------
+exports.me = async (req, res) => {
+    try {
+
+        const user = await User.findOne({ employeeId: req.user.employeeId }).select("-passwordHash -__v");
+        console.log(user);
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+        const profile = await Employee.findOne({ employeeId: user.employeeId }).select("-__v");
+        return res.status(200).json({
+            user: {
+                id: user.employeeId,
+                email: user.email,
+                role: user.role,
+                lastLoginAt: user.lastLoginAt,
+
+            },
+            profile
         })
     }
-}
+    catch (err) {
+        console.error("Me error:", err);
+        res.status(500).json({ message: err.message });
+    }
+};

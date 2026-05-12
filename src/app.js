@@ -24,15 +24,14 @@ const authRoutes = require("./routes/authRoutes");
 app.use("/api/auth", authRoutes);
 
 app.get("/", (req, res) => res.json({ message: "API running" }));
-
-
-// const appointmentRoutes = require("./routes/appointmentRoute");
-// app.use("/api/appointment", appointmentRoutes);
-
-mongoose
-    .connect(process.env.MONGO_URI)
-    .then(() => console.log("MongoDB connected"))
-    .catch((err) => console.error("MongoDB connection error:", err.message));
-
+const startServer = async () => {
+    try {
+        await mongoose.connect(process.env.MONGO_URI)
+        console.log("MongoDB connected")
+    } catch (err) {
+        console.error("MongoDB connection error:", err.message);
+    }
+};
+startServer();
 module.exports = app;
 
