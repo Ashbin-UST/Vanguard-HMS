@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
+const crypto = require("node:crypto");
 const Employee = require("../models/Employee");
 const User = require("../models/User")
  
@@ -33,8 +33,6 @@ exports.signup = async (req,res)=>{
  
         const password_hash = await bcrypt.hash(password,12);
  
-        // let profile = null;
- 
         const employee = new Employee();
         employee.email = email;
         employee.name = name;
@@ -50,18 +48,7 @@ exports.signup = async (req,res)=>{
         employee.availabilitySlots = availabilitySlots;
        
         const savedEmployee = await employee.save();
-       
-       
-        //alternative  
-        //const employee = await Employee.create(req.body);
- 
-       
-        // Generate verification token
-    // const verification_token = crypto.randomBytes(32).toString("hex");
-    // const verification_token_expiry = new Date(
-    //   Date.now() + 24 * 60 * 60 * 1000,
-    // ); // 24 hours
- 
+      
      const user = await User.create({
       email,
       passwordHash:password_hash,
@@ -69,16 +56,13 @@ exports.signup = async (req,res)=>{
       employeeId: savedEmployee.employeeId,
       createdAt:Date.now,
       lastLoginAt:Date.now
-      //verification_token,
-      //verification_token_expiry,
     });
  
     
     res.status(201).json({
       message:
         "Account created successfully. ",
-     // token,
-     
+        user
     });
  
  
@@ -115,8 +99,7 @@ exports.login = async (req,res)=>{
       { expiresIn: process.env.JWT_EXPIRES_IN },
     );  
     
-    const profile = await Employee.findOne({employeeId:user.employeeId});
-
+   
 
     res.status(200).json({
       message:"Login successful",

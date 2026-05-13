@@ -18,17 +18,19 @@ app.use(
 app.use(morgan("dev"));
 
 
-
-
 const authRoutes = require("./routes/authRoutes");
 app.use("/api/auth",authRoutes) 
 
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() =>{
-     console.log("MongoDB connected");
-  })
-  .catch((err) => console.error("MongoDB connection error:", err.message));
 
-  console.log(mongoose.connection.name);
+
+
+const startserver = async () =>{
+    try{
+        await mongoose.connect(process.env.MONGO_URI)
+        console.log("MongoDB connected")
+  }
+  catch(err) { console.error("MongoDB connection error:", err.message);}
+}
+
+  startserver();
 module.exports = app; 
