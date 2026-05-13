@@ -43,6 +43,7 @@ const loginValidation = [
 ];
 
 router.post("/signup", signUpValidation, validate, controller.signup);
+router.get("/verify-email", controller.verifyEmail);
 router.post("/login", loginValidation, validate, controller.login);
 router.get("/profile", auth, controller.profile);
 router.put("/selfUpdate", auth, controller.updateMyProfile);
