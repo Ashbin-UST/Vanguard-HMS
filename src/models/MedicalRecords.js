@@ -1,48 +1,56 @@
 const mongoose = require("mongoose");
- 
-const medicalrecordSchema = new mongoose.Schema({
-    medicalRecordId: { type: String, unique: true },
+const { timeStamp } = require("node:console");
+const Counter = require("./Counter");
+
+const medicalRecordSchema = new mongoose.Schema({
+    medicalRecordId: {
+        type: String,
+        unique: true
+    },
     appointmentId: {
         type: String,
-        ref: "Appointment",
-        required: true
+        required: true,
+        ref: "Appointments"
     },
-    doctorId: {
+    patientId: {
         type: String,
-        ref: "Employee",
+        required: true,
+        ref: "Patients"
+    },
+    doctorEmployeeId: {
+        type: String,
+        required: true,
+        ref: "Employees"
+    },
+    symptoms: {
+        type: String,
         required: true
     },
-    symptoms: { type: String, required: true },
-    diagnosis: { type: String, required: true },
-    prescriptionNotes: [
-        {
-            name: String,
-            dosage: String,
-            duration: String
-        }
-    ],
- 
-}, {
-    timestamps: {
-        createdAt: "created_at",
+    diagnosis: {
+        type: String,
+        required: true
+    },
+    prescriptionItems: [{
+        name: {type: String, required: true},
+        dosage: {type: String, required: true},
+        duration: {type: String, required: true}
+    }],
+    notes: {
+        type: String
     }
-});
- 
-medicalrecordSchema.pre('save', async function (next) {
+}, {timeStamps: { createdAt: "created_at" }}
+);
+
+// Pre-save hook to generate sequential ID
+medicalRecordSchema.pre('save', async function () {
     if (this.isNew) {
-        try {
             const counter = await Counter.findOneAndUpdate(
-                { name: 'MedicalRecords' },
+                { name: 'medicalRecord' },
                 { $inc: { seq: 1 } }, // Creates sequence
                 { new: true, upsert: true } // upsert is update and insert
             );
-            this.medicalRecordId = `MR-${String(counter.seq).padStart(6, '0')}`; // create 6 digit sequence number
-        } catch (err) {
-            return next(err);
-        }
+            this.medicalRecordId = `MEDREC-${String(counter.seq).padStart(6, '0')}`; // create 6 digit sequence number
     }
-    next();
 });
- 
-module.exports = mongoose.model('MedicalRecords', medicalrecordSchema);
- 
+
+module.exports = mongoose.model("MedicalRecords", medicalRecordSchema);
