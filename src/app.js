@@ -14,21 +14,28 @@ app.use(
         credentials:true,
     }),
 ); 
-
 app.use(morgan("dev"));
 
 
-
-
 const authRoutes = require("./routes/authRoutes");
-app.use("/api/auth",authRoutes) 
+app.use("/api/auth",authRoutes);
 
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() =>{
-     console.log("MongoDB connected");
-  })
-  .catch((err) => console.error("MongoDB connection error:", err.message));
+const employeeRoutes = require("./routes/employeeRoutes")
+app.use("/api/employees",employeeRoutes);
 
-  console.log(mongoose.connection.name);
+const nodeRoutes = require("./routes/nodeRoutes")
+app.use("/api/node",nodeRoutes)
+
+
+const startServer = async ()=>{
+try{
+ await mongoose.connect(process.env.MONGO_URI)
+console.log("MongoDB connected");
+
+}
+  catch(err) { 
+    console.error("MongoDB connection error:", err.message);
+  }
+} 
+startServer();
 module.exports = app; 

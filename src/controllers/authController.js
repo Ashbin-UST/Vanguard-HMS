@@ -1,12 +1,12 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
+
 
 
 const Employee = require("../models/Employee");
 const User = require("../models/User");
 const { findOne } = require("../models/Counter");
-const { profile } = require("console");
+
 
 exports.signup = async (req,res)=>{ 
  
@@ -33,7 +33,6 @@ exports.signup = async (req,res)=>{
 
         const password_hash = await bcrypt.hash(password,12);
 
-        // let profile = null;
  
         const employee = new Employee();
         employee.email = email; 
@@ -52,15 +51,7 @@ exports.signup = async (req,res)=>{
         const savedEmployee = await employee.save(); 
        
         
-        //alternative
-        //const employee = await Employee.create(req.body);
 
-       
-        // Generate verification token
-    const verification_token = crypto.randomBytes(32).toString("hex");
-    const verification_token_expiry = new Date(
-      Date.now() + 24 * 60 * 60 * 1000,
-    ); // 24 hours
 
      const user = await User.create({
       email,
@@ -69,21 +60,15 @@ exports.signup = async (req,res)=>{
       employeeId: savedEmployee.employeeId,
       createdAt: new Date(),
       lastLoginAt:new Date()
-      // verification_token,
-      // verification_token_expiry,
+     
     }); 
 
-    // const token = jwt.sign(
-    //   { id: user.employeeId, role: user.role },
-    //   process.env.JWT_SECRET,
-    //   { expiresIn: process.env.JWT_EXPIRES_IN },
-    // ); 
+  
     
     res.status(201).json({
       message:
         "Account created successfully. ",
-      //token,
-     
+        user
     });
 
 
@@ -144,6 +129,7 @@ exports.login = async (req,res)=>{
 //------------------profile-------------------------------
 exports.me = async (req,res)=>{
   try{
+    console.log(req.user)
   const  user = await User.findOne({employeeId:req.user.employeeId}).select("-passwordHash -__v");
   const profile = await Employee.findOne({employeeId:user.employeeId}).select("-__v");
   return res.status(200).json({ 
