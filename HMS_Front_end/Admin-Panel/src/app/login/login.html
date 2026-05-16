@@ -1,1 +1,6 @@
-<p>login works!</p>
+<form [formGroup]='loginForm' (ngSubmit)='onSubmit()'>
+    <input formControlName='email' placeholder='Email' />
+    <span *ngIf="loginForm.get('email')?.invalid">Invalid email</span>
+    <input formControlName='password' type='password' />
+    <button [disabled]='loginForm.invalid'>Login</button>
+</form>
