@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MedCare Hospital – Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --teal:      #0D9488;
+      --teal-lt:   #CCFBF1;
+      --teal-dk:   #0F766E;
+      --coral:     #F97316;
+      --navy:      #1E293B;
+      --slate:     #64748B;
+      --error:     #EF4444;
+      --bg:        #EEF2FF;
+      --card-bg:   #FFFFFF;
+      --input-bg:  #F8FAFC;
+      --border:    #E2E8F0;
+      --radius:    18px;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      background-image:
+        radial-gradient(ellipse 60% 50% at 15% 20%, #C7D2FE 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 80% 80%, #A5F3FC 0%, transparent 60%);
+      font-family: 'DM Sans', sans-serif;
+      padding: 24px;
+    }
+
+    /* ── Card ── */
+    .card {
+      display: flex;
+      width: 900px;
+      max-width: 100%;
+      min-height: 540px;
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: 0 24px 64px rgba(15,118,110,.12), 0 4px 16px rgba(0,0,0,.06);
+      overflow: hidden;
+    }
+
+    /* ── Left panel ── */
+    .left {
+      flex: 0 0 42%;
+      background: linear-gradient(145deg, #F0FDFA 0%, #CCFBF1 45%, #99F6E4 100%);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 44px 40px 0;
+      overflow: hidden;
+    }
+
+    /* Decorative blobs */
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      opacity: .35;
+    }
+    .blob-1 {
+      width: 160px; height: 160px;
+      background: var(--teal-lt);
+      top: -40px; left: -40px;
+    }
+    .blob-2 {
+      width: 100px; height: 100px;
+      background: #FED7AA;
+      top: 60px; right: -20px;
+      opacity: .5;
+    }
+    .blob-3 {
+      width: 200px; height: 200px;
+      background: var(--teal);
+      bottom: -60px; left: -60px;
+      opacity: .12;
+    }
+
+    .left-text { position: relative; z-index: 2; }
+
+    .left-text h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 3rem;
+      line-height: 1.1;
+      color: var(--navy);
+      margin-bottom: 12px;
+    }
+    .left-text h1 span { color: var(--coral); }
+
+    .left-text p {
+      color: var(--slate);
+      font-size: .975rem;
+      line-height: 1.6;
+      max-width: 220px;
+    }
+
+    /* Doctor illustration placeholder */
+    .doctor-wrap {
+      position: relative;
+      z-index: 2;
+      margin-top: 28px;
+      display: flex;
+      justify-content: center;
+    }
+    .doctor-img {
+      width: 220px;
+      /* Replace src with a real 3D illustration */
+      filter: drop-shadow(0 8px 24px rgba(13,148,136,.25));
+      display: block;
+    }
+    /* Fallback avatar when no real image */
+    .doctor-avatar {
+      width: 180px;
+      height: 220px;
+      background: linear-gradient(160deg, #FFFFFF 30%, #A7F3D0 100%);
+      border-radius: 50% 50% 40% 40%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 6rem;
+      box-shadow: 0 8px 32px rgba(13,148,136,.2);
+    }
+
+    /* ── Right panel ── */
+    .right {
+      flex: 1;
+      background: #FAFBFF;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 52px 52px;
+      position: relative;
+    }
+
+    /* Corner deco rings */
+    .ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 3px solid var(--teal-lt);
+    }
+    .ring-1 { width: 44px; height: 44px; top: 24px; right: 24px; }
+    .ring-2 { width: 22px; height: 22px; top: 56px; right: 52px; background: #FED7AA; border-color: #FED7AA; opacity: .6; }
+
+    /* Logo */
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 36px;
+      color: var(--navy);
+    }
+    .logo span { color: var(--teal); }
+
+    /* Form */
+    .form-group { margin-bottom: 20px; }
+
+    label {
+      display: block;
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--slate);
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      margin-bottom: 7px;
+    }
+
+    .input-wrap { position: relative; }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="email"] {
+      width: 100%;
+      padding: 13px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      background: var(--input-bg);
+      font-family: inherit;
+      font-size: .95rem;
+      color: var(--navy);
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    input:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(13,148,136,.12);
+    }
+    input.error { border-color: var(--error); }
+    input.error:focus { box-shadow: 0 0 0 3px rgba(239,68,68,.12); }
+
+    .eye-btn {
+      position: absolute;
+      right: 13px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none;
+      cursor: pointer;
+      color: var(--slate);
+      font-size: 1rem;
+      line-height: 1;
+      padding: 2px;
+    }
+
+    .error-msg {
+      margin-top: 5px;
+      font-size: .78rem;
+      color: var(--error);
+      display: none;
+    }
+    .error-msg.show { display: block; }
+
+    /* Login button */
+    .btn-login {
+      width: 100%;
+      padding: 14px;
+      margin-top: 8px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dk) 100%);
+      color: #fff;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: .02em;
+      transition: opacity .2s, transform .15s, box-shadow .2s;
+      box-shadow: 0 4px 18px rgba(13,148,136,.35);
+    }
+    .btn-login:hover {
+      opacity: .92;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(13,148,136,.4);
+    }
+    .btn-login:active { transform: translateY(0); }
+
+    /* Footer links */
+    .links {
+      margin-top: 22px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      font-size: .875rem;
+      color: var(--slate);
+    }
+    .links a {
+      color: var(--teal);
+      font-weight: 600;
+      text-decoration: none;
+      transition: color .15s;
+    }
+    .links a:hover { color: var(--teal-dk); }
+
+    /* ── Responsive ── */
+    @media (max-width: 680px) {
+      .left { display: none; }
+      .right { padding: 40px 28px; }
+      .card { min-height: unset; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+
+  <!-- LEFT -->
+  <div class="left">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+
+    <div class="left-text">
+      <h1>Hello<span>!</span></h1>
+      <p>Please enter your details to continue accessing your portal.</p>
+    </div>
+
+    <div class="doctor-wrap">
+      <!--
+        Replace the emoji below with:
+        <img class="doctor-img" src="your-doctor-3d.png" alt="Doctor"/>
+        See image sources at the bottom of this file (in comments).
+      -->
+      <div class="doctor-avatar">🧑‍⚕️</div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+    <div class="ring ring-1"></div>
+    <div class="ring ring-2"></div>
+
+    <div class="logo"><span>MedCare</span> Hospital</div>
+
+    <div class="form-group">
+      <label for="email">Username or E-mail</label>
+      <div class="input-wrap">
+        <input type="email" id="email" placeholder="you@example.com" autocomplete="username"/>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <div class="input-wrap">
+        <input type="password" id="password" class="error" placeholder="••••••••" autocomplete="current-password"/>
+        <button class="eye-btn" onclick="togglePwd()" title="Toggle password">👁</button>
+      </div>
+      <p class="error-msg show" id="errMsg">The username or password is incorrect.</p>
+    </div>
+
+    <button class="btn-login" onclick="handleLogin()">Log In</button>
+
+    <div class="links">
+      <a href="#">Forgot Password?</a>
+      <span>Don't have an account? <a href="#">Sign Up</a></span>
+    </div>
+  </div>
+</div>
+
+<script>
+  function togglePwd() {
+    const inp = document.getElementById('password');
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+  }
+
+  function handleLogin() {
+    const email = document.getElementById('email').value.trim();
+    const pwd   = document.getElementById('password').value;
+    const pwdInp = document.getElementById('password');
+    const err    = document.getElementById('errMsg');
+
+    if (!email || !pwd) {
+      pwdInp.classList.add('error');
+      err.classList.add('show');
+      err.textContent = 'Please fill in all fields.';
+    } else {
+      pwdInp.classList.remove('error');
+      err.classList.remove('show');
+      alert('Login successful! (demo only)');
+    }
+  }
+</script>
+
+<!--
+==============================================
+  WHERE TO FIND 3D DOCTOR / MEDICAL IMAGES
+==============================================
+
+1. FREE  — Blush Design (blush.design)
+   Customizable 3D character illustrations. Pick color, pose, style.
+   Download as PNG. Many medical/healthcare packs.
+
+2. FREE  — unDraw (undraw.co)
+   SVG illustrations. Search "doctor", "health", "medical".
+
+3. FREE  — Freepik (freepik.com)
+   Search: "3D doctor character PNG transparent"
+   Tons of free options (attribution required on free plan).
+
+4. FREE  — Storyset by Freepik (storyset.com)
+   Animated SVG / PNG medical illustrations. No signup needed.
+
+5. PAID  — IconScout / LottieFiles
+   High-quality 3D Lottie animations + PNG illustrations.
+   ~$10/month. Best quality for hospital dashboards.
+
+6. FREE  — Sketchfab (sketchfab.com)
+   Free 3D renders. Render + screenshot a doctor model.
+
+==============================================
+  ANGULAR COMPONENT STRUCTURE (for reference)
+==============================================
+
+// login.component.ts
+@Component({
+  selector: 'app-login',
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.scss']
+})
+export class LoginComponent {
+  email = '';
+  password = '';
+  showPassword = false;
+  errorMsg = '';
+
+  togglePassword() { this.showPassword = !this.showPassword; }
+
+  onLogin() {
+    if (!this.email || !this.password) {
+      this.errorMsg = 'Please fill in all fields.';
+    } else {
+      // call your AuthService here
+    }
+  }
+}
+
+// login.component.html  →  use the HTML structure above
+// login.component.scss  →  copy the CSS variables & rules above
+
+==============================================
+-->
+</body>
+</html>
