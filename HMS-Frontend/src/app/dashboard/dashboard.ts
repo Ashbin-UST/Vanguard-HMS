@@ -27,7 +27,7 @@ export class Dashboard{
           this.user = res.profile;
           console.log(res);
           this.cdr.detectChanges();
-        },
+        },  
         error: (err:any) => {
           console.log(err);
         }
