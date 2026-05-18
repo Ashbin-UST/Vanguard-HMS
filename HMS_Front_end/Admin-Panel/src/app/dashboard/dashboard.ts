@@ -1,5 +1,5 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Component,ChangeDetectorRef } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
 
 @Component({
   selector: 'app-dashboard',
@@ -8,11 +8,11 @@ import { Component,ChangeDetectorRef } from '@angular/core';
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
-export class Dashboard{ 
+export class Dashboard implements OnInit {
 
-   user: any;
+  user: any;
 
-  constructor(private http: HttpClient,private cdr:ChangeDetectorRef) {}
+  constructor(private readonly http: HttpClient, private readonly cdr: ChangeDetectorRef) { }
 
   ngOnInit() {
     const token = localStorage.getItem('token');
@@ -23,15 +23,14 @@ export class Dashboard{
 
     this.http.get('http://localhost:5000/api/auth/me', { headers })
       .subscribe({
-        next: (res:any) => {
+        next: (res: any) => {
           this.user = res.profile;
           console.log(res);
           this.cdr.detectChanges();
         },
-        error: (err:any) => {
+        error: (err: any) => {
           console.log(err);
         }
       });
-    }
-
+  }
 }

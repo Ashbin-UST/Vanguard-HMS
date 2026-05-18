@@ -1,1 +1,455 @@
-<p>signup works!</p>
+<div class="page">
+
+  <div class="signup-container">
+
+    <!-- LEFT PANEL -->
+
+    <div class="left-panel">
+
+      <div class="image-section">
+        <img src="/indexPic.jpg" alt="doctor" />
+      </div>
+
+      <div class="welcome-section">
+
+        <h1>
+          Vanguard Hospital Management System
+        </h1>
+
+        <p>
+          Create your HMS employee account
+        </p>
+
+      </div>
+
+    </div>
+
+    <!-- RIGHT PANEL -->
+
+    <div class="right-panel">
+
+      <div class="form-box">
+
+        <h2>Sign Up</h2>
+
+        <p class="subtitle">
+          Create your account
+        </p>
+
+        <form
+          [formGroup]="signupForm"
+          (ngSubmit)="onSignup()"
+        >
+
+          <!-- Username -->
+
+          <div class="input-group">
+
+            <label for="username">
+              Username
+            </label>
+
+            <input
+              id="username"
+              type="text"
+              placeholder="Enter username"
+              formControlName="username"
+            />
+
+          </div>
+
+          <!-- Full Name -->
+
+          <div class="input-group">
+
+            <label for="name">
+              Full Name
+            </label>
+
+            <input
+              id="name"
+              type="text"
+              placeholder="Enter full name"
+              formControlName="name"
+            />
+
+          </div>
+
+          <!-- Phone -->
+
+          <div class="input-group">
+
+            <label for="phone">
+              Phone
+            </label>
+
+            <input
+              id="phone"
+              type="text"
+              placeholder="Enter phone number"
+              formControlName="phone"
+            />
+
+          </div>
+
+          <!-- Email -->
+
+          <div class="input-group">
+
+            <label for="email">
+              Email
+            </label>
+
+            <input
+              id="email"
+              type="email"
+              placeholder="Enter email"
+              formControlName="email"
+            />
+
+          </div>
+
+          <!-- Password -->
+
+          <div class="input-group">
+
+            <label for="password">
+              Password
+            </label>
+
+            <input
+              id="password"
+              type="password"
+              placeholder="Enter password"
+              formControlName="password"
+            />
+
+          </div>
+
+          <!-- Confirm Password -->
+
+          <div class="input-group">
+
+            <label for="confirmPassword">
+              Confirm Password
+            </label>
+
+            <input
+              id="confirmPassword"
+              type="password"
+              placeholder="Confirm password"
+              formControlName="confirmPassword"
+            />
+
+            <p
+              *ngIf="
+                passwordsDoNotMatch() &&
+                signupForm.get('confirmPassword')?.touched
+              "
+              class="error-text"
+            >
+              Passwords do not match
+            </p>
+
+          </div>
+
+          <!-- Department -->
+
+          <div class="input-group">
+
+            <label for="department">
+              Department
+            </label>
+
+            <select
+              id="department"
+              formControlName="department"
+            >
+
+              <option value="">
+                Select Department
+              </option>
+
+              <option value="OPD">OPD</option>
+              <option value="IPD">IPD</option>
+              <option value="Lab">Lab</option>
+              <option value="Pharmacy">
+                Pharmacy
+              </option>
+              <option value="Administration">
+                Administration
+              </option>
+              <option value="Reception">
+                Reception
+              </option>
+              <option value="Billing">
+                Billing
+              </option>
+
+            </select>
+
+          </div>
+
+          <!-- Designation -->
+
+          <div class="input-group">
+
+            <label for="designation">
+              Designation
+            </label>
+
+            <select
+              id="designation"
+              formControlName="designation"
+            >
+
+              <option value="">
+                Select Designation
+              </option>
+
+              <option value="OWNER">
+                OWNER
+              </option>
+
+              <option value="ADMIN">
+                ADMIN
+              </option>
+
+              <option value="DOCTOR">
+                DOCTOR
+              </option>
+
+              <option value="RECEPTIONIST">
+                RECEPTIONIST
+              </option>
+
+              <option value="CASHIER">
+                CASHIER
+              </option>
+
+              <option value="NURSE">
+                NURSE
+              </option>
+
+              <option value="LAB_TECH">
+                LAB TECH
+              </option>
+
+              <option value="PHARMACIST">
+                PHARMACIST
+              </option>
+
+            </select>
+
+          </div>
+
+          <!-- Joining Date -->
+
+          <div class="input-group">
+
+            <label for="joiningDate">
+              Joining Date
+            </label>
+
+            <input
+              id="joiningDate"
+              type="date"
+              formControlName="joiningDate"
+            />
+
+          </div>
+
+          <!-- Qualification -->
+
+          <div class="input-group">
+
+            <label for="qualification">
+              Qualification
+            </label>
+
+            <input
+              id="qualification"
+              type="text"
+              placeholder="MBBS, BSc etc"
+              formControlName="qualification"
+            />
+
+          </div>
+
+          <!-- Medical Registration -->
+
+          <div
+            *ngIf="
+              ['DOCTOR','NURSE','LAB_TECH','PHARMACIST']
+              .includes(signupForm.get('designation')?.value)
+            "
+            class="input-group"
+          >
+
+            <label for="medicalRegistrationNumber">
+              Medical Registration Number
+            </label>
+
+            <input
+              id="medicalRegistrationNumber"
+              type="text"
+              formControlName="medicalRegistrationNumber"
+            />
+
+          </div>
+
+          <!-- Specialization -->
+
+          <div
+            *ngIf="
+              ['DOCTOR','LAB_TECH']
+              .includes(signupForm.get('designation')?.value)
+            "
+            class="input-group"
+          >
+
+            <label for="specialization">
+              Specialization
+            </label>
+
+            <input
+              id="specialization"
+              type="text"
+              formControlName="specialization"
+            />
+
+          </div>
+
+          <!-- Consultation Fee -->
+
+          <div
+            *ngIf="
+              signupForm.get('designation')?.value === 'DOCTOR'
+            "
+            class="input-group"
+          >
+
+            <label for="consultationFee">
+              Consultation Fee
+            </label>
+
+            <input
+              id="consultationFee"
+              type="text"
+              formControlName="consultationFee"
+            />
+
+          </div>
+
+          <!-- Availability Day -->
+
+          <div
+            *ngIf="
+              signupForm.get('designation')?.value === 'DOCTOR'
+            "
+            class="input-group"
+          >
+
+            <label for="day">
+              Available Day
+            </label>
+
+            <select
+              id="day"
+              formControlName="day"
+            >
+
+              <option value="">
+                Select Day
+              </option>
+
+              <option value="MONDAY">
+                Monday
+              </option>
+
+              <option value="TUESDAY">
+                Tuesday
+              </option>
+
+              <option value="WEDNESDAY">
+                Wednesday
+              </option>
+
+              <option value="THURSDAY">
+                Thursday
+              </option>
+
+              <option value="FRIDAY">
+                Friday
+              </option>
+
+              <option value="SATURDAY">
+                Saturday
+              </option>
+
+              <option value="SUNDAY">
+                Sunday
+              </option>
+
+            </select>
+
+          </div>
+
+          <!-- Start Time -->
+
+          <div
+            *ngIf="
+              signupForm.get('designation')?.value === 'DOCTOR'
+            "
+            class="input-group"
+          >
+
+            <label for="startTime">
+              Start Time
+            </label>
+
+            <input
+              id="startTime"
+              type="time"
+              formControlName="startTime"
+            />
+
+          </div>
+
+          <!-- End Time -->
+
+          <div
+            *ngIf="
+              signupForm.get('designation')?.value === 'DOCTOR'
+            "
+            class="input-group"
+          >
+
+            <label for="endTime">
+              End Time
+            </label>
+
+            <input
+              id="endTime"
+              type="time"
+              formControlName="endTime"
+            />
+
+          </div>
+
+          <button
+            type="submit"
+            [disabled]="passwordsDoNotMatch()"
+          >
+            Create Account
+          </button>
+
+        </form>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
