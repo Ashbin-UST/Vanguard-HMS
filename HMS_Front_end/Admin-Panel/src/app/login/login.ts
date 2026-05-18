@@ -22,7 +22,6 @@ export class Login {
   }
 
   onSubmit() {
-
     if (this.loginForm.valid) {
       console.log(this.loginForm.value);
     }
