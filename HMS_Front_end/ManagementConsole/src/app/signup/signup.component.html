@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registration Form</title>
+   <link rel="stylesheet" type="text/css" href="signup.component.css">
+
+<style>
+   
+</style>
+</head>
+<body>
+
+<div class="register-container">
+    <h2>Create Account</h2>
+    <form (ngSubmit)="onSubmit()">
+        <div class="form-group">
+            <label for="fullname">Full Name</label>
+            <input type="text" id="fullname" name="fullname" [(ngModel)]="registrationData.name" required>
+        </div>
+        <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" [(ngModel)]="registrationData.email" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" [(ngModel)]="registrationData.password" minlength="6" required>
+        </div>
+        <div class="form-group">
+            <label for="confirm">Confirm Password</label>
+            <input type="password" id="confirm" name="confirm" minlength="6" required>
+        </div>
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" [(ngModel)]="registrationData.username" required>
+        </div>
+        <div class="form-group">
+            <label for="roles">Roles</label>
+            <input type="text" id="roles" name="roles" [(ngModel)]="registrationData.roles" required>
+        </div>
+        <div class="form-group">
+            <label for="phone">Phone</label>
+            <input type="tel" id="phone" name="phone" [(ngModel)]="registrationData.phone" required>
+        </div>
+        <div class="form-group">
+            <label for="department">Department</label>
+            <input type="text" id="department" name="department" [(ngModel)]="registrationData.department" required>
+        </div>
+        <div class="form-group">
+            <label for="designation">Designation</label>
+            <input type="text" id="designation" name="designation" [(ngModel)]="registrationData.designation" required>
+        </div>
+        <div class="form-group">
+            <label for="joiningDate">Joining Date</label>
+            <input type="date" id="joiningDate" name="joiningDate" [(ngModel)]="registrationData.joiningDate" required>
+        </div>
+        <div class="form-group">
+            <label for="qualification">Qualification</label>
+            <textarea id="qualification" name="qualification" rows="3" [(ngModel)]="registrationData.qualification" required></textarea>
+        </div>
+        <button type="submit">Register</button>
+        <p class="note">Already have an account? <a href="#">Login here</a></p>
+    </form>
+</div>
+
+<script>
+function validateForm() {
+    const password = document.getElementById("password").value;
+    const confirm = document.getElementById("confirm").value;
+    if (password !== confirm) {
+        alert("Passwords do not match!");
+        return false;
+    }
+    return true;
+
+}
+</script>
+
+</body>
+</html>

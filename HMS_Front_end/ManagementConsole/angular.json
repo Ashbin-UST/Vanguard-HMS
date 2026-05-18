@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "Management-Console": {
+    "ManagementConsole": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -29,15 +29,7 @@
             "styles": [
               "src/styles.css"
             ],
-            "scripts": [],
-            "server": "src/main.server.ts",
-            "outputMode": "server",
-            "security": {
-              "allowedHosts": []
-            },
-            "ssr": {
-              "entry": "src/server.ts"
-            }
+            "scripts": []
           },
           "configurations": {
             "production": {
@@ -67,10 +59,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "Management-Console:build:production"
+              "buildTarget": "ManagementConsole:build:production"
             },
             "development": {
-              "buildTarget": "Management-Console:build:development"
+              "buildTarget": "ManagementConsole:build:development"
             }
           },
           "defaultConfiguration": "development"

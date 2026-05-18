@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <nav>
+<a routerLink='/users'>Home</a>
+<br>
+<a routerLink='/login'>Login</a>
+<a routerLink='/signup'>Sign Up</a>
+  </nav>
+  <router-outlet></router-outlet>
+HI
+  <div *ngFor="let item of contents">
+  <!-- <h2>{{ item.title }}</h2> -->
+
+  <div [innerHTML]="item.html"></div>
+</div>
+</body>
+</html>

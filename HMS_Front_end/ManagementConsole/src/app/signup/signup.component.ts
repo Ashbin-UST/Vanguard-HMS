@@ -1,0 +1,51 @@
+import { Component,Injectable } from '@angular/core';
+import  { SignupService } from '../service/signup/signup.service';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
+@Component({
+  selector: 'app-signup',
+  imports: [CommonModule, FormsModule],
+  templateUrl: './signup.component.html',
+  styleUrl: './signup.component.css'
+})
+export class SignupComponent {
+  registrationData = {
+    
+  "username": "",
+ 
+  "email": "",
+ 
+  "password": "",
+ 
+  "roles": [""],
+ 
+  "name": "",
+ 
+  "phone": "",
+ 
+  "department": "",
+ 
+  "designation": "",
+ 
+  "joiningDate": "",
+ 
+  "qualification": [
+    ]
+
+  };
+  constructor(private signupService:SignupService) { }
+  onSubmit(){
+    this.signupService.signupsubmit(this.registrationData).subscribe(
+      response => {
+        console.log('Signup successful:', response);
+        
+        // Handle successful signup, e.g., navigate to login page or show a success message
+      },
+      error => {
+        console.error('Signup failed:', error);
+        // Handle signup failure, e.g., show an error message
+      }
+    );
+
+}}
