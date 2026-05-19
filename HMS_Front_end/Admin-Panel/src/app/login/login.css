@@ -1,0 +1,99 @@
+.page {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #dfe7f2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.login-container {
+  width: 90%;
+  max-width: 1100px;
+  min-height: 90vh;
+  background-color: white;
+  border-radius: 20px;
+  display: flex;
+  overflow: hidden;
+  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.left-panel {
+  width: 50%;
+  background-color: #12216d;
+  display: flex;
+  flex-direction: column;
+}
+
+.image-section { height: 60%; }
+.image-section img { width: 100%; height: 100%; object-fit: cover; }
+
+.welcome-section {
+  flex: 1;
+  color: white;
+  padding: 50px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.welcome-section h1 { font-size: 40px; margin-bottom: 20px; }
+.welcome-section p { font-size: 18px; line-height: 1.6; }
+
+.right-panel {
+  width: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px;
+  overflow-y: auto;
+}
+.right-panel::-webkit-scrollbar { display: none; }
+
+.form-box { width: 100%; max-width: 380px; }
+.form-box h2 { font-size: 38px; margin-bottom: 10px; }
+
+.subtitle { color: gray; margin-bottom: 30px; }
+
+.input-group { display: flex; flex-direction: column; margin-bottom: 16px; }
+.input-group label { margin-bottom: 8px; font-weight: 600; }
+.input-group input {
+  height: 50px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 0 15px;
+  font-size: 16px;
+  outline: none;
+}
+.input-group input:focus { border-color: #12216d; }
+
+.forgot-password { text-align: right; margin-bottom: 20px; }
+.forgot-password a { text-decoration: none; color: #2f49d1; }
+
+.form-box button {
+  width: 100%;
+  height: 50px;
+  border: none;
+  background-color: #12216d;
+  color: white;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 10px;
+  margin-bottom: 20px;
+  transition: 0.3s;
+}
+.form-box button:hover { background-color: #1a2f96; }
+
+.signup-text { text-align: center; }
+.signup-text a { color: #2f49d1; text-decoration: none; cursor: pointer; }
+
+.error { color: red; font-size: 13px; margin-top: 4px; }
+
+@media (max-width: 900px) {
+  .login-container { flex-direction: column; }
+  .left-panel, .right-panel { width: 100%; }
+  .left-panel { height: 300px; }
+  .welcome-section { padding: 30px; }
+  .welcome-section h1 { font-size: 30px; }
+}

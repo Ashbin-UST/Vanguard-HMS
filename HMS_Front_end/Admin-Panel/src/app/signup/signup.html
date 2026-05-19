@@ -1,1 +1,165 @@
-<p>signup works!</p>
+<div class="page">
+  <div class="login-container">
+
+    <div class="left-panel">
+      <div class="image-section">
+        <img src="/loginpic2.jpg" alt="doctor" />
+      </div>
+      <div class="welcome-section">
+        <h1>Vanguard Hospital Management System</h1>
+        <p>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Consequuntur, aut.</p>
+      </div>
+    </div>
+
+    <div class="right-panel">
+      <div class="form-box">
+        <h2>Sign Up</h2>
+        <p class="subtitle">Create your account</p>
+
+        <form [formGroup]="signupForm" (ngSubmit)="onSignup()">
+
+          <!-- COMMON FIELDS -->
+          <div class="input-group">
+            <label>Full Name</label>
+            <input type="text" placeholder="Enter your name" formControlName="fullName" />
+            <span class="error" *ngIf="signupForm.get('fullName')?.invalid && signupForm.get('fullName')?.touched">
+              Name is required
+            </span>
+          </div>
+
+          <div class="input-group">
+            <label>Email</label>
+            <input type="email" placeholder="Enter email" formControlName="email" />
+            <span class="error" *ngIf="signupForm.get('email')?.invalid && signupForm.get('email')?.touched">
+              Enter a valid email
+            </span>
+          </div>
+
+          <div class="input-group">
+            <label>Phone</label>
+            <input type="tel" placeholder="Enter phone number" formControlName="phone" />
+            <span class="error" *ngIf="signupForm.get('phone')?.invalid && signupForm.get('phone')?.touched">
+              Min 10 digits
+            </span>
+          </div>
+
+          <div class="input-group">
+            <label>Password</label>
+            <input type="password" placeholder="Create password" formControlName="password" />
+            <span class="error" *ngIf="signupForm.get('password')?.invalid && signupForm.get('password')?.touched">
+              Min 6 characters
+            </span>
+          </div>
+
+          <div class="input-group">
+            <label>Confirm Password</label>
+            <input type="password" placeholder="Confirm password" formControlName="confirmPassword" />
+            <span class="error" *ngIf="passwordsDoNotMatch()">
+              Passwords do not match
+            </span>
+          </div>
+
+          <div class="input-group">
+            <label>Designation</label>
+            <select formControlName="designation">
+              <option value="" disabled selected>Select role</option>
+              <option *ngFor="let d of designations" [value]="d">{{ d }}</option>
+            </select>
+            <span class="error" *ngIf="signupForm.get('designation')?.invalid && signupForm.get('designation')?.touched">
+              Designation is required
+            </span>
+          </div>
+
+          <div class="input-group">
+            <label>Department</label>
+            <select formControlName="department">
+              <option value="" disabled selected>Select department</option>
+              <option *ngFor="let d of departments" [value]="d">{{ d }}</option>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <label>Joining Date</label>
+            <input type="date" formControlName="joiningDate" />
+          </div>
+
+          <!-- DOCTOR FIELDS -->
+          <ng-container *ngIf="isDoctor">
+
+            <div class="section-divider">Doctor Details</div>
+
+            <div class="input-group">
+              <label>Medical Registration Number</label>
+              <input type="text" placeholder="Enter MRN" formControlName="medicalRegistrationNumber" />
+            </div>
+
+            <div class="input-group">
+              <label>Specialisation</label>
+              <input type="text" placeholder="e.g. Cardiology" formControlName="specialisation" />
+            </div>
+
+            <div class="input-group">
+              <label>Consultation Fee (₹)</label>
+              <input type="number" placeholder="Enter fee" formControlName="consultationFee" />
+            </div>
+
+            <!-- Qualifications -->
+            <div class="section-label">Qualifications</div>
+            <div formArrayName="qualifications">
+              <div *ngFor="let q of qualifications.controls; let i = index" class="array-row">
+                <input type="text" [formControlName]="i" placeholder="e.g. MBBS" />
+                <button type="button" class="remove-btn" (click)="removeQualification(i)">✕</button>
+              </div>
+            </div>
+            <button type="button" class="add-btn" (click)="addQualification()">+ Add Qualification</button>
+
+            <!-- Availability Slots -->
+            <div class="section-label">Availability Slots</div>
+            <div formArrayName="availabilitySlots">
+              <div *ngFor="let slot of availabilitySlots.controls; let i = index"
+                   [formGroupName]="i" class="slot-row">
+                <input type="date" formControlName="day" />
+                <input type="time" formControlName="startTime" />
+                <input type="time" formControlName="endTime" />
+                <button type="button" class="remove-btn" (click)="removeSlot(i)">✕</button>
+              </div>
+            </div>
+            <button type="button" class="add-btn" (click)="addSlot()">+ Add Slot</button>
+
+          </ng-container>
+
+          <!-- NURSE / LAB_TECH FIELDS -->
+          <ng-container *ngIf="isNurseOrLabTech">
+
+            <div class="section-divider">Qualifications</div>
+
+            <div formArrayName="qualifications">
+              <div *ngFor="let q of qualifications.controls; let i = index" class="array-row">
+                <input type="text" [formControlName]="i" placeholder="e.g. B.Sc Nursing" />
+                <button type="button" class="remove-btn" (click)="removeQualification(i)">✕</button>
+              </div>
+            </div>
+            <button type="button" class="add-btn" (click)="addQualification()">+ Add Qualification</button>
+
+            <div class="input-group">
+              <label>Medical Registration Number</label>
+              <input type="text" placeholder="Enter MRN" formControlName="medicalRegistrationNumber" />
+            </div>
+
+          </ng-container>
+
+          <p class="api-error" *ngIf="errorMsg">{{ errorMsg }}</p>
+
+          <button type="submit" [disabled]="passwordsDoNotMatch()">Create Account</button>
+
+        </form>
+
+        <div class="signup-text">
+          Already have an account?
+          <a routerLink="/login">Login</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

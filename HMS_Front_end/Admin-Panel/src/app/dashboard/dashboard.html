@@ -1,0 +1,114 @@
+<div class="page">
+
+  <div class="profile-wrapper">
+
+    <!-- HEADER -->
+    <div class="profile-header">
+
+      <div class="avatar">
+        {{ user?.name?.charAt(0) }}
+      </div>
+
+      <div class="title-section">
+        <h1>{{ user?.name || 'Unknown User' }}</h1>
+
+        <p>
+          {{ user?.designation || 'Staff' }}
+          <span *ngIf="user?.department"> • {{ user?.department }}</span>
+        </p>
+
+        <div class="badges">
+          <span class="badge status">{{ user?.status || 'N/A' }}</span>
+          <span class="badge role">{{ user?.designation || user?.role }}</span>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- GRID -->
+    <div class="profile-grid">
+
+      <!-- BASIC INFO -->
+      <div class="card">
+        <h3>Basic Information</h3>
+
+        <p *ngIf="user?.employeeId"><b>Employee ID:</b> {{ user?.employeeId }}</p>
+        <p *ngIf="user?.name"><b>Name:</b> {{ user?.name }}</p>
+        <p *ngIf="user?.email"><b>Email:</b> {{ user?.email }}</p>
+        <p *ngIf="user?.phone"><b>Phone:</b> {{ user?.phone }}</p>
+
+      </div>
+
+      <!-- PROFESSIONAL -->
+      <div class="card">
+
+        <h3>Professional Details</h3>
+
+        <p *ngIf="user?.designation"><b>Designation:</b> {{ user?.designation }}</p>
+        <p *ngIf="user?.department"><b>Department:</b> {{ user?.department }}</p>
+        <p *ngIf="user?.specialisation"><b>Specialisation:</b> {{ user?.specialisation }}</p>
+        <p *ngIf="user?.medicalRegistrationNumber">
+          <b>Reg No:</b> {{ user?.medicalRegistrationNumber }}
+        </p>
+
+      </div>
+
+      <!-- EDUCATION -->
+      <div class="card" *ngIf="user?.qualification?.length">
+
+        <h3>Qualification</h3>
+
+        <ul>
+          <li *ngFor="let q of user?.qualification">
+            {{ q }}
+          </li>
+        </ul>
+
+      </div>
+
+      <!-- FINANCIAL -->
+      <div class="card" *ngIf="user?.consultationFee">
+
+        <h3>Consultation Fee</h3>
+        <p class="highlight">₹ {{ user?.consultationFee }}</p>
+
+      </div>
+
+      <!-- JOINING -->
+      <div class="card" *ngIf="user?.joiningDate">
+
+        <h3>Joining Info</h3>
+
+        <p>
+          <b>Date:</b>
+          <b>Joined:</b>
+        {{ user?.joiningDate?.$date ? (user.joiningDate.$date | date:'mediumDate') : 'N/A' }}
+        </p>
+
+      </div>
+
+      <!-- AVAILABILITY -->
+      <div class="card full-width" *ngIf="user?.availabilitySlots?.length">
+
+        <h3>Availability Slots</h3>
+
+        <div class="slot" *ngFor="let slot of user?.availabilitySlots">
+
+          <div>
+            <b>Day:</b> {{ slot?.day?.$date ? (slot.day.$date | date:'fullDate') : 'N/A' }}
+          </div>
+
+          <div>
+            <b>Time:</b> {{ slot.startTime }} - {{ slot.endTime }}
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

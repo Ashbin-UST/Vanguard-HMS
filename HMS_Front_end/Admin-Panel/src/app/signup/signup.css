@@ -1,0 +1,224 @@
+.page {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #dfe7f2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.login-container {
+  width: 90%;
+  max-width: 1100px;
+  min-height: 90vh;
+  background-color: white;
+  border-radius: 20px;
+  display: flex;
+  overflow: hidden;
+  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.left-panel {
+  width: 50%;
+  background-color: #12216d;
+  display: flex;
+  flex-direction: column;
+}
+
+.image-section { height: 60%; }
+.image-section img { width: 100%; height: 100%; object-fit: cover; }
+
+.welcome-section {
+  flex: 1;
+  color: white;
+  padding: 50px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.welcome-section h1 { font-size: 40px; margin-bottom: 20px; }
+.welcome-section p { font-size: 18px; line-height: 1.6; }
+
+.right-panel {
+  width: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px;
+  overflow-y: auto;
+}
+.right-panel::-webkit-scrollbar { display: none; }
+
+.form-box { width: 100%; max-width: 380px; }
+.form-box h2 { font-size: 38px; margin-bottom: 10px; }
+
+.subtitle { color: gray; margin-bottom: 30px; }
+
+.input-group { display: flex; flex-direction: column; margin-bottom: 16px; }
+.input-group label { margin-bottom: 8px; font-weight: 600; }
+.input-group input {
+  height: 50px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 0 15px;
+  font-size: 16px;
+  outline: none;
+}
+.input-group input:focus { border-color: #12216d; }
+
+.form-box button {
+  width: 100%;
+  height: 50px;
+  border: none;
+  background-color: #12216d;
+  color: white;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 10px;
+  margin-bottom: 20px;
+  transition: 0.3s;
+}
+.form-box button:hover { background-color: #1a2f96; }
+.form-box button:disabled { background-color: #8a99c7; cursor: not-allowed; }
+
+.signup-text { text-align: center; }
+.signup-text a { color: #2f49d1; text-decoration: none; cursor: pointer; }
+
+.error { color: red; font-size: 13px; margin-top: 4px; display:block}
+
+@media (max-width: 900px) {
+  .login-container { flex-direction: column; }
+  .left-panel, .right-panel { width: 100%; }
+  .left-panel { height: 300px; }
+  .welcome-section { padding: 30px; }
+  .welcome-section h1 { font-size: 30px; }
+} 
+
+/* add to existing signup.css */
+
+.input-group select {
+  height: 50px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 0 15px;
+  font-size: 16px;
+  outline: none;
+  background: white;
+  cursor: pointer;
+}
+
+.input-group select:focus { border-color: #12216d; }
+
+.input-group input[type="date"],
+.input-group input[type="time"],
+.input-group input[type="number"] {
+  height: 50px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 0 15px;
+  font-size: 16px;
+  outline: none;
+}
+
+.section-divider {
+  font-size: 13px;
+  font-weight: 700;
+  color: #12216d;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 2px solid #12216d;
+  padding-bottom: 6px;
+  margin: 20px 0 16px;
+}
+
+.section-label {
+  font-weight: 600;
+  font-size: 14px;
+  margin: 16px 0 8px;
+  color: #333;
+}
+
+.array-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.array-row input {
+  flex: 1;
+  height: 44px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 15px;
+  outline: none;
+}
+
+.array-row input:focus { border-color: #12216d; }
+
+.slot-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.slot-row input {
+  flex: 1;
+  min-width: 100px;
+  height: 44px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 0 10px;
+  font-size: 14px;
+  outline: none;
+}
+
+.slot-row input:focus { border-color: #12216d; }
+
+.add-btn {
+  width: auto;
+  height: 36px;
+  padding: 0 16px;
+  font-size: 13px;
+  background-color: #e8ecf8;
+  color: #12216d;
+  border: 1px solid #12216d;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 12px;
+  margin-top: 0;
+  transition: 0.2s;
+}
+
+.add-btn:hover { background-color: #d0d8f0; }
+
+.remove-btn {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  background-color: #ffe5e5;
+  color: #cc0000;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remove-btn:hover { background-color: #ffcccc; }
+
+.api-error {
+  color: red;
+  font-size: 14px;
+  margin-bottom: 10px;
+  text-align: center;
+}
