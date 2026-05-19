@@ -73,9 +73,9 @@ exports.signup = async (req, res) => {
         const employee = await Employee.create(employeeData);
 
         // Generate verification token
-        const verificationToken = crypto.randomBytes(32).toString("hex");
+        // const verificationToken = crypto.randomBytes(32).toString("hex");
 
-        const verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        // const verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
         // Create user
         const user = await User.create({
@@ -84,31 +84,31 @@ exports.signup = async (req, res) => {
             passwordHash,
             roles,
             employeeCode: employee.employeeCode,
-            verificationToken,
-            verificationTokenExpiry
+            // verificationToken,
+            // verificationTokenExpiry
         });
 
         // Verification URL
-        const verifyUrl =
-            `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}`;
+        // const verifyUrl =
+        //     `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}`;
 
         // Send email
-        await sendEmail({
-            to: user.email,
+        // await sendEmail({
+        //     to: user.email,
 
-            subject: "HMS - Verify Your Email",
+        //     subject: "HMS - Verify Your Email",
 
-            html: `
-                <h2>Welcome to HMS</h2>
-                <p>Hi ${employee.name}, your employee account has been created successfully.</p>
-                <p>Please verify your email address using the link below:</p>
-                <a href="${verifyUrl}" target="_blank">
-                    Verify Email
-                </a>
-                <p>This verification link expires in <strong>24 hours</strong>.</p>
-                <p>If you did not create this account, please ignore this email.</p>
-            `
-        });
+        //     html: `
+        //         <h2>Welcome to HMS</h2>
+        //         <p>Hi ${employee.name}, your employee account has been created successfully.</p>
+        //         <p>Please verify your email address using the link below:</p>
+        //         <a href="${verifyUrl}" target="_blank">
+        //             Verify Email
+        //         </a>
+        //         <p>This verification link expires in <strong>24 hours</strong>.</p>
+        //         <p>If you did not create this account, please ignore this email.</p>
+        //     `
+        // });
 
         res.status(201).json({
             message:

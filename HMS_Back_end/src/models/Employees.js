@@ -5,6 +5,7 @@ const employeeSchema = new mongoose.Schema({
     employeeCode: {
         type: String,
         unique: true,
+        required: true
     },
     name: {
         type: String,
@@ -30,11 +31,6 @@ const employeeSchema = new mongoose.Schema({
             "CASHIER", "NURSE", "LAB_TECH", "PHARMACIST"],
         required: true
     },
-    status: {
-        type: String,
-        enum: ["ACTIVE", "INACTIVE"],
-        default: "ACTIVE"
-    },
     joiningDate: {
         type: Date,
         required: true
@@ -52,7 +48,7 @@ const employeeSchema = new mongoose.Schema({
         required: true
     }],
     consultationFee: {
-        type: String
+        type: Number
     },
     availabilitySlots: {
     type: [{
