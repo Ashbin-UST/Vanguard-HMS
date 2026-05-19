@@ -45,11 +45,7 @@ exports.signup = async (req, res) => {
 
         const savedEmployee = await employee.save();
 
-        res.status(201).json({
-            success: true,
-            message: "Employee Created Successfully",
-            data: savedEmployee
-        });
+
 
         // Generate verification token
         const verification_token = crypto.randomBytes(32).toString("hex");
@@ -110,6 +106,7 @@ exports.login = async (req, res) => {
             { expiresIn: process.env.JWT_EXPIRES_IN },
         );
         const profile = await Employee.findOne({ employeeId: user.employeeId });
+        console.log("Success");
         res.status(200).json({
             message: "Login successful",
             token,

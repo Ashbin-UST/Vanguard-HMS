@@ -14,7 +14,7 @@ const employeeSchema = new mongoose.Schema({
             "Pharmacy",
             "Admin"
         ],
-        required: true
+        // required: true
     },
     designation: {
         type: String,
@@ -27,7 +27,7 @@ const employeeSchema = new mongoose.Schema({
             "LAB_TECH",
             "PHARMACIST"
         ],
-        required: true
+        //required: true
 
     },
     status: {
@@ -38,10 +38,10 @@ const employeeSchema = new mongoose.Schema({
         ],
         default: "ACTIVE"
     },
-    joiningDate: { type: Date, required: true },
+    joiningDate: { type: Date }, //required: true
     medicalRegistrationNumber: { type: String },
     specialization: [{ type: String }],
-    qualification: [{ type: String, required: true }],
+    qualification: [{ type: String, }],  //required: true 
     consultationFee: { type: Number, default: 0 },
     availabilitySlots: [{
         day: String,

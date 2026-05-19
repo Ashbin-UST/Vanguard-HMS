@@ -1,0 +1,228 @@
+<div class="signup-container">
+
+    <div class="left-section">
+
+        <div class="hospital-logo">
+            <img src="hms_logo.png" alt="Elevance HMS Logo">
+        </div>
+
+        <h1 class="hospital-title">
+            Elevance Healthcare HMS
+        </h1>
+
+        <p class="hospital-subtitle">
+            Secure and intelligent healthcare management system
+            for doctors, nurses, staff and patients.
+        </p>
+
+
+        <div class="image-box">
+            <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=1200&auto=format&fit=crop"
+                alt="Doctors">
+        </div>
+
+    </div>
+
+    <!-- RIGHT SECTION -->
+    <div class="right-section">
+
+        <div class="signup-card">
+
+            <h2 class="signup-title">
+                Create Account
+            </h2>
+
+            <p class="signup-subtitle">
+                Register to access the HMS platform
+            </p>
+
+            <!-- FORM -->
+            <form [formGroup]="signupForm" (ngSubmit)="onSubmit()">
+
+                <div class="form-group">
+
+                    <label class="form-label">Full Name</label>
+
+                    <input type="text" class="form-input" formControlName="name" placeholder="Enter your name">
+
+                </div>
+
+                <div class="form-group">
+
+                    <label class="form-label">Email Address</label>
+
+                    <input type="email" class="form-input" formControlName="email" placeholder="Enter your email">
+
+                </div>
+
+                <div class="form-group">
+
+                    <label class="form-label">Mobile Number</label>
+
+                    <input type="text" class="form-input" formControlName="phone" placeholder="Enter mobile number">
+
+                </div>
+                <div class="form-group">
+
+                    <label>Designation</label>
+
+                    <select class="form-input" formControlName="designation">
+
+                        <option value="">
+                            Select Designation
+                        </option>
+
+                        <option *ngFor="let d of designations" [value]="d">
+
+                            {{ d }}
+
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <!-- DEPARTMENT -->
+                <div class="form-group">
+
+                    <label>Department</label>
+
+                    <select class="form-input" formControlName="department">
+
+                        <option value="">
+                            Select Department
+                        </option>
+
+                        <option *ngFor="let d of departments" [value]="d">
+
+                            {{ d }}
+
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <!-- JOINING DATE -->
+                <div class="form-group">
+
+                    <label>Joining Date</label>
+
+                    <input type="date" class="form-input" formControlName="joiningDate">
+
+                </div>
+
+                <!-- DOCTOR ONLY -->
+                <div *ngIf="isDoctor()">
+
+                    <!-- SPECIALIZATION -->
+                    <div class="form-group">
+
+                        <label>Specialization</label>
+
+                        <input type="text" class="form-input" formControlName="specialization" placeholder="Cardiology">
+
+                    </div>
+
+                    <!-- LICENSE -->
+                    <div class="form-group">
+
+                        <label>Medical Registration Number</label>
+
+                        <input type="text" class="form-input" formControlName="medicalRegistrationNumber">
+
+                    </div>
+
+                    <!-- QUALIFICATION -->
+                    <div class="form-group">
+
+                        <label>Qualification</label>
+
+                        <input type="text" class="form-input" formControlName="qualification" placeholder="MBBS, MD">
+
+                    </div>
+
+                    <!-- FEE -->
+                    <div class="form-group">
+
+                        <label>Consultation Fee</label>
+
+                        <input type="number" class="form-input" formControlName="consultationFee">
+
+                    </div>
+
+                    <!-- SLOTS -->
+                    <div class="slot-header">
+
+                        <h3>Availability Slots</h3>
+
+                        <button type="button" class="add-slot-btn" (click)="addSlot()">
+
+                            + Add Slot
+
+                        </button>
+
+                    </div>
+
+                    <div class="slot-box" *ngFor="let slot of availabilitySlots.controls; let i = index"
+                        [formGroup]="getSlotGroup(i)">
+
+                        <input type="text" class="form-input" formControlName="day" placeholder="Day">
+
+                        <input type="time" class="form-input" formControlName="startTime">
+
+                        <input type="time" class="form-input" formControlName="endTime">
+
+                        <button type="button" class="remove-btn" (click)="removeSlot(i)">
+
+                            Remove
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label class="form-label">Password</label>
+
+                    <input type="password" class="form-input" formControlName="password" placeholder="Enter password">
+
+                </div>
+
+                <div class="form-group">
+
+                    <label class="form-label">Confirm Password</label>
+
+                    <input type="password" class="form-input" formControlName="confirmPassword"
+                        placeholder="Re-enter password">
+
+                </div>
+
+                <button type="submit" class="signup-btn">
+                    Create Account
+                </button>
+
+            </form>
+
+            <!-- Footer -->
+            <div class="footer-text">
+
+                Already have an account?
+
+                <a routerLink="/login">
+                    Login
+                </a>
+
+            </div>
+            <p class="footer-text">
+                HMS Secure Portal
+            </p>
+
+
+        </div>
+
+    </div>
+
+</div>

@@ -1,0 +1,80 @@
+<div class="home-container">
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+
+        <div class="logo-section">
+
+            <div class="logo">
+                <img src="hms_logo.png" alt="HMS Logo">
+            </div>
+
+            <div>
+                <h2>Elevance Healthcare HMS</h2>
+                <p>Caring Beyond Medicine</p>
+            </div>
+
+        </div>
+
+        <!-- MENU ICON -->
+        <div class="menu-container">
+
+            <button class="menu-btn" (click)="toggleMenu()">
+                ☰
+            </button>
+
+            <!-- DROPDOWN -->
+            <div class="dropdown-menu" *ngIf="isMenuOpen">
+
+                <a routerLink="">HOME</a>
+
+                <a routerLink="/login">
+                    LOGIN
+                </a>
+
+                <a routerLink="/signup">
+                    SIGNUP
+                </a>
+
+            </div>
+
+        </div>
+
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section class="hero-section">
+
+        <div class="hero-left">
+
+            <h1>
+                Advanced Healthcare <br>
+                Management System
+            </h1>
+
+            <p>
+                Our HMS platform helps hospitals manage patients,
+                doctors, appointments, pharmacy, billing and medical
+                records securely and efficiently.
+            </p>
+
+            <button routerLink="/login">
+                Explore HMS
+            </button>
+
+        </div>
+
+        <div class="hero-right">
+
+            <div class="image-box">
+
+                <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=1200&auto=format&fit=crop"
+                    alt="Doctors">
+
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
