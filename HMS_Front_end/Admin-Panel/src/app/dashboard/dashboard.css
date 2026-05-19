@@ -1,0 +1,188 @@
+.page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #eef3fb, #f7f9fc);
+    font-family: Inter, sans-serif;
+    padding: 30px;
+    display: flex;
+    justify-content: center;
+}
+
+.profile-wrapper {
+    width: 100%;
+    max-width: 1000px;
+}
+
+/* HEADER */
+.profile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+
+    background: white;
+    padding: 22px;
+    border-radius: 18px;
+
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.left-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.avatar {
+    width: 75px;
+    height: 75px;
+    border-radius: 50%;
+    background: #2b6cb0;
+    color: white;
+    font-size: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.title-section h1 {
+    margin: 0;
+    font-size: 22px;
+    color: #1a202c;
+}
+
+.title-section p {
+    margin: 5px 0;
+    color: #718096;
+}
+
+/* BADGES */
+.badges {
+    margin-top: 6px;
+    display: flex;
+    gap: 8px;
+}
+
+.badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status {
+    background: #e6fffa;
+    color: #2f855a;
+}
+
+.role {
+    background: #ebf8ff;
+    color: #2b6cb0;
+}
+
+/* GRID */
+.profile-grid {
+    margin-top: 20px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+/* CARD */
+.card {
+    background: white;
+    padding: 16px;
+    border-radius: 14px;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
+}
+
+.card h3 {
+    margin-bottom: 10px;
+    font-size: 15px;
+    color: #2d3748;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+/* FULL WIDTH */
+.full-width {
+    grid-column: span 2;
+}
+
+/* LIST */
+ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
+li {
+    margin-bottom: 4px;
+    color: #444;
+}
+
+/* HIGHLIGHT */
+.highlight {
+    font-size: 18px;
+    font-weight: bold;
+    color: #2b6cb0;
+}
+
+/* SLOT */
+.slot {
+    background: #f8fafc;
+    padding: 10px;
+    border-radius: 10px;
+    margin-top: 8px;
+    display: flex;
+    justify-content: space-between;
+    color: #333;
+}
+
+/* LOGOUT BUTTON */
+.btn-logout {
+    background: transparent;
+    border: 1px solid #e7082d;
+    color: #d40824;
+
+    padding: 0.6rem 1rem;
+
+    font-size: 0.9rem;
+    font-weight: 600;
+
+    border-radius: 10px;
+
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    transition: all 0.2s ease;
+}
+
+.btn-logout:hover {
+    background-color: #d40824;
+    color: white;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+
+    .profile-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .full-width {
+        grid-column: span 1;
+    }
+
+    .slot {
+        flex-direction: column;
+        gap: 8px;
+    }
+}

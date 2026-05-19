@@ -5,7 +5,7 @@ import { Injectable } from '@angular/core';
   providedIn: 'root',
 })
 export class Auth {
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   login(data: any) {
     return this.http.post(
