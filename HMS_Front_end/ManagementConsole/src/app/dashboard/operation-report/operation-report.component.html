@@ -1,0 +1,113 @@
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+/>
+<div class="report-container">
+
+  <!-- TOP CARDS -->
+  <div class="stats-grid">
+
+    <div class="stat-card appointment-card">
+      <div class="icon-box">
+        <i class="fas fa-calendar-check"></i>
+      </div>
+
+      <div class="stat-content">
+        <h3>Total Appointments</h3>
+        <h1>{{ operationReport.appointmentno }}</h1>
+        <p>Hospital appointments</p>
+      </div>
+    </div>
+
+    <div class="stat-card employee-card">
+      <div class="icon-box">
+        <i class="fas fa-user-doctor"></i>
+      </div>
+
+      <div class="stat-content">
+        <h3>Total Employees</h3>
+        <h1>{{ operationReport.employeeno }}</h1>
+        <p>Medical staff count</p>
+      </div>
+    </div>
+
+    <div class="stat-card billing-card">
+      <div class="icon-box">
+        <i class="fas fa-file-invoice-dollar"></i>
+      </div>
+
+      <div class="stat-content">
+        <h3>Total Billings</h3>
+        <h1>{{ operationReport.billingno }}</h1>
+        <p>Billing records</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- APPOINTMENTS -->
+  <div class="section-card">
+    <h2>Appointments</h2>
+
+    <div
+      class="list-card"
+      *ngFor="let appointment of operationReport.appointments"
+    >
+      <div>
+        <span class="label">Patient</span>
+        <h4>{{ appointment.patientId }}</h4>
+      </div>
+
+      <div>
+        <span class="label">Doctor</span>
+        <h4>{{ appointment.doctorId }}</h4>
+      </div>
+
+      <div>
+        <span class="label">Status</span>
+        <h4>{{ appointment.status }}</h4>
+      </div>
+    </div>
+  </div>
+
+  <!-- EMPLOYEES -->
+  <div class="section-card">
+    <h2>Employees</h2>
+
+    <div
+      class="list-card"
+      *ngFor="let employee of operationReport.employees"
+    >
+      <div>
+        <span class="label">Name</span>
+        <h4>{{ employee.name }}</h4>
+      </div>
+
+      <div>
+        <span class="label">Role</span>
+        <h4>{{ employee.role }}</h4>
+      </div>
+    </div>
+  </div>
+
+  <!-- BILLINGS -->
+  <div class="section-card">
+    <h2>Billings</h2>
+
+    <div
+      class="list-card"
+      *ngFor="let billing of operationReport.billings"
+    >
+      <div>
+        <span class="label">Amount</span>
+        <h4>₹{{ billing.amount }}</h4>
+      </div>
+
+      <div>
+        <span class="label">Date</span>
+        <h4>{{ billing.date }}</h4>
+      </div>
+    </div>
+  </div>
+
+</div>

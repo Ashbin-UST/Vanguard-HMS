@@ -1,16 +1,30 @@
-import { Component,OnInit } from '@angular/core';
-import { RouterOutlet,RouterLink } from '@angular/router';
-import { HtmlContentService } from './service/htmlcontent/htmlcontent.service';
+import { Component, OnInit } from '@angular/core';
+import { RouterOutlet, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { HttpClientModule } from '@angular/common/http';
+
+// import { ChartComponent } from './dashboard/chart/chart.component';
+
+import { HtmlContentService } from './service/htmlcontent/htmlcontent.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, CommonModule],
+  standalone: true,
+
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    CommonModule,
+    HttpClientModule,
+    // ChartComponent,
+  ],
+
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
-export class AppComponent implements OnInit  {
-   contents: any[] = [];
+export class AppComponent implements OnInit {
+
+  contents: any[] = [];
 
   constructor(private contentService: HtmlContentService) {}
 
@@ -19,5 +33,6 @@ export class AppComponent implements OnInit  {
       this.contents = data;
     });
   }
+
   title = 'first-angular-app';
 }

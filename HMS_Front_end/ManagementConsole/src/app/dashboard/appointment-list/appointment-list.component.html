@@ -1,0 +1,15 @@
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+/>
+<div class="appointment-box">
+  <h2>Appointments</h2>
+
+  <ul>
+    <li *ngFor="let appointment of appointments">
+      <span><strong>Patient:</strong> {{ appointment.patientId }}</span>
+      <span><strong>Doctor:</strong> {{ appointment.doctorId }}</span>
+      <span><strong>Status:</strong> {{ appointment.status }}</span>
+    </li>
+  </ul>
+</div>

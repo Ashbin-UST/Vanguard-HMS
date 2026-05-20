@@ -37,15 +37,7 @@ export class SignupComponent {
   constructor(private signupService:SignupService) { }
   onSubmit(){
     this.signupService.signupsubmit(this.registrationData).subscribe(
-      response => {
-        console.log('Signup successful:', response);
-        
-        // Handle successful signup, e.g., navigate to login page or show a success message
-      },
-      error => {
-        console.error('Signup failed:', error);
-        // Handle signup failure, e.g., show an error message
-      }
+   
     );
 
 }}
