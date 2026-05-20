@@ -3,7 +3,8 @@ const mongoose = require("mongoose");
 const User = require("../models/Users");
 const Employee = require("../models/Employees");
 const sendEmail = require("../utils/sendEmail");
-const sanitizeQualifications = require("../utils/qualificationSanitizer");
+const buildEmployeeData = require("../utils/buildEmployeeData");
+const validateUniqueEmployeeFields = require("../utils/validateUniqueEmployeeFields");
 
 // Employee self registration
 exports.registerEmployee = async (req, res) => {
@@ -14,20 +15,10 @@ exports.registerEmployee = async (req, res) => {
     username,
     email,
     password,
-    name,
-    phone,
-    department,
-    designation,
-    joiningDate,
-    medicalRegistrationNumber,
-    specialization,
-    qualification,
-    consultationFee,
-    availabilitySlots,
+    designation
   } = req.body;
 
   try {
-
     // Prevent self-registration as ADMIN or OWNER
     if (["ADMIN", "OWNER"].includes(designation)) {
       return res.status(403).json({
@@ -35,94 +26,24 @@ exports.registerEmployee = async (req, res) => {
       });
     }
 
-    // Check existing username
-    const existingUsername = await User.findOne({
-      username,
-    });
+    const uniquenessResult = await validateUniqueEmployeeFields(req.body);
 
-    if (existingUsername) {
-      return res.status(409).json({
-        message: "Username already exists",
+    if (!uniquenessResult.success){
+      return res.status(uniquenessResult.status).json({
+        message: uniquenessResult.message
       });
-    }
-
-    // Check existing user email
-    const existingUserEmail = await User.findOne({
-      email,
-    });
-
-    if (existingUserEmail) {
-      return res.status(409).json({
-        message: "Email already exists",
-      });
-    }
-
-    // Check existing employee email
-    const existingEmployeeEmail = await Employee.findOne({
-      email,
-    });
-
-    if (existingEmployeeEmail) {
-      return res.status(409).json({
-        message: "Employee email already exists",
-      });
-    }
-
-    // Check medical registration uniqueness
-    if (["DOCTOR", "NURSE", "LAB_TECH", "PHARMACIST"].includes(designation)) {
-      const existingMedicalRegistration = await Employee.findOne({
-        medicalRegistrationNumber,
-      });
-
-      if (existingMedicalRegistration) {
-        return res.status(409).json({
-          message: "Medical registration number already exists",
-        });
-      }
     }
 
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
     // Build employee data
-    const employeeData = {
-      name,
-      phone,
-      email,
-      department,
-      designation,
-      joiningDate,
-      qualification: sanitizeQualifications(qualification),
-    };
-
-    // Add medical registration field
-    if (["DOCTOR", "NURSE", "LAB_TECH", "PHARMACIST"].includes(designation)) {
-      employeeData.medicalRegistrationNumber = medicalRegistrationNumber;
-    }
-
-    // Add specialization
-    if (["DOCTOR", "LAB_TECH"].includes(designation)) {
-      employeeData.specialization = specialization;
-    }
-
-    // Add doctor-only fields
-    if (designation === "DOCTOR") {
-      employeeData.consultationFee = consultationFee;
-
-      employeeData.availabilitySlots = availabilitySlots;
-    }
-
-    // Start session AFTER validations
-    const session = await mongoose.startSession();
-
-    try {
-      // Start transaction
-      session.startTransaction();
+    const employeeData = buildEmployeeData(req.body);
 
       // Create employee
       employee = new Employee(employeeData);
 
-      await employee.save({ session });
+      await employee.save();
 
       // Create user
       user = new User({
@@ -139,20 +60,7 @@ exports.registerEmployee = async (req, res) => {
         createdBy: null,
       });
 
-      await user.save({ session });
-
-      // Commit transaction
-      await session.commitTransaction();
-    } catch (err) {
-      // Rollback transaction safely
-      if (session.inTransaction()) {
-        await session.abortTransaction();
-      }
-
-      throw err;
-    } finally {
-      session.endSession();
-    }
+      await user.save();
 
     // Send approval request email to admin(s)
     try {
@@ -242,4 +150,4 @@ exports.registerEmployee = async (req, res) => {
       message: "Server error during employee self registration",
     });
   }
-};
+}

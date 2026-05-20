@@ -3,12 +3,14 @@ const router = express.Router();
 
 const auth = require("../middlewares/authMiddleware");
 
-// const controller = require("../controllers/employeeController");
+const controller = require("../controllers/employeeController");
 
 router.use(auth);
 
 router.get(
-    "/profile"
+    "/profile",
+    auth,
+    controller.getProfile
 );
 
 router.put(

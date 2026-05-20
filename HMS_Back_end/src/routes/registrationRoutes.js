@@ -5,18 +5,18 @@ const { body } = require("express-validator");
 
 const validate = require("../middlewares/validate");
 
-// const controller = require("../controllers/registrationController");
+const controller = require("../controllers/registrationController");
 
-const allowedDesignationTypes = [
+const allowedDesignationTypes = new Set([
     "DOCTOR",
     "RECEPTIONIST",
     "CASHIER",
     "NURSE",
     "LAB_TECH",
     "PHARMACIST"
-];
+]);
 
-const allowedDepartmentTypes = [
+const allowedDepartmentTypes = new Set([
     "OPD",
     "IPD",
     "Lab",
@@ -24,7 +24,19 @@ const allowedDepartmentTypes = [
     "Administration",
     "Reception",
     "Billing"
-];
+]);
+
+const medicalFields = new Set([
+  "DOCTOR",
+  "NURSE",
+  "LAB_TECH",
+  "PHARMACIST"
+]);
+
+const specializationFields = new Set([
+    "DOCTOR", 
+    "LAB_TECH"
+]);
 
 const registerRequestValidation = [
 
@@ -45,15 +57,23 @@ const registerRequestValidation = [
         .withMessage("Valid email is required"),
 
     body("password")
-        .isLength({ min: 6 })
-        .withMessage("Password must be at least 6 characters long"),
+        .isLength({ min: 8 })
+        .withMessage("Password must be at least 8 characters long")
+        .matches(/[A-Z]/)
+        .withMessage("Password must contain at least one uppercase letter")
+        .matches(/[a-z]/)
+        .withMessage("Password must contain at least one lowercase letter")
+        .matches(/\d/)
+        .withMessage("Password must contain at least one number")
+        .matches(/[^A-Za-z0-9]/)
+        .withMessage("Password must contain at least one special character"),
 
     body("department")
-        .isIn(allowedDepartmentTypes)
+        .isIn([...allowedDepartmentTypes])
         .withMessage("Valid department is required"),
 
     body("designation")
-        .isIn(allowedDesignationTypes)
+        .isIn([...allowedDesignationTypes])
         .withMessage("Valid designation is required"),
 
     body("joiningDate")
@@ -66,16 +86,14 @@ const registerRequestValidation = [
 
     body("medicalRegistrationNumber")
         .if((value, { req }) =>
-            ["DOCTOR", "NURSE", "LAB_TECH", "PHARMACIST"]
-                .includes(req.body.designation)
+            medicalFields.has(req.body.designation)
         )
         .notEmpty()
         .withMessage("Medical registration number is required"),
 
     body("specialization")
         .if((value, { req }) =>
-            ["DOCTOR", "LAB_TECH"]
-                .includes(req.body.designation)
+            specializationFields.has(req.body.designation)
         )
         .notEmpty()
         .withMessage("Specialization is required"),
@@ -94,7 +112,8 @@ const registerRequestValidation = [
 router.post(
     "/register-request",
     registerRequestValidation,
-    validate
+    validate,
+    controller.registerEmployee
 );
 
 module.exports = router;

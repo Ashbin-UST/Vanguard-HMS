@@ -6,6 +6,10 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const mongoose = require("mongoose");
 
+const adminRoutes = require("./routes/adminRoutes");
+const ownerRoutes = require("./routes/ownerRoutes");
+const registrationRoutes = require("./routes/registrationRoutes");
+
 const app = express();
 
 // Used for secure HTTP headers
@@ -29,6 +33,10 @@ app.use(express.json());
 const authRoutes = require("./routes/authRoutes");
 
 app.use("/api/auth", authRoutes);
+
+app.use("/api/admin", adminRoutes);
+app.use("/api/owner", ownerRoutes);
+app.use("/api/register", registrationRoutes);
 
 // Default route
 app.get("/", (req, res) => res.json({

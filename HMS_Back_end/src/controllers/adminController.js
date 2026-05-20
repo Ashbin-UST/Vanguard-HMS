@@ -4,7 +4,12 @@ const User = require("../models/Users");
 const Employee = require("../models/Employees");
 const sendEmail = require("../utils/sendEmail");
 const generateTemporaryPassword = require("../utils/generateTemporaryPassword");
-const sanitizeQualifications = require("../utils/qualificationSanitizer");
+const buildEmployeeData = require("../utils/buildEmployeeData");
+const buildEmployeeResponse = require("../utils/buildEmployeeResponse");
+const updateEmployeeData = require("../utils/updateEmployeeData");
+const validateUniqueEmployeeFields = require("../utils/validateUniqueEmployeeFields");
+
+const restrictedDesignations = new Set(["OWNER", "ADMIN"]);
 
 // Employee Account Creation
 exports.createEmployee = async (req, res) => {
@@ -12,73 +17,22 @@ exports.createEmployee = async (req, res) => {
   let user;
   let temporaryPassword;
 
-  const {
-    username,
-    email,
-    name,
-    phone,
-    department,
-    designation,
-    joiningDate,
-    medicalRegistrationNumber,
-    specialization,
-    qualification,
-    consultationFee,
-    availabilitySlots,
-  } = req.body;
+  const { username, email, designation } = req.body;
 
   try {
     // Prevent admin from creating ADMIN or OWNER accounts
-    if (["ADMIN", "OWNER"].includes(designation)) {
+    if (restrictedDesignations.has(designation)) {
       return res.status(403).json({
         message: "Invalid designation. Cannot create admin or owner accounts.",
       });
     }
 
-    // Check existing username
-    const existingUsername = await User.findOne({
-      username,
-    });
+    const uniquenessResult = await validateUniqueEmployeeFields(req.body);
 
-    if (existingUsername) {
-      return res.status(409).json({
-        message: "Username already exists",
+    if (!uniquenessResult.success) {
+      return res.status(uniquenessResult.status).json({
+        message: uniquenessResult.message,
       });
-    }
-
-    // Check existing user email
-    const existingUserEmail = await User.findOne({
-      email,
-    });
-
-    if (existingUserEmail) {
-      return res.status(409).json({
-        message: "Email already exists",
-      });
-    }
-
-    // Check existing employee email
-    const existingEmployeeEmail = await Employee.findOne({
-      email,
-    });
-
-    if (existingEmployeeEmail) {
-      return res.status(409).json({
-        message: "Employee email already exists",
-      });
-    }
-
-    // Check medical registration uniqueness
-    if (["DOCTOR", "NURSE", "LAB_TECH", "PHARMACIST"].includes(designation)) {
-      const existingMedicalRegistration = await Employee.findOne({
-        medicalRegistrationNumber,
-      });
-
-      if (existingMedicalRegistration) {
-        return res.status(409).json({
-          message: "Medical registration number already exists",
-        });
-      }
     }
 
     // Generate temporary password
@@ -88,74 +42,29 @@ exports.createEmployee = async (req, res) => {
     const passwordHash = await bcrypt.hash(temporaryPassword, 10);
 
     // Build employee data
-    const employeeData = {
-      name,
-      phone,
+    const employeeData = buildEmployeeData(req.body);
+
+    // Create employee
+    employee = new Employee(employeeData);
+
+    await employee.save();
+
+    // Create user
+    user = new User({
+      username,
       email,
-      department,
-      designation,
-      joiningDate,
-      qualification: sanitizeQualifications(qualification),
-    };
+      passwordHash,
+      roles: ["STAFF"],
+      employeeCode: employee.employeeCode,
+      status: "ACTIVE",
+      mustChangePassword: true,
+      createdByAdmin: true,
+      approvedBy: req.user.employeeCode,
+      approvedAt: new Date(),
+      createdBy: req.user.employeeCode,
+    });
 
-    // Add medical registration field
-    if (["DOCTOR", "NURSE", "LAB_TECH", "PHARMACIST"].includes(designation)) {
-      employeeData.medicalRegistrationNumber = medicalRegistrationNumber;
-    }
-
-    // Add specialization
-    if (["DOCTOR", "LAB_TECH"].includes(designation)) {
-      employeeData.specialization = specialization;
-    }
-
-    // Add doctor-only fields
-    if (designation === "DOCTOR") {
-      employeeData.consultationFee = consultationFee;
-
-      employeeData.availabilitySlots = availabilitySlots;
-    }
-
-    // Start session AFTER validations
-    const session = await mongoose.startSession();
-
-    try {
-      // Start transaction
-      session.startTransaction();
-
-      // Create employee
-      employee = new Employee(employeeData);
-
-      await employee.save({ session });
-
-      // Create user
-      user = new User({
-        username,
-        email,
-        passwordHash,
-        roles: ["STAFF"],
-        employeeCode: employee.employeeCode,
-        status: "ACTIVE",
-        mustChangePassword: true,
-        createdByAdmin: true,
-        approvedBy: req.user.employeeCode,
-        approvedAt: new Date(),
-        createdBy: req.user.employeeCode,
-      });
-
-      await user.save({ session });
-
-      // Commit transaction
-      await session.commitTransaction();
-    } catch (err) {
-      // Rollback transaction safely
-      if (session.inTransaction()) {
-        await session.abortTransaction();
-      }
-
-      throw err;
-    } finally {
-      session.endSession();
-    }
+    await user.save();
 
     // Send email AFTER successful transaction
     try {
@@ -251,28 +160,7 @@ exports.getEmployees = async (req, res) => {
       },
     });
 
-    // Merge employee + user data
-    const formattedEmployees = employees.map((employee) => {
-      // Find matching user
-
-      const matchedUser = users.find(
-        (user) => user.employeeCode === employee.employeeCode,
-      );
-
-      return {
-        employeeCode: employee.employeeCode,
-        name: employee.name,
-        email: employee.email,
-        phone: employee.phone,
-        department: employee.department,
-        designation: employee.designation,
-        qualification: employee.qualification,
-        joiningDate: employee.joiningDate,
-        status: matchedUser?.status,
-        roles: matchedUser?.roles,
-        lastLoginAt: matchedUser?.lastLoginAt,
-      };
-    });
+    const formattedEmployees = buildEmployeeResponse(employees, users);
 
     return res.status(200).json({
       totalEmployees: formattedEmployees.length,
@@ -280,6 +168,7 @@ exports.getEmployees = async (req, res) => {
     });
   } catch (err) {
     console.error("Get employees error:", err);
+
     return res.status(500).json({
       message: "Server error while fetching employees",
     });
@@ -287,7 +176,7 @@ exports.getEmployees = async (req, res) => {
 };
 
 // Get account status pending
-exports.getEmployees = async (req, res) => {
+exports.getPendingEmployees = async (req, res) => {
   try {
     // Find all STAFF users
     const users = await User.find({
@@ -305,28 +194,7 @@ exports.getEmployees = async (req, res) => {
       },
     });
 
-    // Merge employee + user data
-    const formattedEmployees = employees.map((employee) => {
-      // Find matching user
-
-      const matchedUser = users.find(
-        (user) => user.employeeCode === employee.employeeCode,
-      );
-
-      return {
-        employeeCode: employee.employeeCode,
-        name: employee.name,
-        email: employee.email,
-        phone: employee.phone,
-        department: employee.department,
-        designation: employee.designation,
-        qualification: employee.qualification,
-        joiningDate: employee.joiningDate,
-        status: matchedUser?.status,
-        roles: matchedUser?.roles,
-        lastLoginAt: matchedUser?.lastLoginAt,
-      };
-    });
+    const formattedEmployees = buildEmployeeResponse(employees, users);
 
     return res.status(200).json({
       totalEmployees: formattedEmployees.length,
@@ -334,6 +202,7 @@ exports.getEmployees = async (req, res) => {
     });
   } catch (err) {
     console.error("Get employees error:", err);
+
     return res.status(500).json({
       message: "Server error while fetching employees",
     });
@@ -358,14 +227,14 @@ exports.approveEmployee = async (req, res) => {
     }
 
     // Ensure role is staff
-    if (["ADMIN", "OWNER"].some((role) => user.roles.includes(role))) {
+    if (user.roles.some((role) => restrictedDesignations.has(role))) {
       return res.status(403).json({
         message: "Only STAFF accounts can be approved",
       });
     }
 
     //Ensure current status as pending
-    if (user.status !== "PENDING") {
+    if (String(user.status) !== "PENDING") {
       return res.status(400).json({
         message: "Account status is not pending",
       });
@@ -441,14 +310,14 @@ exports.rejectEmployee = async (req, res) => {
     }
 
     // Ensure role is staff
-    if (["ADMIN", "OWNER"].some((role) => user.roles.includes(role))) {
+    if (user.roles.some((role) => restrictedDesignations.has(role))) {
       return res.status(403).json({
         message: "Only STAFF accounts can be rejected",
       });
     }
 
     //Ensure current status as pending
-    if (user.status !== "PENDING") {
+    if (String(user.status) !== "PENDING") {
       return res.status(400).json({
         message: "Account status is not pending",
       });
@@ -501,7 +370,7 @@ exports.rejectEmployee = async (req, res) => {
 // Update employee
 exports.updateEmployee = async (req, res) => {
   try {
-    const employeeCode = req.params.employeeCode;
+    const { employeeCode } = req.params;
 
     // Find employee
     const employee = await Employee.findOne({
@@ -515,41 +384,13 @@ exports.updateEmployee = async (req, res) => {
     }
 
     // Prevent updating OWNER or ADMIN
-    if (["OWNER", "ADMIN"].includes(employee.designation)) {
+    if (restrictedDesignations.has(employee.designation)) {
       return res.status(403).json({
         message: "Cannot update OWNER or ADMIN accounts",
       });
     }
 
-    // Prevent designation change
-    if (req.body.designation && req.body.designation !== employee.designation) {
-      return res.status(403).json({
-        message: "Employee designation cannot be changed",
-      });
-    }
-
-    // Allowed fields only
-    const allowedFields = [
-      "name",
-      "phone",
-      "department",
-      "qualification",
-      "specialization",
-      "consultationFee",
-      "availabilitySlots",
-    ];
-
-    // Update only allowed fields
-    allowedFields.forEach((field) => {
-      if (req.body[field] !== undefined) {
-        // Sanitize qualifications
-        if (field === "qualification") {
-          employee[field] = sanitizeQualifications(req.body[field]);
-        } else {
-          employee[field] = req.body[field];
-        }
-      }
-    });
+    updateEmployeeData(employee, req.body);
 
     // Save employee
     await employee.save();
@@ -572,7 +413,6 @@ exports.updateEmployee = async (req, res) => {
 };
 
 // Delete employee
-
 exports.deleteEmployee = async (req, res) => {
   const session = await mongoose.startSession();
 
@@ -591,14 +431,11 @@ exports.deleteEmployee = async (req, res) => {
     }
 
     // Prevent deleting OWNER or ADMIN
-    if (["OWNER", "ADMIN"].includes(employee.designation)) {
+    if (restrictedDesignations.has(employee.designation)) {
       return res.status(403).json({
         message: "Cannot delete OWNER or ADMIN accounts",
       });
     }
-
-    // Start transaction
-    session.startTransaction();
 
     // Delete employee
     await Employee.deleteOne(
@@ -620,22 +457,13 @@ exports.deleteEmployee = async (req, res) => {
       },
     );
 
-    // Commit transaction
-    await session.commitTransaction();
-
     return res.status(200).json({
       message: "Employee deleted successfully",
     });
   } catch (err) {
-    if (session.inTransaction()) {
-      await session.abortTransaction();
-    }
-
     console.error("Error during employee deletion:", err);
     return res.status(500).json({
       message: "Server error during employee deletion",
     });
-  } finally {
-    session.endSession();
   }
 };

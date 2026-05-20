@@ -1,120 +1,68 @@
+const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
-
 const Employee = require("../models/Employees");
 const User = require("../models/Users");
-
 const sendEmail = require("../utils/sendEmail");
 const generateTemporaryPassword = require("../utils/generateTemporaryPassword");
+const buildEmployeeData = require("../utils/buildEmployeeData");
+const buildEmployeeProfile = require("../utils/buildEmployeeProfile");
+const buildEmployeeResponse = require("../utils/buildEmployeeResponse");
+const validateUniqueEmployeeFields = require("../utils/validateUniqueEmployeeFields");
 
+// Create Admin
 const createAdmin = async (req, res) => {
+  let employee;
+  let user;
+  let temporaryPassword;
+
+  const { username, email } = req.body;
+
   try {
-    const {
-      username,
-      name,
-      phone,
-      email,
-      department,
-      designation,
-      joiningDate,
-      qualification,
-    } = req.body;
+    const uniquenessResult = await validateUniqueEmployeeFields(req.body);
 
-    // Check existing username
-
-    const existingUsername = await User.findOne({
-      username,
-    });
-
-    if (existingUsername) {
-      return res.status(409).json({
-        message: "Username already exists",
-      });
-    }
-
-    // Check existing user email
-
-    const existingUserEmail = await User.findOne({
-      email,
-    });
-
-    if (existingUserEmail) {
-      return res.status(409).json({
-        message: "Email already exists",
-      });
-    }
-
-    // Check existing employee email
-
-    const existingEmployeeEmail = await Employee.findOne({
-      email,
-    });
-
-    if (existingEmployeeEmail) {
-      return res.status(409).json({
-        message: "Employee email already exists",
+    if (!uniquenessResult.success) {
+      return res.status(uniquenessResult.status).json({
+        message: uniquenessResult.message,
       });
     }
 
     // Generate temporary password
-
-    const temporaryPassword = generateTemporaryPassword();
+    temporaryPassword = generateTemporaryPassword();
 
     // Hash password
-
     const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
 
-    // Create employee
+    // Build Admin Employee Data
+    const employeeData = buildEmployeeData(req.body);
 
-    const employee = await Employee.create({
-      name,
+      // Create employee
+      employee = new Employee(employeeData);
+      await employee.save();
 
-      phone,
-
-      email,
-
-      department,
-
-      designation,
-
-      joiningDate,
-
-      qualification,
-    });
-
-    // Create user
-
-    const user = await User.create({
-      username,
-
-      email,
-
-      passwordHash: hashedPassword,
-
-      status: "ACTIVE",
-
-      roles: ["ADMIN"],
-
-      employeeCode: employee.employeeCode,
-
-      mustChangePassword: true,
-
-      createdByAdmin: true,
-
-      approvedBy: req.user.employeeCode,
-
-      approvedAt: new Date(),
-
-      createdBy: req.user.employeeCode,
-    });
+      // Create user
+      user = new User({
+        username,
+        email,
+        passwordHash: hashedPassword,
+        status: "ACTIVE",
+        roles: ["ADMIN"],
+        employeeCode: employee.employeeCode,
+        mustChangePassword: true,
+        createdByAdmin: true,
+        approvedBy: req.user.employeeCode,
+        approvedAt: new Date(),
+        createdBy: req.user.employeeCode,
+      });
+      await user.save();
 
     // Send email
+    try {
+      await sendEmail({
+        to: user.email,
 
-    await sendEmail({
-      to: user.email,
+        subject: "HMS Admin Account Created",
 
-      subject: "HMS Admin Account Created",
-
-      html: `
+        html: `
                 <h2>Welcome to HMS</h2>
 
                 <p>Your admin account has been created successfully.</p>
@@ -135,7 +83,10 @@ const createAdmin = async (req, res) => {
 
                 <p> Regards, <br /> HMS Team </p>
             `,
-    });
+      });
+    } catch (emailError) {
+      console.error("Email sending error:", emailError);
+    }
 
     return res.status(201).json({
       message:
@@ -143,85 +94,93 @@ const createAdmin = async (req, res) => {
 
       employee: {
         employeeCode: employee.employeeCode,
-
         name: employee.name,
-
         email: employee.email,
-
         designation: employee.designation,
       },
 
       user: {
         username: user.username,
-
         roles: user.roles,
-
         status: user.status,
       },
     });
   } catch (err) {
-    console.error(err);
-
+    console.error("Error during admin creation: ", err);
     return res.status(500).json({
       message: "Internal server error",
     });
   }
 };
 
+// Get all Admins
 const getAdmins = async (req, res) => {
   try {
     const admins = await User.find({
       roles: "ADMIN",
     }).select("-passwordHash");
 
+    const employeeCodes = admins.map((admin) => admin.employeeCode);
+
+    const employees = await Employee.find({
+      employeeCode: {
+        $in: employeeCodes,
+      },
+    });
+
+    const formattedEmployees = buildEmployeeResponse(employees, admins);
+
     return res.status(200).json({
-      admins,
+      totalAdmins: formattedAdmins.length,
+      admins: formattedAdmins,
     });
   } catch (err) {
     console.error(err);
-
     return res.status(500).json({
       message: "Internal server error",
     });
   }
 };
 
+// Update Admin
 const updateAdmin = async (req, res) => {
   try {
     const { employeeCode } = req.params;
 
-    const updatedEmployee = await Employee.findOneAndUpdate(
-      {
-        employeeCode,
-      },
+    // Find admin employee
+    const employee = await Employee.findOne({
+      employeeCode,
+    });
 
-      req.body,
-
-      {
-        new: true,
-      },
-    );
-
-    if (!updatedEmployee) {
+    if (!employee) {
       return res.status(404).json({
         message: "Admin not found",
       });
     }
 
+    updateEmployeeData(employee, req.body);
+
+    // Save employee
+    await employee.save();
+
     return res.status(200).json({
       message: "Admin updated successfully",
-
-      employee: updatedEmployee,
+      employee: {
+        employeeCode: employee.employeeCode,
+        name: employee.name,
+        department: employee.department,
+        designation: employee.designation,
+      },
     });
   } catch (err) {
-    console.error(err);
-
+    console.error("Error during admin update:", err);
     return res.status(500).json({
-      message: "Internal server error",
+      message: "Server error during admin update",
     });
   }
 };
 
+// Delete Admin
 const deleteAdmin = async (req, res) => {
   try {
     const { employeeCode } = req.params;
@@ -237,7 +196,6 @@ const deleteAdmin = async (req, res) => {
     }
 
     // Prevent owner deletion
-
     if (employee.designation === "OWNER") {
       return res.status(403).json({
         message: "Owner account cannot be deleted",
@@ -245,13 +203,11 @@ const deleteAdmin = async (req, res) => {
     }
 
     // Delete user
-
     await User.findOneAndDelete({
       employeeCode,
     });
 
     // Delete employee
-
     await Employee.findOneAndDelete({
       employeeCode,
     });
@@ -261,7 +217,6 @@ const deleteAdmin = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-
     return res.status(500).json({
       message: "Internal server error",
     });
@@ -270,10 +225,7 @@ const deleteAdmin = async (req, res) => {
 
 module.exports = {
   createAdmin,
-
   getAdmins,
-
   updateAdmin,
-
   deleteAdmin,
 };

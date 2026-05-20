@@ -1,14 +1,14 @@
 const express = require("express");
 const router = express.Router();
 
-const { body } = require("express-validator");
+const { body, param } = require("express-validator");
 
 const validate = require("../middlewares/validate");
 
 const auth = require("../middlewares/authMiddleware");
 const authorizeOwner = require("../middlewares/authorizeOwnerMiddleware");
 
-// const controller = require("../controllers/ownerController");
+const controller = require("../controllers/ownerController");
 
 router.use(auth, authorizeOwner);
 
@@ -47,22 +47,36 @@ const adminCreationValidation = [
         .withMessage("At least one qualification is required")
 ];
 
+const employeeCodeValidation = [
+    param("employeeCode")
+        .notEmpty()
+        .withMessage("Employee Code is required")
+];
+
 router.post(
     "/create-admin",
     adminCreationValidation,
-    validate
+    validate,
+    controller.createAdmin
 );
 
 router.get(
-    "/admins"
+    "/admins",
+    controller.getAdmins
 );
 
 router.put(
-    "/update-admin/:employeeCode"
+    "/update-admin/:employeeCode",
+    employeeCodeValidation,
+    validate,
+    controller.updateAdmin
 );
 
 router.delete(
-    "/delete-admin/:employeeCode"
+    "/delete-admin/:employeeCode",
+    employeeCodeValidation,
+    validate,
+    controller.deleteAdmin
 );
 
 module.exports = router;
