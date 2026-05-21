@@ -1,16 +1,13 @@
 const express = require("express");
 const router = express.Router();
-
 const { body, param } = require("express-validator");
-
 const validate = require("../middlewares/validate");
-
 const auth = require("../middlewares/authMiddleware");
-const authorizeOwner = require("../middlewares/authorizeOwnerMiddleware");
-
+const authorizeRoles = require("../middlewares/authorizeRolesMiddleware");
 const controller = require("../controllers/ownerController");
 
-router.use(auth, authorizeOwner);
+// All routes require authentication and owner authorization
+router.use(auth, authorizeRoles("OWNER"));
 
 const adminCreationValidation = [
 

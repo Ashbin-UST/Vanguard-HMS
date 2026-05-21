@@ -1,8 +1,6 @@
 const crypto = require("node:crypto");
 
-const generateTemporaryPassword = (
-    length = 12
-) => {
+const generateTemporaryPassword = ( length = 12 ) => {
 
     // Characters allowed in password
 

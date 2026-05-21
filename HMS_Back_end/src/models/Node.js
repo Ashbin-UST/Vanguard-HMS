@@ -7,32 +7,39 @@ const nodeSchema = new mongoose.Schema(
             type: String,
             unique: true
         },
-
         name: {
             type: String,
             required: true,
             trim: true
         },
-
-        url: {
+        path: {
             type: String,
             required: true,
-            unique: true
+            trim: true
         },
-
+        icon: {
+            type: String,
+            trim: true
+        },
         allowedRoles: [{
             type: String,
             enum: [
                 "OWNER",
                 "ADMIN",
+                "STAFF"
+            ],
+            required: true
+        }],
+        allowedDesignations: [{
+            type: String,
+            enum: [
                 "DOCTOR",
                 "RECEPTIONIST",
                 "CASHIER",
                 "NURSE",
                 "LAB_TECH",
                 "PHARMACIST"
-            ],
-            required: true
+            ]
         }]
     },
     {
@@ -43,16 +50,31 @@ const nodeSchema = new mongoose.Schema(
     }
 );
 
-// Pre-save hook to generate sequential ID
+// Auto generate nodeId
 nodeSchema.pre("save", async function () {
+
     if (this.isNew) {
-                const counter = await Counter.findOneAndUpdate(
-                    { name: 'node' },
-                    { $inc: { seq: 1 } }, // Creates sequence
-                    { new: true, upsert: true } // upsert is update and insert
-                );
-                this.nodeId = `NODE-${String(counter.seq).padStart(6, '0')}`; // create 6 digit sequence number
-        }
+
+        const counter =
+            await Counter.findOneAndUpdate(
+                {
+                    name: "nodes"
+                },
+
+                {
+                    $inc: {
+                        seq: 1
+                    }
+                },
+
+                {
+                    returnDocument: "after",
+                    upsert: true
+                }
+            );
+
+        this.nodeId = `NODE-${String(counter.seq).padStart(6, "0")}`;
+    }
 });
 
 module.exports = mongoose.model("Node", nodeSchema);

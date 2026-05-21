@@ -1,10 +1,7 @@
 const express = require("express");
 const router = express.Router();
-
 const { body } = require("express-validator");
-
 const validate = require("../middlewares/validate");
-
 const controller = require("../controllers/registrationController");
 
 const allowedDesignationTypes = new Set([

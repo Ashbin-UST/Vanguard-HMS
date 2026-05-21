@@ -117,25 +117,19 @@ exports.createEmployee = async (req, res) => {
 
       user: {
         username: user.username,
-
         email: user.email,
-
         roles: user.roles,
       },
 
       employee: {
         employeeCode: employee.employeeCode,
-
         name: employee.name,
-
         department: employee.department,
-
         designation: employee.designation,
       },
     });
   } catch (err) {
     console.error("Employee creation error:", err);
-
     return res.status(500).json({
       message: "Server error during employee creation",
     });

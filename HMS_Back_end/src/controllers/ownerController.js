@@ -128,14 +128,14 @@ const getAdmins = async (req, res) => {
       },
     });
 
-    const formattedEmployees = buildEmployeeResponse(employees, admins);
+    const formattedAdmins = buildEmployeeResponse(employees, admins);
 
     return res.status(200).json({
       totalAdmins: formattedAdmins.length,
       admins: formattedAdmins,
     });
   } catch (err) {
-    console.error(err);
+    console.error("Error during admin retrieval: ",err);
     return res.status(500).json({
       message: "Internal server error",
     });

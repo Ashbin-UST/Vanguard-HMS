@@ -1,10 +1,9 @@
 const express = require("express");
 const router = express.Router();
-
 const auth = require("../middlewares/authMiddleware");
-
 const controller = require("../controllers/employeeController");
 
+// All routes require authentication
 router.use(auth);
 
 router.get(

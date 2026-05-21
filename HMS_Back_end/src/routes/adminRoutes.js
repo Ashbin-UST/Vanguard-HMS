@@ -1,16 +1,13 @@
 const express = require("express");
 const router = express.Router();
-
 const { body, param } = require("express-validator");
-
 const validate = require("../middlewares/validate");
-
 const auth = require("../middlewares/authMiddleware");
-const authorizeAdmin = require("../middlewares/authorizeAdminMiddleware");
-
+const authorizeRoles = require("../middlewares/authorizeRolesMiddleware");
 const controller = require("../controllers/adminController");
 
-router.use(auth, authorizeAdmin);
+// All routes require authentication and admin authorization
+router.use(auth, authorizeRoles("ADMIN"));
 
 const allowedDesignationTypes = new Set([
     "DOCTOR",
