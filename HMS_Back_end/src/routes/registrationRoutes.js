@@ -24,14 +24,14 @@ const allowedDepartmentTypes = new Set([
 ]);
 
 const medicalFields = new Set([
-  "DOCTOR",
-  "NURSE",
-  "LAB_TECH",
-  "PHARMACIST"
+    "DOCTOR",
+    "NURSE",
+    "LAB_TECH",
+    "PHARMACIST"
 ]);
 
 const specializationFields = new Set([
-    "DOCTOR", 
+    "DOCTOR",
     "LAB_TECH"
 ]);
 
@@ -46,8 +46,8 @@ const registerRequestValidation = [
         .withMessage("Name is required"),
 
     body("phone")
-        .notEmpty()
-        .withMessage("Phone number is required"),
+        .matches(/^\d{10}$/)
+        .withMessage("Phone number must contain exactly 10 digits"),
 
     body("email")
         .isEmail()
@@ -74,8 +74,9 @@ const registerRequestValidation = [
         .withMessage("Valid designation is required"),
 
     body("joiningDate")
-        .notEmpty()
-        .withMessage("Joining date is required"),
+        .isISO8601()
+        .toDate()
+        .withMessage("Valid joining data is required"),
 
     body("qualification")
         .isArray({ min: 1 })

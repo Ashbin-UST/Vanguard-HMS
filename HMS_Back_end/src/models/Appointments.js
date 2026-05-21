@@ -16,7 +16,7 @@ const appointmentSchema = new mongoose.Schema({
         required: true,
         ref: "Employee"
     },
-    date: {
+    appointmentDate: {
         type: Date,
         required: true
     },

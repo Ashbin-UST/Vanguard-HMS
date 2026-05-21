@@ -7,7 +7,7 @@ const authorizeRoles = require("../middlewares/authorizeRolesMiddleware");
 const controller = require("../controllers/adminController");
 
 // All routes require authentication and admin authorization
-router.use(auth, authorizeRoles("ADMIN"));
+router.use(auth, authorizeRoles("OWNER", "ADMIN"));
 
 const allowedDesignationTypes = new Set([
     "DOCTOR",
@@ -29,14 +29,14 @@ const allowedDepartmentTypes = new Set([
 ]);
 
 const medicalFields = new Set([
-  "DOCTOR",
-  "NURSE",
-  "LAB_TECH",
-  "PHARMACIST"
+    "DOCTOR",
+    "NURSE",
+    "LAB_TECH",
+    "PHARMACIST"
 ]);
 
 const specializationFields = new Set([
-    "DOCTOR", 
+    "DOCTOR",
     "LAB_TECH"
 ]);
 
@@ -51,8 +51,8 @@ const employeeCreationValidation = [
         .withMessage("Name is required"),
 
     body("phone")
-        .notEmpty()
-        .withMessage("Phone number is required"),
+    .matches(/^\d{10}$/)
+    .withMessage("Phone number must contain exactly 10 digits"),
 
     body("email")
         .isEmail()

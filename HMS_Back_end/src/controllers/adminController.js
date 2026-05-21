@@ -112,9 +112,7 @@ exports.createEmployee = async (req, res) => {
     }
 
     return res.status(201).json({
-      message:
-        "Employee account created successfully. Login credentials have been sent via email.",
-
+      message: "Employee account created successfully. Login credentials have been sent via email.",
       user: {
         username: user.username,
         email: user.email,
