@@ -51,3 +51,5 @@ const validateEmployeeStatus = async (employeeCode, expectedDesignation) => {
         employee
     };
 }
+
+module.exports = validateEmployeeStatus;

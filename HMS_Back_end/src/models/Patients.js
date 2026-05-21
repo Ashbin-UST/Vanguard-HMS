@@ -32,8 +32,8 @@ const patientSchema = new mongoose.Schema({
         required: true
     },
     address: {
-        houseName: { type: String, required },
-        houseNumber: { type: String, required },
+        houseName: { type: String, required: true },
+        houseNumber: { type: String, required: true },
         city: { type: String, required: true },
         postCode: { type: String, required: true }
     },
@@ -53,7 +53,6 @@ const patientSchema = new mongoose.Schema({
     },
     createdByEmployeeId: {
         type: String,
-        required: true
     }
 });
 

@@ -31,7 +31,6 @@ const appointmentSchema = new mongoose.Schema({
     },
     createdByEmployeeId: {
         type: String,
-        required: true,
         ref: "Employees"
     }
 });

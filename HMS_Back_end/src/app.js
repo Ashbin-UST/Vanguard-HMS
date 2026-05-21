@@ -9,6 +9,8 @@ const mongoose = require("mongoose");
 const adminRoutes = require("./routes/adminRoutes");
 const ownerRoutes = require("./routes/ownerRoutes");
 const registrationRoutes = require("./routes/registrationRoutes");
+const patientRoutes = require("./routes/patientRoutes");
+const appointmentRoutes = require("./routes/appointmentRoutes");
 
 const app = express();
 

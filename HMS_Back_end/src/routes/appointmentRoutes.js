@@ -3,11 +3,11 @@ const router = express.Router();
 const { body } = require("express-validator");
 const validate = require("../middlewares/validate");
 const auth = require("../middlewares/authMiddleware");
-const authorizeRoles = require("../middlewares/authorizeRolesMiddleware");
+const authorizeDesignation = require("../middlewares/authorizeDesignations");
 const controller = require("../controllers/appointmentController");
 
 // All routes require authentication and receptionist authorization
-router.use(auth, authorizeRoles("OWNER", "ADMIN", "RECEPTIONIST"));
+router.use(auth, authorizeDesignation("OWNER", "ADMIN", "RECEPTIONIST"));
 
 const createAppointmentValidation = [
     body("patientId")
@@ -34,3 +34,5 @@ router.post(
     validate,
     controller.createAppointment
 );
+
+module.exports = router;
