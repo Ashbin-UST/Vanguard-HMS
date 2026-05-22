@@ -21,18 +21,12 @@ const nodeSchema = new mongoose.Schema(
             type: String,
             trim: true
         },
-        allowedRoles: [{
+        
+        allowedDesignations: [{
             type: String,
             enum: [
                 "OWNER",
                 "ADMIN",
-                "STAFF"
-            ],
-            required: true
-        }],
-        allowedDesignations: [{
-            type: String,
-            enum: [
                 "DOCTOR",
                 "RECEPTIONIST",
                 "CASHIER",

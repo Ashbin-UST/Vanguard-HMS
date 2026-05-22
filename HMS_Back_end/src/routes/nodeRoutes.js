@@ -9,7 +9,18 @@ const controller = require("../controllers/nodeController");
 // All routes require authentication
 router.use(auth);
 
-const nodeValidation = [
+const allowedDesignationTypes = new Set([
+    "OWNER",
+    "ADMIN",
+    "DOCTOR",
+    "RECEPTIONIST",
+    "CASHIER",
+    "NURSE",
+    "LAB_TECH",
+    "PHARMACIST"
+]);
+
+const createNodeValidation = [
 
     body("name")
         .notEmpty()
@@ -21,17 +32,48 @@ const nodeValidation = [
         .matches(/^\/.*/)
         .withMessage("Path must start with /"),
 
-    body("allowedRoles")
+    body("allowedDesignations")
         .isArray({ min: 1 })
-        .withMessage("At least one allowed role is required"),
+        .withMessage("At least one allowed designation is required"),
+
+    body("allowedDesignations.*")
+        .isIn([...allowedDesignationTypes])
+        .withMessage("Valid designation is required")
+];
+
+const updateNodeValidation = [
+
+    param("nodeId")
+        .notEmpty()
+        .withMessage("Node ID is required"),
+
+    body("name")
+        .optional()
+        .notEmpty()
+        .withMessage("Node name cannot be empty"),
+
+    body("path")
+        .optional()
+        .notEmpty()
+        .withMessage("Node path cannot be empty")
+        .matches(/^\/.*/)
+        .withMessage("Path must start with /"),
 
     body("allowedDesignations")
         .optional()
-        .isArray()
-        .withMessage("Allowed designations must be an array")
+        .isArray({ min: 1 })
+        .withMessage(
+            "At least one allowed designation is required"
+        ),
+
+    body("allowedDesignations.*")
+        .optional()
+        .isIn([...allowedDesignationTypes])
+        .withMessage("Valid designation is required")
 ];
 
 const nodeIdValidation = [
+
     param("nodeId")
         .notEmpty()
         .withMessage("Node ID is required")
@@ -41,7 +83,7 @@ const nodeIdValidation = [
 router.post(
     "/create-node",
     authorizeRoles("ADMIN", "OWNER"),
-    nodeValidation,
+    createNodeValidation,
     validate,
     controller.createNode
 );
@@ -50,7 +92,7 @@ router.post(
 router.put(
     "/update-node/:nodeId",
     authorizeRoles("ADMIN", "OWNER"),
-    nodeIdValidation,
+    updateNodeValidation,
     validate,
     controller.updateNode
 );

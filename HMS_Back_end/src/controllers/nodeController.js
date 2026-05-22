@@ -24,12 +24,12 @@ exports.createNode = async (req, res) => {
 
         // Create node
         const node = await Node.create({
-                name,
-                path,
-                icon,
-                allowedRoles,
-                allowedDesignations
-            });
+            name,
+            path,
+            icon,
+            allowedRoles,
+            allowedDesignations
+        });
 
         return res.status(201).json({
             message: "Node created successfully",
@@ -80,17 +80,17 @@ exports.updateNode = async (req, res) => {
         }
 
         const updatedNode = await Node.findOneAndUpdate(
-                {
-                    nodeId: req.params.nodeId
-                },
+            {
+                nodeId: req.params.nodeId
+            },
 
-                updateData,
+            updateData,
 
-                {
-                    new: true,
-                    runValidators: true
-                }
-            );
+            {
+                new: true,
+                runValidators: true
+            }
+        );
 
         if (!updatedNode) {
             return res.status(404).json({
@@ -144,8 +144,8 @@ exports.getMyNodes = async (req, res) => {
 
     try {
         const employee = await Employee.findOne({
-                employeeCode: req.user.employeeCode
-            });
+            employeeCode: req.user.employeeCode
+        });
 
         if (!employee) {
             return res.status(404).json({
@@ -153,21 +153,13 @@ exports.getMyNodes = async (req, res) => {
             });
         }
 
-        const roles = req.user.roles;
-
         const designation = employee.designation;
 
         const nodes = await Node.find({
-                $or: [
-                    {
-                        allowedRoles: { $in: roles }
-                    },
-                    {
-                        allowedDesignations: designation
-                    }
-                ]
-            })
-            .select("-_id -__v");
+
+            allowedDesignations: designation
+
+        }).select("-_id -__v");
 
         return res.status(200).json({
             totalNodes: nodes.length,

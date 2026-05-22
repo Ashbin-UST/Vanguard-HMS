@@ -1,0 +1,78 @@
+<div class="billing-container">
+  <div class="header">
+    <h1>Billing Management</h1>
+    <button class="btn-primary" (click)="createNewBill()">+ Create Bill</button>
+  </div>
+
+  <div class="revenue-card">
+    <h3>Total Revenue</h3>
+    <p class="revenue-amount">{{ totalRevenue | currency }}</p>
+  </div>
+
+  <div class="filter-section">
+    <select [(ngModel)]="filterStatus" (change)="filterByStatus()" class="filter-select">
+      <option value="">All Status</option>
+      <option *ngFor="let status of statusOptions" [value]="status">{{ status }}</option>
+    </select>
+  </div>
+
+  <div *ngIf="error" class="error-message">{{ error }}</div>
+
+  <div *ngIf="loading" class="loading">Loading bills...</div>
+
+  <div *ngIf="!loading && bills.length === 0" class="no-data">
+    No bills found
+  </div>
+
+  <table *ngIf="!loading && bills.length > 0" class="bills-table">
+    <thead>
+      <tr>
+        <th>Bill ID</th>
+        <th>Patient</th>
+        <th>Total Amount</th>
+        <th>Status</th>
+        <th>Created Date</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let bill of bills">
+        <td>{{ bill.billId }}</td>
+        <td>{{ bill.patient?.name || 'N/A' }} ({{ bill.patient?.UHID || 'N/A' }})</td>
+        <td>{{ bill.total | currency }}</td>
+        <td>
+          <span [ngClass]="'badge ' + getStatusColor(bill.status)">
+            {{ bill.status }}
+          </span>
+        </td>
+        <td>{{ bill.created_at | date: 'short' }}</td>
+        <td>
+          <button class="btn-view" (click)="viewBill(bill._id!)">View</button>
+          <button class="btn-edit" (click)="editBill(bill._id!)">Edit</button>
+          <button
+            *ngIf="bill.status !== 'PAID'"
+            class="btn-paid"
+            (click)="markAsPaid(bill._id!)"
+          >
+            Mark Paid
+          </button>
+          <button class="btn-delete" (click)="deleteBill(bill._id!)">Delete</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div *ngIf="!loading && bills.length > 0" class="pagination">
+    <button [disabled]="currentPage === 1" (click)="previousPage()" class="btn-pagination">
+      Previous
+    </button>
+    <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
+    <button
+      [disabled]="currentPage === totalPages"
+      (click)="nextPage()"
+      class="btn-pagination"
+    >
+      Next
+    </button>
+  </div>
+</div>

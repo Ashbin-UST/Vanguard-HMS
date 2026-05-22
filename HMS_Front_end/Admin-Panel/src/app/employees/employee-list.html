@@ -1,0 +1,79 @@
+<div class="employee-list-container">
+  <div class="header">
+    <h1>Employee Management</h1>
+    <button class="btn-primary" (click)="createNewEmployee()">+ Add Employee</button>
+  </div>
+
+  <div class="filter-section">
+    <select [(ngModel)]="filterDepartment" (change)="filterByDepartment()" class="filter-select">
+      <option value="">All Departments</option>
+      <option *ngFor="let dept of departments" [value]="dept">{{ dept }}</option>
+    </select>
+  </div>
+
+  <div class="search-bar">
+    <input
+      type="text"
+      placeholder="Search by name, email, or employee code..."
+      [(ngModel)]="searchQuery"
+      (keyup.enter)="searchEmployees()"
+      class="search-input"
+    />
+    <button class="btn-secondary" (click)="searchEmployees()">Search</button>
+  </div>
+
+  <div *ngIf="error" class="error-message">{{ error }}</div>
+
+  <div *ngIf="loading" class="loading">Loading employees...</div>
+
+  <div *ngIf="!loading && employees.length === 0" class="no-data">
+    No employees found
+  </div>
+
+  <table *ngIf="!loading && employees.length > 0" class="employees-table">
+    <thead>
+      <tr>
+        <th>Employee Code</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Department</th>
+        <th>Designation</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let employee of employees">
+        <td>{{ employee.employeeCode }}</td>
+        <td>{{ employee.name }}</td>
+        <td>{{ employee.email }}</td>
+        <td>{{ employee.phone }}</td>
+        <td>{{ employee.department }}</td>
+        <td>
+          <span class="badge-designation">
+            {{ employee.designation }}
+          </span>
+        </td>
+        <td>
+          <button class="btn-view" (click)="viewEmployee(employee._id!)">View</button>
+          <button class="btn-edit" (click)="editEmployee(employee._id!)">Edit</button>
+          <button class="btn-delete" (click)="deleteEmployee(employee._id!)">Delete</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div *ngIf="!loading && employees.length > 0" class="pagination">
+    <button [disabled]="currentPage === 1" (click)="previousPage()" class="btn-pagination">
+      Previous
+    </button>
+    <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
+    <button
+      [disabled]="currentPage === totalPages"
+      (click)="nextPage()"
+      class="btn-pagination"
+    >
+      Next
+    </button>
+  </div>
+</div>

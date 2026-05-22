@@ -1,0 +1,102 @@
+<div class="bill-form-container">
+  <div class="form-header">
+    <h1>{{ isEditing ? 'Edit Bill' : 'Create New Bill' }}</h1>
+  </div>
+
+  <div *ngIf="error" class="error-message">{{ error }}</div>
+
+  <form [formGroup]="billForm" (ngSubmit)="onSubmit()" class="bill-form">
+    <div class="form-section">
+      <h2>Bill Information</h2>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="patientId">Patient *</label>
+          <select formControlName="patientId" class="form-input">
+            <option value="">Select patient</option>
+            <option *ngFor="let patient of patients" [value]="patient._id">
+              {{ patient.name }} ({{ patient.UHID }})
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="appointmentId">Appointment (Optional)</label>
+          <select formControlName="appointmentId" class="form-input">
+            <option value="">Select appointment</option>
+            <option *ngFor="let apt of appointments" [value]="apt._id">
+              {{ apt.appointmentId }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="status">Status *</label>
+        <select formControlName="status" class="form-input">
+          <option *ngFor="let status of statusOptions" [value]="status">
+            {{ status }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-header">
+        <h2>Billing Items</h2>
+        <button type="button" class="btn-add-item" (click)="addItem()">
+          + Add Item
+        </button>
+      </div>
+
+      <div formArrayName="items">
+        <div
+          *ngFor="let item of items.controls; let i = index"
+          [formGroupName]="i"
+          class="bill-item"
+        >
+          <div class="form-row">
+            <div class="form-group">
+              <label>Service Name *</label>
+              <input
+                type="text"
+                formControlName="serviceName"
+                placeholder="e.g., Consultation, X-Ray"
+                class="form-input"
+              />
+            </div>
+            <div class="form-group">
+              <label>Amount *</label>
+              <input
+                type="number"
+                formControlName="amount"
+                placeholder="0.00"
+                class="form-input"
+              />
+            </div>
+            <button
+              *ngIf="items.length > 1"
+              type="button"
+              class="btn-remove"
+              (click)="removeItem(i)"
+            >
+              Remove
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="total-section">
+        <label>Total Amount:</label>
+        <span class="total-amount">{{ totalAmount | currency }}</span>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" [disabled]="loading" class="btn-submit">
+        {{ loading ? 'Loading...' : (isEditing ? 'Update Bill' : 'Create Bill') }}
+      </button>
+      <button type="button" (click)="cancel()" class="btn-cancel">Cancel</button>
+    </div>
+  </form>
+</div>

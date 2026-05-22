@@ -1,0 +1,93 @@
+<div class="admin-dashboard-container">
+  <div class="header">
+    <h1>Admin Dashboard</h1>
+  </div>
+
+  <div *ngIf="error" class="error-message">{{ error }}</div>
+
+  <div *ngIf="loading" class="loading">Loading dashboard...</div>
+
+  <div *ngIf="!loading" class="dashboard-content">
+    <div class="stats-grid">
+      <div class="stat-card" (click)="navigateTo('/patients')">
+        <div class="stat-icon">👥</div>
+        <div class="stat-info">
+          <h3>Total Patients</h3>
+          <p class="stat-number">{{ stats.totalPatients }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card" (click)="navigateTo('/employees')">
+        <div class="stat-icon">👨‍💼</div>
+        <div class="stat-info">
+          <h3>Total Employees</h3>
+          <p class="stat-number">{{ stats.totalEmployees }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card" (click)="navigateTo('/appointments')">
+        <div class="stat-icon">📅</div>
+        <div class="stat-info">
+          <h3>Total Appointments</h3>
+          <p class="stat-number">{{ stats.totalAppointments }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card" (click)="navigateTo('/billing')">
+        <div class="stat-icon">💰</div>
+        <div class="stat-info">
+          <h3>Total Bills</h3>
+          <p class="stat-number">{{ stats.totalBills }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card highlight">
+        <div class="stat-icon">✅</div>
+        <div class="stat-info">
+          <h3>Paid Bills</h3>
+          <p class="stat-number">{{ stats.paidBills }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card warning">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-info">
+          <h3>Pending Approvals</h3>
+          <p class="stat-number">{{ stats.pendingApprovals }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="quick-actions">
+      <h2>Quick Actions</h2>
+      <div class="action-buttons">
+        <button class="action-btn" (click)="navigateTo('/patients/create')">
+          + Add Patient
+        </button>
+        <button class="action-btn" (click)="navigateTo('/appointments/create')">
+          + Book Appointment
+        </button>
+        <button class="action-btn" (click)="navigateTo('/employees/create')">
+          + Add Employee
+        </button>
+        <button class="action-btn" (click)="navigateTo('/billing/create')">
+          + Create Bill
+        </button>
+        <button class="action-btn" (click)="navigateTo('/medical-records/create')">
+          + Add Medical Record
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="recentActivities.length > 0" class="recent-activities">
+      <h2>Recent Activities</h2>
+      <div class="activity-list">
+        <div *ngFor="let activity of recentActivities" class="activity-item">
+          <span class="activity-type">{{ activity.type }}</span>
+          <span class="activity-description">{{ activity.description }}</span>
+          <span class="activity-time">{{ activity.timestamp | date: 'short' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

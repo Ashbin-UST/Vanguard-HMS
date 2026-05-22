@@ -1,0 +1,154 @@
+<div class="record-form-container">
+  <div class="form-header">
+    <h1>{{ isEditing ? 'Edit Medical Record' : 'Create Medical Record' }}</h1>
+  </div>
+
+  <div *ngIf="error" class="error-message">{{ error }}</div>
+
+  <form [formGroup]="recordForm" (ngSubmit)="onSubmit()" class="record-form">
+    <div class="form-section">
+      <h2>Record Information</h2>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="appointmentId">Appointment *</label>
+          <select formControlName="appointmentId" class="form-input">
+            <option value="">Select appointment</option>
+            <option *ngFor="let apt of appointments" [value]="apt._id">
+              {{ apt.appointmentId }} - {{ apt.patient?.name }}
+            </option>
+          </select>
+          <span *ngIf="recordForm.get('appointmentId')?.invalid && recordForm.get('appointmentId')?.touched" class="error-text">
+            Appointment is required
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="doctorEmployeeId">Doctor *</label>
+          <select formControlName="doctorEmployeeId" class="form-input">
+            <option value="">Select doctor</option>
+            <option *ngFor="let doctor of doctors" [value]="doctor.employeeCode">
+              {{ doctor.name }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="patientId">Patient ID *</label>
+        <input
+          id="patientId"
+          type="text"
+          formControlName="patientId"
+          placeholder="Patient ID will be auto-filled"
+          class="form-input"
+        />
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2>Clinical Information</h2>
+
+      <div class="form-group">
+        <label for="symptoms">Symptoms *</label>
+        <textarea
+          id="symptoms"
+          formControlName="symptoms"
+          placeholder="Describe patient symptoms"
+          class="form-textarea"
+          rows="4"
+        ></textarea>
+        <span *ngIf="recordForm.get('symptoms')?.invalid && recordForm.get('symptoms')?.touched" class="error-text">
+          Symptoms must be at least 10 characters
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="diagnosis">Diagnosis *</label>
+        <textarea
+          id="diagnosis"
+          formControlName="diagnosis"
+          placeholder="Enter diagnosis"
+          class="form-textarea"
+          rows="4"
+        ></textarea>
+        <span *ngIf="recordForm.get('diagnosis')?.invalid && recordForm.get('diagnosis')?.touched" class="error-text">
+          Diagnosis must be at least 10 characters
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="notes">Additional Notes</label>
+        <textarea
+          id="notes"
+          formControlName="notes"
+          placeholder="Any additional notes"
+          class="form-textarea"
+          rows="3"
+        ></textarea>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-header">
+        <h2>Prescriptions</h2>
+        <button type="button" class="btn-add-prescription" (click)="addPrescription()">
+          + Add Prescription
+        </button>
+      </div>
+
+      <div formArrayName="prescriptionItems">
+        <div
+          *ngFor="let prescription of prescriptions.controls; let i = index"
+          [formGroupName]="i"
+          class="prescription-item"
+        >
+          <div class="form-row">
+            <div class="form-group">
+              <label>Medicine Name *</label>
+              <input
+                type="text"
+                formControlName="name"
+                placeholder="Enter medicine name"
+                class="form-input"
+              />
+            </div>
+            <div class="form-group">
+              <label>Dosage *</label>
+              <input
+                type="text"
+                formControlName="dosage"
+                placeholder="e.g., 500mg"
+                class="form-input"
+              />
+            </div>
+            <div class="form-group">
+              <label>Duration *</label>
+              <input
+                type="text"
+                formControlName="duration"
+                placeholder="e.g., 7 days"
+                class="form-input"
+              />
+            </div>
+            <button
+              *ngIf="prescriptions.length > 1"
+              type="button"
+              class="btn-remove"
+              (click)="removePrescription(i)"
+            >
+              Remove
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" [disabled]="loading" class="btn-submit">
+        {{ loading ? 'Loading...' : (isEditing ? 'Update Record' : 'Create Record') }}
+      </button>
+      <button type="button" (click)="cancel()" class="btn-cancel">Cancel</button>
+    </div>
+  </form>
+</div>

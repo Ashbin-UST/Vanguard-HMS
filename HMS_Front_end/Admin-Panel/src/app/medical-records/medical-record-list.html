@@ -1,0 +1,66 @@
+<div class="medical-record-container">
+  <div class="header">
+    <h1>Medical Records</h1>
+    <button class="btn-primary" (click)="createNewRecord()">+ Create Record</button>
+  </div>
+
+  <div class="search-bar">
+    <input
+      type="text"
+      placeholder="Search by patient, doctor, or record ID..."
+      [(ngModel)]="searchQuery"
+      (keyup.enter)="searchRecords()"
+      class="search-input"
+    />
+    <button class="btn-secondary" (click)="searchRecords()">Search</button>
+  </div>
+
+  <div *ngIf="error" class="error-message">{{ error }}</div>
+
+  <div *ngIf="loading" class="loading">Loading medical records...</div>
+
+  <div *ngIf="!loading && medicalRecords.length === 0" class="no-data">
+    No medical records found
+  </div>
+
+  <table *ngIf="!loading && medicalRecords.length > 0" class="records-table">
+    <thead>
+      <tr>
+        <th>Record ID</th>
+        <th>Patient</th>
+        <th>Doctor</th>
+        <th>Appointment Date</th>
+        <th>Diagnosis</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let record of medicalRecords">
+        <td>{{ record.medicalRecordId }}</td>
+        <td>{{ record.patient?.name || 'N/A' }} ({{ record.patient?.UHID || 'N/A' }})</td>
+        <td>{{ record.doctor?.name || 'N/A' }}</td>
+        <td>{{ record.appointment?.appointmentDate | date: 'short' }}</td>
+        <td>{{ record.diagnosis | slice: 0:50 }}...</td>
+        <td>
+          <button class="btn-view" (click)="viewRecord(record._id!)">View</button>
+          <button class="btn-edit" (click)="editRecord(record._id!)">Edit</button>
+          <button class="btn-delete" (click)="deleteRecord(record._id!)">Delete</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div *ngIf="!loading && medicalRecords.length > 0" class="pagination">
+    <button [disabled]="currentPage === 1" (click)="previousPage()" class="btn-pagination">
+      Previous
+    </button>
+    <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
+    <button
+      [disabled]="currentPage === totalPages"
+      (click)="nextPage()"
+      class="btn-pagination"
+    >
+      Next
+    </button>
+  </div>
+</div>
