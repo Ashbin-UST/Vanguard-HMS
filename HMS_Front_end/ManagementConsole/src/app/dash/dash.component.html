@@ -8,17 +8,23 @@
     </div>
 
     <nav class="sidebar-nav">
-      <button
-        *ngFor="let item of navItems"
-        class="nav-btn"
-        [class.nav-btn--active]="activeSection === item.id"
-        (click)="setSection(item.id)">
-        <span class="nav-icon">{{ item.icon }}</span>
-        {{ item.label }}
-        <span *ngIf="item.id === 'requests' && requestsBadge > 0" class="nav-badge">
-          {{ requestsBadge }}
-        </span>
-      </button>
+     <button
+  *ngFor="let item of navItems"
+  class="nav-btn"
+  [class.nav-btn--active]="activeSection === item.url"
+  (click)="setSection(item.url)">
+
+  <span class="nav-icon">{{ item.logo }}</span>
+
+  {{ item.name }}
+
+  <span *ngIf="item.url === 'requests' && requestsBadge > 0"
+        class="nav-badge">
+    {{ requestsBadge }}
+  </span>
+
+</button>
+
     </nav>
 
     <div class="sidebar-user">

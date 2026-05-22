@@ -3,38 +3,49 @@ const Counter = require("./Counter");
 
 const nodeSchema = new mongoose.Schema(
     {
-        nodeId: {
-            type: String,
-            unique: true
-        },
+        
+nodeId: { type: String, unique: true },
 
-        name: {
-            type: String,
-            required: true,
-            trim: true
-        },
+  name: { type: String, required: true, trim: true },
 
-        url: {
-            type: String,
-            required: true,
-            unique: true
-        },
+  url: { type: String, required: true, unique: true },
 
-        allowedRoles: [{
-            type: String,
-            enum: [
-                "OWNER",
-                "ADMIN",
-                "DOCTOR",
-                "RECEPTIONIST",
-                "CASHIER",
-                "NURSE",
-                "LAB_TECH",
-                "PHARMACIST"
-            ],
-            required: true
-        }]
-    },
+  logo: {type: String,
+  default: "📌"
+},
+
+identifier: {
+  type: String,
+  required: true,
+  unique: true
+},
+
+order: {
+  type: Number,
+  default: 0
+},
+
+isActive: {
+  type: Boolean,
+  default: true
+}
+,
+  roles: [{
+    type: String,
+    enum: [
+      "OWNER",
+      "ADMIN",
+      "DOCTOR",
+      "RECEPTIONIST",
+      "CASHIER",
+      "NURSE",
+      "LAB_TECH",
+      "PHARMACIST"
+    ],
+    required: true
+  }]
+},
+
     {
         timestamps: {
             createdAt: "created_at",

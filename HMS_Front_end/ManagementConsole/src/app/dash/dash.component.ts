@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { Employee } from './models/employee.model';
 import { Activity } from './models/activity.model';
 import { Request } from './models/request.model';
+import { NavItem } from './models/navItem.model';
 import { Toast } from './models/toast.model';
 import { NewEmployee } from './models/newEmployee.model';
 import { EmployeeTablesComponent } from './employee-tables/employee-tables.component';
@@ -13,7 +14,7 @@ import { ActivityComponent } from '../dash/activity/activity.component';
 
 import { EmployeeService } from '../service/dashboard/employee/employee.service';
 import { AuditService } from '../service/dashboard/audit/audit.service';
-
+import { NavnodeService } from '../service/dashboard/navnode/navnode.service';
 import {
   getAvatarColor,
   getRoleStyle,
@@ -40,12 +41,7 @@ export class DashComponent {
   departments = ['Cardiology', 'General', 'Pediatrics', 'Emergency', 'Radiology', 'Pharmacy', 'Finance', 'Front Desk'];
 
 
-  navItems = [
-    { id: 'overview',   label: 'Overview',   icon: '⊞' },
-    { id: 'employees',  label: 'Employees',  icon: '👥' },
-    { id: 'activity',   label: 'Activity',   icon: '📋' },
-    { id: 'requests',   label: 'Requests',   icon: '🔔' },  
-  ];
+navItems: NavItem[] = [];
 
   // ── State ────────────────────────────────────────────────────────
   activeSection = 'overview';
@@ -73,12 +69,31 @@ export class DashComponent {
     // { _id: 3, requestedBy: 'Rahul Verma',     requestorRole: 'Cashier',      name: 'Suresh Babu', role: 'Lab Technician', dept: 'Radiology',  email: 'suresh.b@hospital.com', time: '2 days ago', avatar: 'SB' },
   ];
 
-  constructor(private router: Router, private employeeService: EmployeeService, private auditService: AuditService) {}
+  constructor(private router: Router, private employeeService: EmployeeService, private auditService: AuditService, private navnodeService: NavnodeService) {}
 
   ngOnInit(): void {
     this.loadEmployees();
     this.loadActivities();
+    this.loadNavItems();
   }
+  
+loadNavItems() {
+  const role = localStorage.getItem('role') || 'ADMIN';
+
+  this.navnodeService.getNavByRole(role).subscribe({
+    next: (data) => {
+      this.navItems = data;
+
+      if (data.length) {
+        this.activeSection = data[0].url;
+      }
+    },
+    error: () => {
+      this.showToast('Failed to load navigation', 'error');
+    }
+  });
+}
+
 loadActivities(): void {
   this.auditService.getAuditLogs().subscribe({
     next: (logs: any[]) => {
@@ -86,8 +101,8 @@ loadActivities(): void {
       this.activities = logs.map(log => ({
         _id: log._id,
 
-        actor: 'System',
-        actorRole: 'Admin',
+        actor: log.actor,
+        actorRole: log.actorRole,
 
         action: formatAction(log.action),
 
@@ -257,29 +272,6 @@ get recentEmployees(): Employee[] {
   return this.employees.slice(0, 5);
 }
 
-
-  // deleteEmployee(id: number): void {
-  //   const emp = this.employees.find(e => e.id === id)!;
-  //   this.employees  = this.employees.filter(e => e.id !== id);
-  //   this.activities = [{
-  //     id: Date.now(), actor: 'Admin', actorRole: 'Admin',
-  //     action: 'removed employee', target: emp.name,
-  //     time: 'Just now', icon: '🗑️',
-  //   }, ...this.activities];
-  //   this.showDeleteConfirm = null;
-  //   this.showToast(`${emp.name} removed`, 'error');
-  // }
-
-  // deleteEmployee(emp: Employee): void {
-  //   this.employees = this.employees.filter(e => e.id !== emp.id);
-  //   this.activities = [{
-  //     id: Date.now(), actor: 'Admin', actorRole: 'Admin',
-  //     action: 'removed employee', target: emp.name,
-  //     time: 'Just now', icon: '🗑️',
-  //   }, ...this.activities];
-  //   this.showDeleteConfirm = null
-  //   this.showToast(`${emp.name} removed`, 'error');
-  // }
   deleteEmployee(emp: Employee): void {
   this.employeeService.deleteEmployee(emp._id).subscribe({
     next: () => {
