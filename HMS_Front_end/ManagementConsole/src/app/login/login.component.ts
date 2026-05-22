@@ -24,11 +24,20 @@ constructor(private loginService:LoginService,
   onSubmit(){
     this.loginService.loginsubmit(this.loginData).subscribe((data:any) => {
       // Handle the retrieved data
-      
-      console.log(data);
+      alert("Login successful!");
+      alert("Token: " + data.token);
+      alert("User: " + JSON.stringify(data.user));
+      // alert("Roles: " + JSON.stringify(data.roles));
+      // alert(JSON.stringify(data));
+      // console.log(data);
       this.authService.setToken(data.token);
       this.authService.setUser(data.user);
-      this.authService.setRole(data.roles);
+      this.authService.setRole(data.user.roles);
+      // alert(data.token);
+      // alert("bababa");
+      // alert(data.user);
+      alert(data.user.roles);
+      alert(this.authService.getRole());
       this.router.navigate(['/dashboard']);
     });
   }

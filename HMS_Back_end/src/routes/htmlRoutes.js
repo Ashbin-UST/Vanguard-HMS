@@ -4,7 +4,7 @@ const htmlContent = require("../models/HtmlContent");
 const htmlContentController = require("../controllers/htmlContentController");
 
 // Get all HTML content
-router.get("/", htmlContentController.getAllHtmlContent);
+// router.get("/", htmlContentController.getAllHtmlContent);
 
 // Ensure the router is exported
 module.exports = router;

@@ -8,7 +8,7 @@ export class LoginService {
 api = 'http://localhost:5000/api/auth/login';
   constructor(private http:HttpClient) { }
   loginsubmit(loginData:any){
-    alert(loginData.email);
+    
     return this.http.post(this.api,loginData);
   }
 }

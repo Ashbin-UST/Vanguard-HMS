@@ -7,5 +7,6 @@ const nodeController = require("../controllers/nodeController");
 
 router.get("/operationreporttotal", dashboardController.getDashboardData);
 router.get('/node/by-role', nodeController.getNodesByRole);
+router.post('/node', nodeController.createNodes);
 // Ensure the router is exported
 module.exports = router;

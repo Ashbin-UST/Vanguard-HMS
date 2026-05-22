@@ -16,10 +16,12 @@ export class EmployeeService {
 
   getEmployees(): Observable<Employee[]> {
     console.log("Fetching employees from API...");
+    
     return this.http.get<Employee[]>(this.api)
   }
 
   addEmployee(emp: Employee): Observable<Employee> {
+    alert(JSON.stringify(emp));
     return this.http.post<Employee>(this.api, emp);
   }
 

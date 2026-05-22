@@ -17,16 +17,22 @@ export class AuthService {
   setUser(user: any) {
     localStorage.setItem('user', JSON.stringify(user));
   }
-  setRole(user: any) {
-    localStorage.setItem('roles', JSON.stringify(user.roles));
+  setRole(roles: any) {
+    alert("Setting role: " + JSON.stringify(roles));
+    localStorage.setItem('roles', JSON.stringify( roles));
   }
   getToken(): string | null {
     return localStorage.getItem('token');
+  }
+  getRole(): string | null {
+    const roles = localStorage.getItem('roles');
+    return roles ? JSON.parse(roles) : null;
   }
 
   logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('roles');
   }
 
 }

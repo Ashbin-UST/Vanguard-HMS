@@ -37,7 +37,7 @@ import {
 export class DashComponent {
 
   // ── Constants ───────────────────────────────────────────────────
-  roles = ['Doctor', 'Cashier', 'Receptionist', 'Nurse', 'Lab Technician', 'Pharmacist'];
+  roles = ["Admin",'Doctor', 'Cashier', 'Receptionist', 'Nurse', 'Lab Technician', 'Pharmacist'];
   departments = ['Cardiology', 'General', 'Pediatrics', 'Emergency', 'Radiology', 'Pharmacy', 'Finance', 'Front Desk'];
 
 
@@ -78,12 +78,12 @@ navItems: NavItem[] = [];
   }
   
 loadNavItems() {
-  const role = localStorage.getItem('role') || 'ADMIN';
+  const role = localStorage.getItem('role') || "ADMIN";
 
   this.navnodeService.getNavByRole(role).subscribe({
     next: (data) => {
       this.navItems = data;
-
+      // alert(JSON.stringify(data));
       if (data.length) {
         this.activeSection = data[0].url;
       }
@@ -306,6 +306,7 @@ get recentEmployees(): Employee[] {
       // show date in dd/mm/yyyy format
       joiningDate: new Date().toISOString().split('T')[0],
     };
+    alert(JSON.stringify(emp));
     this.employees  = [emp, ...this.employees];
     this.requests   = this.requests.filter(r => r._id !== req._id);
     this.activities = [{

@@ -22,17 +22,13 @@ import { HtmlContentService } from './service/htmlcontent/htmlcontent.service';
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
-export class AppComponent implements OnInit {
+export class AppComponent {
 
   contents: any[] = [];
 
-  constructor(private contentService: HtmlContentService) {}
+  constructor() {}
 
-  ngOnInit(): void {
-    this.contentService.getContent().subscribe(data => {
-      this.contents = data;
-    });
-  }
+
 
   title = 'first-angular-app';
 }
