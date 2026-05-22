@@ -14,8 +14,8 @@ app.use(helmet());
 // Enable CORS
 app.use(
     cors({
-        origin: process.env.FRONTEND_URL,
-        credentials: true
+        origin: 'http://localhost:4200'
+        
     })
 );
 
@@ -27,8 +27,18 @@ app.use(express.json());
 
 // Routes
 const authRoutes = require("./routes/authRoutes");
+const htmlRoutes = require("./routes/htmlRoutes");
+const appointmentRoutes = require("./routes/appointmentRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
+const employeeRoutes=require("./routes/employeeRoutes");
+const auditLogRoutes=require("./routes/auditLogRoutes");
 
+app.use("/api/auth/employees", employeeRoutes);
+app.use("/api/html", htmlRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/appointments", appointmentRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/auth/audit-logs", auditLogRoutes);
 
 // Default route
 app.get("/", (req, res) => res.json({

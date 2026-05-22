@@ -1,4 +1,4 @@
-/* You can add global styles to this file, and also import other style files */
+You can add global styles to this file, and also import other style files
 
 /* Add styles for the navigation bar */
 nav {
@@ -27,7 +27,7 @@ body {
 }
 
 /* Add styles for the router outlet container */
-router-outlet {
+/* router-outlet {
   display: block;
   margin: 2rem auto;
   padding: 1rem;
@@ -35,4 +35,4 @@ router-outlet {
   background: white;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
-}
+} */

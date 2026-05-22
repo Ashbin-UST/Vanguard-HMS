@@ -9,7 +9,7 @@ const controller = require("../controllers/authController");
 const allowedDesignationTypes = ['OWNER', 'ADMIN', 'DOCTOR', 'RECEPTIONIST', 
   'CASHIER', 'NURSE', 'LAB_TECH', 'PHARMACIST'];
 const allowedDepartmentTypes = ["OPD", "IPD", "Lab", "Pharmacy", "Administration", "Reception", "Billing"];
- 
+
 const signUpValidation = [
     body('name').notEmpty().withMessage('Name is required!!'),
     body('phone').notEmpty().withMessage('Phone Number is required!!'),
@@ -26,8 +26,7 @@ const signUpValidation = [
       .if((value, { req }) => ["DOCTOR","LAB_TECH"]
       .includes(req.body.designation)).notEmpty()
       .withMessage("Specialization is required!!"),
-    body("qualification").isArray({ min: 1 })
-      .withMessage("At least one qualification is required!!"),
+    body("qualification").isAlpha().withMessage("Qualification must contain only alphabetic characters!!"),
     body('consultationFee')
       .if(body("designation").equals("DOCTOR"))
       .notEmpty().withMessage("Consultation Fee is required for Doctor!!"),
@@ -48,6 +47,6 @@ router.post("/login", loginValidation, validate, controller.login);
 router.get("/profile", auth, controller.profile);
 router.put("/selfUpdate", auth, controller.updateMyProfile);
 router.put("/updateEmployee/:employeeCode", auth, authAdmin, controller.updateEmployee);
-router.delete("/deleteEmployee/:employeeCode", auth, authAdmin, controller.deleteEmployee);
+router.delete("/deleteEmployee/:employeeCode", auth, controller.deleteEmployee);
 
 module.exports = router;

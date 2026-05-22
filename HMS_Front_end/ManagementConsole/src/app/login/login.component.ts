@@ -28,6 +28,7 @@ constructor(private loginService:LoginService,
       console.log(data);
       this.authService.setToken(data.token);
       this.authService.setUser(data.user);
+      this.authService.setRole(data.roles);
       this.router.navigate(['/dashboard']);
     });
   }

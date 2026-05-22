@@ -1,0 +1,50 @@
+   <div class="table-wrap">
+          <table class="emp-table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Role</th>
+                <th>Department</th>
+                <th>Email</th>
+                <th>Designation</th>
+                <th></th>
+                <th>Status</th>
+                <th>Joined</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let e of filteredEmployees">
+                <td>
+                  <div class="emp-cell">
+                    <div class="avatar avatar--sm" [style.background]="getAvatarColor(e.name)">{{ e.avatar }}</div>
+                    <span class="emp-name">{{ e.name }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="role-badge" [ngStyle]="getRoleStyle(e.roles)">
+                    <span class="role-dot" [style.background]="getRoleDotColor(e.roles)"></span>
+                    {{ e.roles }}
+                  </span>
+                </td>
+                <td class="td-muted">{{ e.department }}</td>
+                <td class="td-light">{{ e.email }}</td>
+                <td class="td-muted">{{ e.designation }}</td>
+                <td>
+                 
+                </td>
+                <td class="td-light"> <span class="status-badge" [class.status-badge--active]="e.status === 'Active'" [class.status-badge--inactive]="e.status !== 'Active'">
+                    {{ e.status }}
+                  </span></td>
+                  <td class="td-light">{{ e.joiningDate.substring(0, 10) }}</td>
+                <td>
+                  <button class="btn-remove" (click)="confirmDelete(e)">Remove</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="empty-state" *ngIf="filteredEmployees.length === 0">No employees found.</div>
+        </div>
+        
+
+

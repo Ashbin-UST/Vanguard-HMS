@@ -17,6 +17,9 @@ export class AuthService {
   setUser(user: any) {
     localStorage.setItem('user', JSON.stringify(user));
   }
+  setRole(user: any) {
+    localStorage.setItem('roles', JSON.stringify(user.roles));
+  }
   getToken(): string | null {
     return localStorage.getItem('token');
   }

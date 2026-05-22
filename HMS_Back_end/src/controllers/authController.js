@@ -4,11 +4,13 @@ const crypto = require("node:crypto");
 const User = require("../models/Users");
 const Employee = require("../models/Employees");
 const sendEmail = require("../utils/sendEmail");
+const createAuditLog = require("../utils/createAuditLog");
 require("dotenv").config();
 
 // Signup
 exports.signup = async (req, res) => {
     try {
+        console.log("Signup request body:", req.body);
         const {
             username,
             email,
@@ -25,7 +27,7 @@ exports.signup = async (req, res) => {
             consultationFee,
             availabilitySlots
         } = req.body;
-
+        
         // Check existing user
         const existingUser = await User.findOne({ email });
 
@@ -87,6 +89,18 @@ exports.signup = async (req, res) => {
             verificationToken,
             verificationTokenExpiry
         });
+         const audit =await createAuditLog({
+              req,
+              action: "ADD",
+              actor: req.user?.employeeCode || "System",
+              actorRole: req.user?.roles || ["System"],
+              collectionName: "Employees",
+              targetId: employee._id,
+              targetUserId: employee._id,
+              before: employee,
+                 // ✅ important
+            });
+            console.log(audit);
 
         // Verification URL
         const verifyUrl =
@@ -135,7 +149,7 @@ exports.signup = async (req, res) => {
 exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
-
+        console.log("Login request body:", req.body);
         const user = await User.findOne({ email });
         if (!user) {
             return res.status(404).json({

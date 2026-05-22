@@ -1,0 +1,239 @@
+<div class="layout">
+
+  <!-- ── SIDEBAR ──────────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-title">🏥 <span class="brand-accent">Vanguard</span></div>
+      <div class="brand-sub">Hospital Management System</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button
+        *ngFor="let item of navItems"
+        class="nav-btn"
+        [class.nav-btn--active]="activeSection === item.id"
+        (click)="setSection(item.id)">
+        <span class="nav-icon">{{ item.icon }}</span>
+        {{ item.label }}
+        <span *ngIf="item.id === 'requests' && requestsBadge > 0" class="nav-badge">
+          {{ requestsBadge }}
+        </span>
+      </button>
+    </nav>
+
+    <div class="sidebar-user">
+      <div class="user-avatar">AD</div>
+      <div>
+        <div class="user-name">Admin</div>
+        <div class="user-role">Super Admin</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ─────────────────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- Header -->
+    <div class="header">
+      <div>
+        <h1 class="header-title">{{ pageTitle }}</h1>
+        <div class="header-date">{{ todayDate }}</div>
+      </div>
+      <button *ngIf="showAddButton" class="btn-add" (click)="showAddModal = true">
+        + Add Employee
+      </button>
+    </div>
+
+    <!-- ── OVERVIEW ─────────────────────────────────────────── -->
+    <ng-container *ngIf="activeSection === 'overview'">
+
+      <!-- Stats cards -->
+      <div class="stats-grid">
+        <div class="stat-card" *ngFor="let s of statsCards">
+          <div>
+            <div class="stat-label">{{ s.label }}</div>
+            <div class="stat-value" [style.color]="s.color">{{ s.value }}</div>
+          </div>
+          <div class="stat-icon" [style.background]="s.bg">{{ s.icon }}</div>
+        </div>
+      </div>
+
+      <!-- Two panels -->
+      <div class="two-col">
+
+        <!-- Recent Employees -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Recent Employees</span>
+            <button class="link-btn" (click)="setSection('employees')">View all →</button>
+          </div>
+          <div class="emp-row" *ngFor="let e of recentEmployees">
+            <div class="avatar" [style.background]="getAvatarColor(e.name)">{{ e.avatar }}</div>
+            <div class="emp-info">
+              <div class="emp-name">{{ e.name }}</div>
+              <div class="emp-dept">{{ e.department }}</div>
+            </div>
+            <span class="role-badge" [ngStyle]="getRoleStyle(e.roles)">
+              <span class="role-dot" [style.background]="getRoleDotColor(e.roles)"></span>
+              {{ e.roles }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Activity Feed -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Recent Activity</span>
+            <button class="link-btn" (click)="setSection('activity')">View all →</button>
+          </div>
+         
+          <app-activity-feed
+              [activities]="activities"
+              mode="compact"
+              [limit]="4">
+        </app-activity-feed>
+
+        </div>
+
+      </div>
+    </ng-container>
+
+    <!-- ── EMPLOYEES ─────────────────────────────────────────── -->
+    <ng-container *ngIf="activeSection === 'employees'">
+      <div class="panel">
+
+        <!-- Filters -->
+        <div class="filters">
+          <input
+            class="search-input"
+            placeholder="Search by name or email..."
+            [(ngModel)]="searchTerm" />
+          <select class="role-select" [(ngModel)]="roleFilter">
+            <option>All</option>
+            <option *ngFor="let r of roles">{{ r }}</option>
+          </select>
+        </div>
+
+        <!-- Table -->
+     
+        <app-employee-tables   [employees]="employees"
+  [searchTerm]="searchTerm"
+  [roleFilter]="roleFilter"
+  (requestDelete)="confirmDelete($event)">></app-employee-tables>
+
+      </div>
+    </ng-container>
+
+
+    
+    <!-- ── ACTIVITY ──────────────────────────────────────────── -->
+    <ng-container *ngIf="activeSection === 'activity'">
+      <div class="panel">
+        <div *ngFor="let a of activities; let i = index; let last = last" class="timeline-row" [class.timeline-row--last]="last">
+          <div class="timeline-left">
+            <div class="activity-icon">{{ a.icon }}</div>
+            <div class="timeline-line" *ngIf="!last"></div>
+          </div>
+          <div class="activity-body">
+            <div class="activity-text activity-text--lg">
+              <b>{{ a.actor }}</b>
+              <span class="actor-role"> ({{ a.actorRole }}) </span>
+              <span class="muted">{{ a.action }} </span>
+              <b class="target-name">{{ a.target }}</b>
+            </div>
+            <div class="activity-time">🕒 {{ a.time }}</div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ── REQUESTS ──────────────────────────────────────────── -->
+    <ng-container *ngIf="activeSection === 'requests'">
+
+      <div class="empty-requests" *ngIf="requests.length === 0">
+        <div class="empty-emoji">🎉</div>
+        <div class="empty-msg">All caught up! No pending requests.</div>
+      </div>
+
+      <div class="request-card" *ngFor="let r of requests">
+        <div class="avatar avatar--lg" [style.background]="getAvatarColor(r.name)">{{ r.avatar }}</div>
+        <div class="request-info">
+          <div class="request-name-row">
+            <span class="request-name">{{ r.name }}</span>
+            <span class="role-badge" [ngStyle]="getRoleStyle(r.role)">
+              <span class="role-dot" [style.background]="getRoleDotColor(r.role)"></span>
+              {{ r.role }}
+            </span>
+          </div>
+          <div class="request-meta">{{ r.department }} · {{ r.email }}</div>
+          <div class="request-by">
+            Requested by <b>{{ r.requestedBy }}</b> ({{ r.requestorRole }}) · {{ r.time }}
+          </div>
+        </div>
+        <div class="request-actions">
+          <button class="btn-approve" (click)="approveRequest(r)">✓ Approve</button>
+          <button class="btn-reject"  (click)="rejectRequest(r)">✕ Reject</button>
+        </div>
+      </div>
+
+    </ng-container>
+
+  </main>
+</div>
+
+<!-- ── ADD EMPLOYEE MODAL ──────────────────────────────────────── -->
+<div class="modal-backdrop" *ngIf="showAddModal" (click)="showAddModal = false">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-title">Add New Employee</div>
+    <div class="modal-sub">Fill in the details to onboard a new staff member.</div>
+
+    <div class="form-field">
+      <label>Full Name *</label>
+      <input type="text" placeholder="Dr. John Doe" [(ngModel)]="newEmp.name" />
+    </div>
+    <div class="form-field">
+      <label>Email *</label>
+      <input type="email" placeholder="john.doe@hospital.com" [(ngModel)]="newEmp.email" />
+    </div>
+
+    <div class="form-row">
+      <div class="form-field">
+        <label>Role</label>
+        <select [(ngModel)]="newEmp.role">
+          <option *ngFor="let r of roles">{{ r }}</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Department</label>
+        <select [(ngModel)]="newEmp.dept">
+          <option *ngFor="let d of departments">{{ d }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="showAddModal = false">Cancel</button>
+      <button class="btn-confirm" (click)="addEmployee()">Add Employee</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── DELETE CONFIRM MODAL ───────────────────────────────────── -->
+<div class="modal-backdrop" *ngIf="showDeleteConfirm" (click)="cancelDelete()">
+  <div class="modal modal--center" (click)="$event.stopPropagation()">
+    <div class="modal-emoji">⚠️</div>
+    <div class="modal-title">Remove Employee?</div>
+    <div class="modal-sub">
+      Are you sure you want to remove <b>{{ showDeleteConfirm!.name }}</b>? This action cannot be undone.
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="cancelDelete()">Cancel</button>
+      <button class="btn-delete" (click)="deleteEmployee(showDeleteConfirm!)">Remove</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOAST ──────────────────────────────────────────────────── -->
+<div class="toast" *ngIf="toast" [class.toast--error]="toast.type === 'error'">
+  {{ toast.type === 'error' ? '❌' : '✅' }} {{ toast.msg }}
+</div>

@@ -1,0 +1,45 @@
+<!-- Compact Mode -->
+<ng-container *ngIf="mode === 'compact'">
+  <div class="activity-row" *ngFor="let a of visibleActivities">
+    <div class="activity-icon">{{ a.icon }}</div>
+    <div class="activity-body">
+      <div class="activity-text">
+        <b>{{ a.actor }}</b>
+        <span class="muted"> {{ a.action }} </span>
+        <b>{{ a.target }}</b>
+      </div>
+      <div class="activity-time">{{ a.time }}</div>
+    </div>
+  </div>
+</ng-container>
+
+<!-- Timeline Mode -->
+<ng-container *ngIf="mode === 'timeline'">
+  <div
+    *ngFor="let a of visibleActivities; let last = last"
+    class="timeline-row"
+    [class.timeline-row--last]="last"
+  >
+    <div class="timeline-left">
+      <div class="activity-icon">{{ a.icon }}</div>
+      <div class="timeline-line" *ngIf="!last"></div>
+    </div>
+
+    <div class="activity-body">
+      <div class="activity-text activity-text--lg">
+        <b>{{ a.actor }}</b>
+        <span class="actor-role"> ({{ a.actorRole }}) </span>
+        <span class="muted">{{ a.action }} </span>
+        <b class="target-name">{{ a.target }}</b>
+      </div>
+      <div class="activity-time">🕒 {{ a.time }}</div>
+    </div>
+  </div>
+</ng-container>
+
+<!-- Empty State -->
+<div class="empty-state" *ngIf="visibleActivities.length === 0">
+  <div class="empty-icon">📋</div>
+  <div class="empty-text">No activity found.</div>
+</div>
+``

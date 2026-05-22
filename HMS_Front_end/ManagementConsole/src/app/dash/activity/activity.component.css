@@ -1,0 +1,84 @@
+.activity-row,
+.timeline-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 0;
+}
+
+.activity-icon {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #f3f4f6;
+  font-size: 18px;
+}
+
+.activity-body {
+  flex: 1;
+}
+
+.activity-text {
+  font-size: 14px;
+  color: #111827;
+  line-height: 1.5;
+}
+
+.activity-text--lg {
+  font-size: 15px;
+}
+
+.activity-time {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.muted {
+  color: #6b7280;
+}
+
+.actor-role {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.target-name {
+  color: #111827;
+}
+
+.timeline-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.timeline-line {
+  width: 2px;
+  flex: 1;
+  min-height: 32px;
+  background: #e5e7eb;
+  margin-top: 6px;
+}
+
+.timeline-row--last .timeline-line {
+  display: none;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 24px 12px;
+  color: #6b7280;
+}
+
+.empty-icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.empty-text {
+  font-size: 14px;
+}

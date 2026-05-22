@@ -11,6 +11,11 @@ const billSchema = new mongoose.Schema({
         required: true,
         ref: "Patients"
     },
+        EmployeeId: {
+        type: String,
+        required: true,
+        ref: "Patients"
+    },
     appointmentId: {
         type: String,
         ref: "Appoinments"

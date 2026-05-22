@@ -10,7 +10,7 @@ import { OperationReportTotalService } from '../../service/dashboard/OperationRe
 export class OperationReportComponent implements OnInit {
   constructor(private operationReportService: OperationReportTotalService) {}
   operationReport: { appointmentno: number; employeeno: number; billingno: number; appointments: any[]; employees: any[]; billings: any[] } = {
-    appointmentno: 0,
+    appointmentno: 1,
     employeeno: 0,
     billingno: 0,
     appointments: [],
