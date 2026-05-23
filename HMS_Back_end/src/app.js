@@ -42,6 +42,7 @@ app.use("/api/register", registrationRoutes);
 app.use("/api/patients", patientRoutes);
 app.use("/api/appointments", appointmentRoutes);
 
+
 // Default route
 app.get("/", (req, res) => res.json({
     message: "API running"

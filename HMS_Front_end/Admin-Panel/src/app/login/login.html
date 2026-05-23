@@ -1,98 +1,70 @@
-<div class="page">
+<div class="login-page">
+  <div class="login-card-wrapper">
+    <div class="login-card">
 
-  <div class="login-container">
-
-    <!-- LEFT SIDE -->
-    <div class="left-panel">
-
-      <div class="image-section">
-        <img src="/indexPic.jpg" alt="doctor" />
+      <div class="login-card__header">
+        <h2 class="login-card__title">Welcome Back</h2>
+        <p class="login-card__subtitle">Login to your account</p>
       </div>
 
-      <div class="welcome-section">
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
 
-        <h1>Vanguard Hospital Management System</h1>
-
-        <p>
-          Welcome back! Login to access your account
-        </p>
-
-      </div>
-
-    </div>
-
-    <!-- RIGHT SIDE -->
-    <div class="right-panel">
-
-      <div class="form-box">
-
-        <h2>Login</h2>
-
-        <p class="subtitle">
-          Enter your credentials to login
-        </p>
-
-        <form
-          [formGroup]="loginForm"
-          (ngSubmit)="onSubmit()"
-        >
-
-          <div class="input-group">
-
-            <label for="loginEmail">
-              Email
-            </label>
-
-            <input
-              id="loginEmail"
-              type="email"
-              placeholder="Enter email"
-              formControlName="email"
-            />
-
-          </div>
-
-          <div class="input-group">
-
-            <label for="loginPassword">
-              Password
-            </label>
-
-            <input
-              id="loginPassword"
-              type="password"
-              placeholder="Enter password"
-              formControlName="password"
-            />
-
-          </div>
-
-          <div class="forgot-password">
-            <a href="#">
-              Forgot Password?
-            </a>
-          </div>
-
-          <button type="submit">
-            Sign In
-          </button>
-
-        </form>
-
-        <div class="signup-text">
-
-          Don't have an account?
-
-          <a routerLink="/signup">
-            Sign Up
-          </a>
-
+        <!-- Email -->
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input
+            type="email"
+            formControlName="email"
+            class="form-input"
+            placeholder="your.email@hospital.com"
+          />
+          @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
+            <p class="form-error">Valid email is required</p>
+          }
         </div>
 
+        <!-- Password -->
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input
+            type="password"
+            formControlName="password"
+            class="form-input"
+            placeholder="••••••••"
+          />
+          @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+            <p class="form-error">Password is required</p>
+          }
+        </div>
+
+        <!-- Forgot Password -->
+        <div class="form-group form-group--right">
+          <a routerLink="/forgot-password" class="link link--sm">Forgot Password?</a>
+        </div>
+
+        <!-- Error Message -->
+        @if (errorMessage) {
+          <div class="alert alert--error">{{ errorMessage }}</div>
+        }
+
+        <!-- Submit -->
+        <button
+          type="submit"
+          [disabled]="loginForm.invalid || loading"
+          class="btn-submit"
+        >
+          {{ loading ? 'Logging in...' : 'Login' }}
+        </button>
+
+      </form>
+
+      <!-- Register Link -->
+      <div class="login-card__footer">
+        <p>Don't have an account?
+          <a routerLink="/register" class="link link--bold">Register as Employee</a>
+        </p>
       </div>
 
     </div>
-
   </div>
-
 </div>

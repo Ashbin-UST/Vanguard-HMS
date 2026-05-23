@@ -1,126 +1,63 @@
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
-import { Router, RouterModule } from '@angular/router';
 import {
   FormBuilder,
   FormGroup,
-  ReactiveFormsModule,
   Validators,
+  ReactiveFormsModule
 } from '@angular/forms';
-
-import { Auth } from '../services/auth';
+import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../services/auth';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    RouterModule
-  ],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './login.html',
-  styleUrl: './login.css',
+  styleUrl: './login.css'
 })
 export class Login {
+  private fb = inject(FormBuilder);
+  private router = inject(Router);
+  private authService = inject(AuthService);
 
   loginForm: FormGroup;
+  loading = false;
+  errorMessage = '';
 
-  showPassword = false;
-
-  errorMsg = '';
-
-  constructor(
-    private readonly fb: FormBuilder,
-    private readonly authService: Auth,
-    private readonly router: Router
-  ) {
-
+  constructor() {
     this.loginForm = this.fb.group({
-
-      email: [
-        '',
-        [
-          Validators.required,
-          Validators.email
-        ]
-      ],
-
-      password: [
-        '',
-        [
-          Validators.required,
-          Validators.minLength(6)
-        ]
-      ],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', Validators.required]
     });
   }
 
-  togglePwd(): void {
-
-    this.showPassword =
-      !this.showPassword;
-  }
-
   onSubmit(): void {
-
-    console.log('BUTTON CLICKED');
-
-    if (this.loginForm.valid) {
-
-      this.errorMsg = '';
-
-      console.log(this.loginForm.value);
-
-      this.authService.login(this.loginForm.value)
-        .subscribe({
-
-          next: (res: any) => {
-
-            console.log(res);
-
-            localStorage.setItem(
-              'token',
-              res.token
-            );
-
-            this.router.navigate([
-              '/dashboard'
-            ]);
-          },
-
-          error: (err) => {
-
-            console.log(err);
-
-            this.errorMsg =
-              'Login failed';
-          }
-        });
-
-    } else {
-
-      this.errorMsg =
-        'The username or password is incorrect.';
-
+    if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
+      return;
     }
-  }
 
-  get emailInvalid() {
+    this.loading = true;
+    this.errorMessage = '';
 
-    const ctrl =
-      this.loginForm.get('email');
+    this.authService.login(this.loginForm.value).subscribe({
+      next: (res: any) => {
+        localStorage.setItem('token', res.token);
 
-    return ctrl?.invalid &&
-      ctrl?.touched;
-  }
+        if (res.user) {
+          localStorage.setItem('user', JSON.stringify(res.user));
+        }
 
-  get passwordInvalid() {
+        this.loading = false;
+        this.router.navigate(['/dashboard']);
+      },
 
-    const ctrl =
-      this.loginForm.get('password');
-
-    return ctrl?.invalid &&
-      ctrl?.touched;
+      error: (err) => {
+        this.loading = false;
+        this.errorMessage =
+          err.error?.message || 'Login failed. Please try again.';
+      }
+    });
   }
 }

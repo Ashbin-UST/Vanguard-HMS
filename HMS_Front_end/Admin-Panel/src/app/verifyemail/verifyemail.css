@@ -1,0 +1,71 @@
+* {
+  box-sizing: border-box;
+}
+
+.container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(to bottom right, #e0f2fe, #ffffff);
+  padding: 20px;
+}
+
+.card {
+  width: 100%;
+  max-width: 500px;
+  background: white;
+  padding: 40px;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.icon {
+  font-size: 60px;
+  margin-bottom: 20px;
+}
+
+h2 {
+  color: #0f172a;
+  margin-bottom: 15px;
+}
+
+p {
+  color: #475569;
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
+.info-box {
+  margin-top: 20px;
+  padding: 16px;
+  background: #f1f5f9;
+  border-radius: 12px;
+  text-align: left;
+}
+
+ul {
+  margin-top: 10px;
+  padding-left: 20px;
+}
+
+li {
+  margin-bottom: 8px;
+  color: #334155;
+}
+
+.login-btn {
+  display: inline-block;
+  margin-top: 25px;
+  padding: 12px 24px;
+  background: #0284c7;
+  color: white;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.login-btn:hover {
+  background: #0369a1;
+}

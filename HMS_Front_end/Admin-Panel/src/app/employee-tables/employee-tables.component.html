@@ -1,0 +1,52 @@
+<div class="table-wrap">
+  <table class="emp-table">
+    <thead>
+      <tr>
+        <th>Employee</th>
+        <th>Role</th>
+        <th>Department</th>
+        <th>Email</th>
+        <th>Designation</th>
+        <th>Status</th>
+        <th>Joined</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let e of filteredEmployees"
+          class="emp-row--clickable"
+          (click)="onRowClick(e)">
+        <td>
+          <div class="emp-cell">
+            <div class="avatar avatar--sm" [style.background]="getAvatarColor(e.name)">{{ e.avatar }}</div>
+            <span class="emp-name">{{ e.name }}</span>
+          </div>
+        </td>
+        <td>
+          <!-- Roles: OWNER / ADMIN / STAFF (from User model) -->
+          <span class="role-badge role-badge--system">{{ e.roles }}</span>
+        </td>
+        <td class="td-muted">{{ e.department }}</td>
+        <td class="td-light">{{ e.email }}</td>
+        <td>
+          <span class="role-badge" [ngStyle]="getDesignationStyle(e.designation)">
+            <span class="role-dot" [style.background]="getDesignationDot(e.designation)"></span>
+            {{ e.designation }}
+          </span>
+        </td>
+        <td>
+          <span class="status-badge"
+            [class.status-badge--active]="e.status === 'Active' || e.status === 'ACTIVE'"
+            [class.status-badge--inactive]="e.status !== 'Active' && e.status !== 'ACTIVE'">
+            {{ e.status }}
+          </span>
+        </td>
+        <td class="td-light">{{ e.joiningDate ? e.joiningDate.substring(0, 10) : '—' }}</td>
+        <td>
+          <button class="btn-remove" (click)="$event.stopPropagation(); confirmDelete(e)">Remove</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="empty-state" *ngIf="filteredEmployees.length === 0">No employees found.</div>
+</div>

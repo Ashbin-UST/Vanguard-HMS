@@ -8,15 +8,8 @@ const validateUniqueEmployeeFields = require("../utils/validateUniqueEmployeeFie
 
 // Employee self registration
 exports.registerEmployee = async (req, res) => {
-  let employee;
-  let user;
 
-  const {
-    username,
-    email,
-    password,
-    designation
-  } = req.body;
+  const { username, email, password, designation } = req.body;
 
   try {
     // Prevent self-registration as ADMIN or OWNER
@@ -28,9 +21,9 @@ exports.registerEmployee = async (req, res) => {
 
     const uniquenessResult = await validateUniqueEmployeeFields(req.body);
 
-    if (!uniquenessResult.success){
+    if (!uniquenessResult.success) {
       return res.status(uniquenessResult.status).json({
-        message: uniquenessResult.message
+        message: uniquenessResult.message,
       });
     }
 
@@ -40,27 +33,27 @@ exports.registerEmployee = async (req, res) => {
     // Build employee data
     const employeeData = buildEmployeeData(req.body);
 
-      // Create employee
-      employee = new Employee(employeeData);
+    // Create employee
+    const employee = new Employee(employeeData);
 
-      await employee.save();
+    await employee.save();
 
-      // Create user
-      user = new User({
-        username,
-        email,
-        passwordHash,
-        roles: ["STAFF"],
-        employeeCode: employee.employeeCode,
-        status: "PENDING",
-        mustChangePassword: false,
-        createdByAdmin: false,
-        approvedBy: null,
-        approvedAt: null,
-        createdBy: null,
-      });
+    // Create user
+    const user = new User({
+      username,
+      email,
+      passwordHash,
+      roles: ["STAFF"],
+      employeeCode: employee.employeeCode,
+      status: "PENDING",
+      mustChangePassword: false,
+      createdByAdmin: false,
+      approvedBy: null,
+      approvedAt: null,
+      createdBy: "Self registration",
+    });
 
-      await user.save();
+    await user.save();
 
     // Send approval request email to admin(s)
     try {
@@ -150,4 +143,4 @@ exports.registerEmployee = async (req, res) => {
       message: "Server error during employee self registration",
     });
   }
-}
+};
