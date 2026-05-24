@@ -1,21 +1,74 @@
-const jwt = require('jsonwebtoken');
+const User = require('../models/userModel');
+const { verifyAccessToken } = require('../utils/generateToken');
 
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'No token provided' });
-  }
-
-  const token = authHeader.split(' ')[1];
+const protect = async (req, res, next) => {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const token = req.headers.authorization?.startsWith('Bearer ')
+      ? req.headers.authorization.split(' ')[1]
+      : null;
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'Access denied. No token provided. Please login first',
+      });
+    }
+
+    const decoded = verifyAccessToken(token);
+
+    const user = await User.findById(decoded.id);
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'User no longer exists',
+      });
+    }
+
+    if (user.status === 'INACTIVE') {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account is INACTIVE. Contact administrator',
+      });
+    }
+
     req.user = decoded;
-
     next();
-  } catch (err) {
-    console.error('JWT Verification Error:', err.message);
+  } catch (error) {
+    if (
+      error.name === 'JsonWebTokenError' ||
+      error.name === 'TokenExpiredError'
+    ) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or expired token. Please login again',
+      });
+    }
 
-    return res.status(401).json({ message: 'Invalid or expired token' });
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
-module.exports = authenticateToken;
+
+const authorize = (...allowedRoles) => {
+  return (req, res, next) => {
+    const userRoles = req.user.roles;
+
+    const hasPermission = userRoles.some((role) =>
+      allowedRoles.includes(role)
+    );
+
+    if (!hasPermission) {
+      return res.status(403).json({
+        success: false,
+        message: `Access denied. Required: [${allowedRoles.join(', ')}]. Your roles: [${userRoles.join(', ')}]`,
+      });
+    }
+
+    next();
+  };
+};
+
+module.exports = { protect, authorize };

@@ -1,17 +1,26 @@
-const express = require("express");
+const express = require('express');
+const {
+    register,
+    selfRegister,
+    login,
+    getMe,
+    forgotPassword,
+    resetPassword,
+    changePassword,
+} = require('../controllers/authController');
+const { protect } = require('../middleware/authMiddleware');
+
 const router = express.Router();
 
-const { signupValidation } = require('../validators/authValidator');
-const { loginValidation } = require('../validators/authValidator');
-const validate = require('../middleware/validate')
-const { signup, login, logout, me } = require("../controllers/authController");
-const auth = require("../middleware/authMiddleware");
+// Public routes
+router.post('/register', register); // Admin register (original)
+router.post('/self-register', selfRegister); // Employee self-registration
+router.post('/login', login);
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
 
-
-
-router.post("/signup", signupValidation, validate, signup);
-router.post("/login", loginValidation, validate, login);
-router.post("/logout", logout);
-router.get("/me", auth, me);
+// Protected routes
+router.get('/me', protect, getMe);
+router.put('/change-password', protect, changePassword);
 
 module.exports = router;
