@@ -1,0 +1,166 @@
+<div class="employee-list-container">
+  <!-- HEADER -->
+  <div class="list-header">
+    <div class="header-left">
+      <p class="header-subtitle">Total: {{ totalEmployees }} employee(s)</p>
+    </div>
+    <button (click)="createEmployee()" class="btn btn-primary">
+      + Add New Employee
+    </button>
+  </div>
+
+  <!-- SEARCH BAR -->
+  <div class="search-section">
+    <div class="search-input-wrapper">
+      <input type="text" [(ngModel)]="searchQuery" (keyup.enter)="onSearch()" class="form-input search-input"
+        placeholder="Search by name, phone, email, or employee code..." />
+      <div class="search-actions">
+        @if (searchQuery) {
+        <button (click)="clearSearch()" class="btn-icon" title="Clear">✕</button>
+        }
+        <button (click)="onSearch()" class="btn btn-primary btn-sm">Search</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILTERS (hidden during search results) -->
+  @if (!showSearchResults) {
+  <div class="filters-section">
+    <div class="filter-group">
+      <label class="filter-label">Status:</label>
+      <select [(ngModel)]="statusFilter" (change)="onFilterChange()" class="filter-select">
+        <option value="">All</option>
+        <option value="ACTIVE">Active</option>
+        <option value="INACTIVE">Inactive</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label">Department:</label>
+      <select [(ngModel)]="departmentFilter" (change)="onFilterChange()" class="filter-select">
+        <option value="">All</option>
+        <option value="OPD">OPD</option>
+        <option value="IPD">IPD</option>
+        <option value="Lab">Lab</option>
+        <option value="Pharmacy">Pharmacy</option>
+        <option value="Admin">Admin</option>
+      </select>
+    </div>
+  </div>
+  }
+
+  <!-- SEARCH RESULTS HEADER -->
+  @if (showSearchResults) {
+  <div class="search-results-header">
+    <p>
+      Search results for "<strong>{{ searchQuery }}</strong>"
+      ({{ searchResults.length }} found)
+    </p>
+    <button (click)="clearSearch()" class="btn btn-secondary btn-sm">
+      Back to All
+    </button>
+  </div>
+  }
+
+  <!-- LOADING -->
+  @if (loading || isSearching) {
+  <div class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading...</p>
+  </div>
+  }
+
+  <!-- EMPLOYEE TABLE -->
+  @if (!loading && !isSearching) {
+  <div class="card table-card">
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>EMP CODE</th>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Department</th>
+            <th>Designation</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (emp of (showSearchResults ? searchResults : employees);
+          track emp._id) {
+          <tr>
+            <!-- Employee Code -->
+            <td>
+              <span class="uhid-badge">
+                {{ emp.employeeCode }}
+              </span>
+            </td>
+
+            <!-- Name -->
+            <td>
+              <span class="patient-name">
+                {{ emp.name }}
+              </span>
+            </td>
+
+            <!-- Phone -->
+            <td>{{ emp.phone }}</td>
+
+            <!-- Department -->
+            <td>{{ emp.department }}</td>
+
+            <!-- Designation -->
+            <td>{{ emp.designation }}</td>
+
+            <!-- Status -->
+            <td>
+              <span [class]="'status-badge status-' + (emp.status || '').toLowerCase()">
+                {{ emp.status }}
+              </span>
+            </td>
+
+            <!-- Actions -->
+            <td>
+              <div class="action-buttons">
+                <button (click)="editEmployee(emp._id!)" class="btn btn-primary btn-sm">
+                  Edit
+                </button>
+                <!-- <button
+                      (click)="toggleStatus(emp)"
+                      [class]="emp.status === 'ACTIVE'
+                        ? 'btn btn-warning btn-sm'
+                        : 'btn btn-success btn-sm'">
+                      {{ emp.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
+                    </button> -->
+              </div>
+            </td>
+          </tr>
+          } @empty {
+          <tr>
+            <td colspan="7" class="empty-state">No employees found</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- PAGINATION (hidden during search) -->
+    @if (!showSearchResults && totalPages > 1) {
+    <div class="pagination">
+      <button (click)="onPageChange(currentPage - 1)" [disabled]="currentPage === 1" class="btn btn-secondary btn-sm">
+        Previous
+      </button>
+      <span class="page-info">
+        Page {{ currentPage }} of {{ totalPages }}
+      </span>
+      <button (click)="onPageChange(currentPage + 1)" [disabled]="currentPage === totalPages"
+        class="btn btn-secondary btn-sm">
+        Next
+      </button>
+    </div>
+    }
+  </div>
+  }
+</div>

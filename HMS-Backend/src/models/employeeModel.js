@@ -56,16 +56,21 @@ const employeeSchema = new mongoose.Schema({
         // required: [true, 'Medical Registration Number is required'],
         unique: true,
         trim: true,
+        sparse: true,
+        default: undefined,
     },
     specialization: {
         type: String,
         trim: true,
+        default: undefined
     },
     qualification: [
         {
             type: String,
             trim: true,
+            // required: true,
         },
+
     ],
     consultationFee: {
         type: Number,

@@ -1,0 +1,43 @@
+@use '../abstracts/variables' as *;
+@use '../abstracts/mixins' as *;
+
+.form-group {
+  margin-bottom: $spacing-6;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: $slate-700;
+  margin-bottom: $spacing-2;
+}
+
+.form-input {
+  @include input-base;
+}
+
+.form-select {
+  @include input-base;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+}
+
+.form-error {
+  color: $red-600;
+  font-size: 0.875rem;
+  margin-top: $spacing-1;
+}
+
+.form-grid {
+  display: grid;
+  gap: $spacing-6;
+
+  @include respond-above('md') {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

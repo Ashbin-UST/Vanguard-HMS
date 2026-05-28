@@ -138,7 +138,7 @@ const rejectEmployee = async (req, res) => {
 };
 
 /**
- * CREATE EMPLOYEE WITH TEMP PASSWORD (Flow 2)
+ * CREATE EMPLOYEE
  */
 const createEmployeeWithTempPassword = async (req, res) => {
     try {
@@ -220,7 +220,7 @@ const createEmployeeWithTempPassword = async (req, res) => {
                 email: normalizedEmail,
                 department,
                 designation,
-                medicalRegistrationNo,
+                medicalRegistrationNo: req.body.medicalRegistrationNo?.trim() || undefined,
                 specialization,
                 qualification,
                 consultationFee,
@@ -259,7 +259,7 @@ const createEmployeeWithTempPassword = async (req, res) => {
 
         return res.status(201).json({
             success: true,
-            message: 'Employee created successfully. Temporary password sent to email.',
+            message: 'Employee created successfully.Reset password link sent to email.',
             data: {
                 userId: user.userId,
                 email: user.email,

@@ -1,15 +1,17 @@
-import { Component, signal } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
-import { Login } from './login/login';
-import { Signup } from './signup/signup';
+import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+import { NavbarComponent } from './shared/ui/navbar/navbar';
+import { ToastComponent } from './shared/ui/toast/toast';
+import { ConfirmModalComponent } from './shared/ui/confirm-modal/confirm-modal';
+
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  standalone: true,
+  imports: [RouterOutlet, NavbarComponent, ToastComponent, ConfirmModalComponent],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrl: './app.scss'
 })
-export class App {
-  protected readonly title = signal('HMS-Frontend');
+export class AppComponent {
+  title = 'Hospital Management System';
 }
-// Api logics come here in this file only (like controller layer in spring boot)

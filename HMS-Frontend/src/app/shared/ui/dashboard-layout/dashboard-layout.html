@@ -1,0 +1,19 @@
+<div class="dashboard-layout">
+  <app-sidebar
+    [menuItems]="menuItems"
+    [title]="title"
+    [subtitle]="subtitle"
+  ></app-sidebar>
+
+  <div class="dashboard-main">
+    <!-- Top Bar -->
+    <header class="dashboard-topbar">
+      <h1 class="page-title">{{ pageTitle }}</h1>
+    </header>
+
+    <!-- Content Area -->
+    <div class="dashboard-content">
+      <ng-content></ng-content>
+    </div>
+  </div>
+</div>

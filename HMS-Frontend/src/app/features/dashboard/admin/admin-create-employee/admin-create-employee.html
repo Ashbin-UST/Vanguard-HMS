@@ -1,0 +1,156 @@
+<app-dashboard-layout [menuItems]="sidebarItems" title="HMS" subtitle="Admin Panel" pageTitle="Create Employee">
+
+  <div class="create-wrapper">
+    <div class="card">
+      <h2 class="card-title">Create Employee</h2>
+
+      <form [formGroup]="createForm" (ngSubmit)="onSubmit()">
+        <div class="form-grid">
+
+          <!-- Name -->
+          <div class="form-group">
+            <label class="form-label">Full Name *</label>
+            <input type="text" formControlName="name" class="form-input" />
+          </div>
+
+          <!-- Email -->
+          <div class="form-group">
+            <label class="form-label">Email *</label>
+            <input type="email" formControlName="email" class="form-input" />
+          </div>
+
+          <!-- Phone -->
+          <div class="form-group">
+            <label class="form-label">Phone *</label>
+            <input type="tel" formControlName="phone" class="form-input" />
+          </div>
+
+          <!-- Department -->
+          <div class="form-group">
+            <label class="form-label">Department *</label>
+            <select formControlName="department" class="form-select">
+              <option value="">Select Department</option>
+              @for (dept of departments; track dept) {
+              <option [value]="dept">{{ dept }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Role (with change handler) -->
+          <div class="form-group">
+            <label class="form-label">Role *</label>
+            <select formControlName="roles" (change)="onRoleChange()" class="form-select">
+              <option value="">Select Role</option>
+              @for (role of roles; track role) {
+              <option [value]="role">{{ role }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Designation -->
+          <div class="form-group">
+            <label class="form-label">Designation *</label>
+            <input type="text" formControlName="designation" class="form-input" />
+          </div>
+
+          <!-- === DOCTOR-ONLY FIELDS (hidden for other roles) === -->
+
+          @if (showDoctorFields) {
+
+          <!-- Medical Registration No -->
+          <div class="form-group">
+            <label class="form-label">Medical Registration No</label>
+            <input type="text" formControlName="medicalRegistrationNo" class="form-input" placeholder="MED123456" />
+          </div>
+
+          <!-- Specialization -->
+          <div class="form-group">
+            <label class="form-label">Specialization</label>
+            <input type="text" formControlName="specialization" class="form-input" placeholder="Cardiology" />
+          </div>
+
+          <!-- Consultation Fee -->
+          <div class="form-group">
+            <label class="form-label">Consultation Fee (₹)</label>
+            <input type="number" formControlName="consultationFee" class="form-input" placeholder="500" min="0" />
+          </div>
+
+          <!-- Qualifications (chips) -->
+          <div class="form-group form-group-full">
+            <label class="form-label">Qualifications</label>
+            <div class="chip-list">
+              @for (chip of qualificationChips; track chip; let i = $index) {
+              <span class="chip">
+                {{ chip }}
+                <button type="button" (click)="removeQualification(i)" class="chip-remove">✕</button>
+              </span>
+              }
+            </div>
+            <div class="chip-add-row">
+              <input type="text" [(ngModel)]="newQualification" [ngModelOptions]="{ standalone: true }"
+                class="form-input chip-input" placeholder="e.g. MBBS, MD"
+                (keyup.enter)="addQualification(); $event.preventDefault()" />
+              <button type="button" (click)="addQualification()" class="btn btn-secondary btn-sm">Add</button>
+            </div>
+          </div>
+
+          <!-- Availability Slots (chips) -->
+          <div class="form-group form-group-full">
+            <label class="form-label">Availability Slots</label>
+            <p class="section-hint">
+              Add time slots in HH:MM-HH:MM format (e.g. 09:00-12:00).
+              Appointments are booked in 30-min intervals within these ranges.
+            </p>
+
+            <div class="chip-list">
+              @for (slot of availabilityChips; track slot; let i = $index) {
+              <span class="chip chip-slot">
+                {{ slot }}
+                <button type="button" (click)="removeAvailabilitySlot(i)" class="chip-remove">✕</button>
+              </span>
+              }
+            </div>
+
+            <div class="chip-add-row">
+              <input type="text" [(ngModel)]="newAvailabilitySlot" [ngModelOptions]="{ standalone: true }"
+                class="form-input chip-input" placeholder="e.g. 09:00-12:00"
+                (keyup.enter)="addAvailabilitySlot(); $event.preventDefault()" />
+              <button type="button" (click)="addAvailabilitySlot()" class="btn btn-secondary btn-sm">Add</button>
+            </div>
+
+            <div class="quick-add-section">
+              <p class="quick-add-label">Quick add:</p>
+              <div class="quick-add-chips">
+                @for (slot of commonTimeSlots; track slot) {
+                <button type="button" (click)="addCommonSlot(slot)" class="quick-add-chip"
+                  [class.added]="availabilityChips.includes(slot)">
+                  {{ slot }}
+                </button>
+                }
+              </div>
+            </div>
+          </div>
+
+          }
+
+        </div>
+
+        <!-- Messages -->
+        @if (errorMessage) {
+        <div class="alert alert-error">{{ errorMessage }}</div>
+        }
+        @if (successMessage) {
+        <div class="alert alert-success">{{ successMessage }}</div>
+        }
+
+        <!-- Submit -->
+        <div class="form-actions">
+          <button type="submit" [disabled]="createForm.invalid || loading" class="btn btn-primary">
+            @if (loading) { Creating... } @else { Create Employee }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</app-dashboard-layout>

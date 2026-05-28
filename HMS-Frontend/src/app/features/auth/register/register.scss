@@ -1,0 +1,152 @@
+@use '../../../../styles/abstracts/variables' as *;
+@use '../../../../styles/abstracts/mixins' as *;
+
+.auth-container {
+  min-height: 100vh;
+  background: linear-gradient(to bottom right, $primary-50, $white);
+  padding: $spacing-12 $spacing-4;
+}
+
+.register-wrapper {
+  max-width: 64rem;
+  margin: 0 auto;
+}
+
+.form-submit {
+  margin-top: $spacing-8;
+}
+
+.alert {
+  margin-top: $spacing-6;
+  padding: $spacing-3;
+  border-radius: $border-radius-lg;
+
+  &-success {
+    background-color: $green-50;
+    border: 1px solid lighten($green-600, 30%);
+    color: darken($green-600, 10%);
+  }
+}
+
+/* Full-width form group (for chips that span both columns) */
+.form-group-full {
+  grid-column: 1 / -1;
+}
+
+/* ── Chip system ─────────────────────────────────────────── */
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #e2e8f0;
+  color: #334155;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.chip-slot {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.chip-remove {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+
+  &:hover {
+    background: #cbd5e1;
+    color: #334155;
+  }
+}
+
+.chip-add-row {
+  display: flex;
+  gap: 8px;
+}
+
+.chip-input {
+  flex: 1;
+}
+
+/* ── Quick-add section ───────────────────────────────────── */
+.quick-add-section {
+  margin-top: 10px;
+}
+
+.quick-add-label {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 0 0 6px 0;
+}
+
+.quick-add-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.quick-add-chip {
+  padding: 3px 10px;
+  font-size: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  background: #fff;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: #3b82f6;
+    color: #3b82f6;
+  }
+
+  &.added {
+    background: #dbeafe;
+    border-color: #3b82f6;
+    color: #1e40af;
+  }
+}
+
+/* ── Section hint ────────────────────────────────────────── */
+.section-hint {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 0 0 8px 0;
+}
+
+/* ── Form select (match input style) ─────────────────────── */
+.form-select {
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #1e293b;
+  background: #fff;
+  width: 100%;
+
+  &:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  }
+}

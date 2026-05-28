@@ -1,22 +1,23 @@
-const Appointment = require('../models/appointmentModel');
-const Patient = require('../models/patientModel');
-const Employee = require('../models/employeeModel');
-const User = require('../models/userModel');
+const Appointment = require("../models/appointmentModel");
+const Patient = require("../models/patientModel");
+const Employee = require("../models/employeeModel");
+const User = require("../models/userModel");
+const { generateBookableSlots } = require("../utils/slotGenerator");
 const {
     sendAppointmentConfirmationEmail,
-    sendAppointmentCancellationEmail
-} = require('../utils/appointmentEmailService');
+    sendAppointmentCancellationEmail,
+} = require("../utils/appointmentEmailService");
 
 /**
  * Helper: Check if time slots overlap
  */
 const doTimeSlotsOverlap = (slot1, slot2) => {
-    const [start1, end1] = slot1.split('-');
-    const [start2, end2] = slot2.split('-');
+    const [start1, end1] = slot1.split("-");
+    const [start2, end2] = slot2.split("-");
 
     // Convert to minutes for easy comparison
     const toMinutes = (time) => {
-        const [hours, minutes] = time.split(':').map(Number);
+        const [hours, minutes] = time.split(":").map(Number);
         return hours * 60 + minutes;
     };
 
@@ -38,7 +39,7 @@ const validateAppointmentDate = (date) => {
     today.setHours(0, 0, 0, 0);
 
     if (appointmentDate < today) {
-        throw new Error('Cannot book appointment in the past');
+        throw new Error("Cannot book appointment in the past");
     }
 
     return appointmentDate;
@@ -58,14 +59,21 @@ exports.createAppointment = async (req, res) => {
             department,
             appointmentType,
             reasonForVisit,
-            consultationFee
+            consultationFee,
         } = req.body;
 
         // Validate required fields
-        if (!patientId || !doctorEmployeeId || !date || !timeSlot || !reasonForVisit) {
+        if (
+            !patientId ||
+            !doctorEmployeeId ||
+            !date ||
+            !timeSlot ||
+            !reasonForVisit
+        ) {
             return res.status(400).json({
                 success: false,
-                message: 'Patient, doctor, date, time slot, and reason for visit are required'
+                message:
+                    "Patient, doctor, date, time slot, and reason for visit are required",
             });
         }
 
@@ -74,7 +82,7 @@ exports.createAppointment = async (req, res) => {
         if (!timeSlotRegex.test(timeSlot)) {
             return res.status(400).json({
                 success: false,
-                message: 'Time slot must be in HH:MM-HH:MM format (e.g., 09:00-09:30)'
+                message: "Time slot must be in HH:MM-HH:MM format (e.g., 09:00-09:30)",
             });
         }
 
@@ -86,14 +94,14 @@ exports.createAppointment = async (req, res) => {
         if (!patient) {
             return res.status(404).json({
                 success: false,
-                message: 'Patient not found'
+                message: "Patient not found",
             });
         }
 
-        if (patient.status === 'INACTIVE') {
+        if (patient.status === "INACTIVE") {
             return res.status(400).json({
                 success: false,
-                message: 'Cannot book appointment for inactive patient'
+                message: "Cannot book appointment for inactive patient",
             });
         }
 
@@ -102,23 +110,23 @@ exports.createAppointment = async (req, res) => {
         if (!doctor) {
             return res.status(404).json({
                 success: false,
-                message: 'Doctor not found'
+                message: "Doctor not found",
             });
         }
 
-        if (doctor.status === 'INACTIVE') {
+        if (doctor.status === "INACTIVE") {
             return res.status(400).json({
                 success: false,
-                message: 'Doctor is currently inactive'
+                message: "Doctor is currently inactive",
             });
         }
 
         // Verify doctor has DOCTOR role
         const doctorUser = await User.findOne({ employeeId: doctor._id });
-        if (!doctorUser || !doctorUser.roles.includes('DOCTOR')) {
+        if (!doctorUser || !doctorUser.roles.includes("DOCTOR")) {
             return res.status(400).json({
                 success: false,
-                message: 'Selected employee is not a doctor'
+                message: "Selected employee is not a doctor",
             });
         }
 
@@ -126,18 +134,18 @@ exports.createAppointment = async (req, res) => {
         if (!doctor.availabilitySlots || doctor.availabilitySlots.length === 0) {
             return res.status(400).json({
                 success: false,
-                message: 'Doctor has no availability slots configured'
+                message: "Doctor has no availability slots configured",
             });
         }
 
-        const isSlotAvailable = doctor.availabilitySlots.some(slot =>
-            doTimeSlotsOverlap(slot, timeSlot)
+        const isSlotAvailable = doctor.availabilitySlots.some((slot) =>
+            doTimeSlotsOverlap(slot, timeSlot),
         );
 
         if (!isSlotAvailable) {
             return res.status(400).json({
                 success: false,
-                message: `Doctor is not available at ${timeSlot}. Available slots: ${doctor.availabilitySlots.join(', ')}`
+                message: `Doctor is not available at ${timeSlot}. Available slots: ${doctor.availabilitySlots.join(", ")}`,
             });
         }
 
@@ -145,23 +153,29 @@ exports.createAppointment = async (req, res) => {
         const existingAppointment = await Appointment.findOne({
             doctorEmployeeId: doctor._id,
             date: appointmentDate,
-            status: { $in: ['BOOKED', 'COMPLETED'] } // Ignore cancelled
+            status: { $in: ["BOOKED", "COMPLETED"] }, // Ignore cancelled
         });
 
         if (existingAppointment) {
             // Check if time slots overlap
-            const hasConflict = doTimeSlotsOverlap(existingAppointment.timeSlot, timeSlot);
+            const hasConflict = doTimeSlotsOverlap(
+                existingAppointment.timeSlot,
+                timeSlot,
+            );
 
             if (hasConflict) {
                 return res.status(409).json({
                     success: false,
-                    message: `Doctor already has an appointment at ${existingAppointment.timeSlot} on this date`
+                    message: `Doctor already has an appointment at ${existingAppointment.timeSlot} on this date`,
                 });
             }
         }
 
         // Determine consultation fee
-        const fee = consultationFee !== undefined ? consultationFee : (doctor.consultationFee || 0);
+        const fee =
+            consultationFee !== undefined
+                ? consultationFee
+                : doctor.consultationFee || 0;
 
         // Create appointment
         const appointment = await new Appointment({
@@ -170,18 +184,21 @@ exports.createAppointment = async (req, res) => {
             date: appointmentDate,
             timeSlot,
             department: department || doctor.department,
-            appointmentType: appointmentType || 'Consultation',
+            appointmentType: appointmentType || "Consultation",
             reasonForVisit,
             consultationFee: fee,
-            status: 'BOOKED',
-            createdByEmployeeId: req.user.id
+            status: "BOOKED",
+            createdByEmployeeId: req.user.id,
         }).save();
 
         // Populate appointment details
         const populatedAppointment = await Appointment.findById(appointment._id)
-            .populate('patientId', 'UHID name phone email gender age')
-            .populate('doctorEmployeeId', 'employeeCode name specialization department consultationFee')
-            .populate('createdByEmployeeId', 'email userId');
+            .populate("patientId", "UHID name phone email gender age")
+            .populate(
+                "doctorEmployeeId",
+                "employeeCode name specialization department consultationFee",
+            )
+            .populate("createdByEmployeeId", "email userId");
 
         // Send confirmation email to patient
         try {
@@ -193,25 +210,26 @@ exports.createAppointment = async (req, res) => {
                 timeSlot,
                 department: appointment.department,
                 consultationFee: fee,
-                appointmentId: appointment.appointmentId
+                appointmentId: appointment.appointmentId,
             });
         } catch (emailError) {
-            console.error('Failed to send confirmation email:', emailError);
+            console.error("Failed to send confirmation email:", emailError);
             // Don't fail the appointment creation if email fails
         }
 
         return res.status(201).json({
             success: true,
-            message: 'Appointment booked successfully',
-            data: populatedAppointment
+            message: "Appointment booked successfully",
+            data: populatedAppointment,
         });
-
     } catch (error) {
-        console.log('Create appointment error:', error);
+        console.log("Create appointment error:", error);
 
-        if (error.name === 'ValidationError') {
-            const messages = Object.values(error.errors).map(e => e.message);
-            return res.status(400).json({ success: false, message: messages.join(', ') });
+        if (error.name === "ValidationError") {
+            const messages = Object.values(error.errors).map((e) => e.message);
+            return res
+                .status(400)
+                .json({ success: false, message: messages.join(", ") });
         }
 
         return res.status(500).json({ success: false, message: error.message });
@@ -224,7 +242,15 @@ exports.createAppointment = async (req, res) => {
  */
 exports.getAllAppointments = async (req, res) => {
     try {
-        const { page = 1, limit = 10, status, date, doctorId, patientId, department } = req.query;
+        const {
+            page = 1,
+            limit = 10,
+            status,
+            date,
+            doctorId,
+            patientId,
+            department,
+        } = req.query;
 
         const filter = {};
         if (status) filter.status = status;
@@ -240,14 +266,22 @@ exports.getAllAppointments = async (req, res) => {
 
             filter.date = {
                 $gte: searchDate,
-                $lt: nextDay
+                $lt: nextDay,
             };
         }
 
+        // ADD this right before const appointments = await Appointment.find(filter):
+        if (!["ADMIN", "OWNER"].some((r) => req.user.roles.includes(r))) {
+            filter.createdByEmployeeId = req.user.id;
+        }
+
         const appointments = await Appointment.find(filter)
-            .populate('patientId', 'UHID name phone email gender age')
-            .populate('doctorEmployeeId', 'employeeCode name specialization department')
-            .populate('createdByEmployeeId', 'email userId')
+            .populate("patientId", "UHID name phone email gender age")
+            .populate(
+                "doctorEmployeeId",
+                "employeeCode name specialization department",
+            )
+            .populate("createdByEmployeeId", "email userId")
             .sort({ date: -1, timeSlot: 1 })
             .limit(limit * 1)
             .skip((page - 1) * limit);
@@ -256,17 +290,16 @@ exports.getAllAppointments = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            message: 'Appointments retrieved successfully',
+            message: "Appointments retrieved successfully",
             data: appointments,
             pagination: {
                 total: count,
                 page: parseInt(page),
-                pages: Math.ceil(count / limit)
-            }
+                pages: Math.ceil(count / limit),
+            },
         });
-
     } catch (error) {
-        console.log('Get all appointments error:', error);
+        console.log("Get all appointments error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -284,12 +317,12 @@ exports.getMyAppointments = async (req, res) => {
         if (!user || !user.employeeId) {
             return res.status(404).json({
                 success: false,
-                message: 'Employee record not found'
+                message: "Employee record not found",
             });
         }
 
         const filter = {
-            doctorEmployeeId: user.employeeId
+            doctorEmployeeId: user.employeeId,
         };
 
         if (status) filter.status = status;
@@ -301,13 +334,17 @@ exports.getMyAppointments = async (req, res) => {
 
             filter.date = {
                 $gte: searchDate,
-                $lt: nextDay
+                $lt: nextDay,
             };
         }
 
         const appointments = await Appointment.find(filter)
-            .populate('patientId', 'UHID name phone email gender age medicalHistory')
-            .populate('createdByEmployeeId', 'email userId')
+            .populate("patientId", "UHID name phone email gender age medicalHistory")
+            .populate(
+                "doctorEmployeeId",
+                "employeeCode name specialization department",
+            )
+            .populate("createdByEmployeeId", "email userId")
             .sort({ date: 1, timeSlot: 1 })
             .limit(limit * 1)
             .skip((page - 1) * limit);
@@ -316,17 +353,16 @@ exports.getMyAppointments = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            message: 'Your appointments retrieved successfully',
+            message: "Your appointments retrieved successfully",
             data: appointments,
             pagination: {
                 total: count,
                 page: parseInt(page),
-                pages: Math.ceil(count / limit)
-            }
+                pages: Math.ceil(count / limit),
+            },
         });
-
     } catch (error) {
-        console.log('Get my appointments error:', error);
+        console.log("Get my appointments error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -345,12 +381,12 @@ exports.getDoctorAppointments = async (req, res) => {
         if (!doctor) {
             return res.status(404).json({
                 success: false,
-                message: 'Doctor not found'
+                message: "Doctor not found",
             });
         }
 
         const filter = {
-            doctorEmployeeId: doctorId
+            doctorEmployeeId: doctorId,
         };
 
         if (status) filter.status = status;
@@ -362,14 +398,17 @@ exports.getDoctorAppointments = async (req, res) => {
 
             filter.date = {
                 $gte: searchDate,
-                $lt: nextDay
+                $lt: nextDay,
             };
         }
 
         const appointments = await Appointment.find(filter)
-            .populate('patientId', 'UHID name phone email gender age')
-            .populate('doctorEmployeeId', 'employeeCode name specialization department')
-            .populate('createdByEmployeeId', 'email userId')
+            .populate("patientId", "UHID name phone email gender age")
+            .populate(
+                "doctorEmployeeId",
+                "employeeCode name specialization department",
+            )
+            .populate("createdByEmployeeId", "email userId")
             .sort({ date: 1, timeSlot: 1 })
             .limit(limit * 1)
             .skip((page - 1) * limit);
@@ -383,12 +422,11 @@ exports.getDoctorAppointments = async (req, res) => {
             pagination: {
                 total: count,
                 page: parseInt(page),
-                pages: Math.ceil(count / limit)
-            }
+                pages: Math.ceil(count / limit),
+            },
         });
-
     } catch (error) {
-        console.log('Get doctor appointments error:', error);
+        console.log("Get doctor appointments error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -406,23 +444,29 @@ exports.getPatientAppointments = async (req, res) => {
         if (!patient) {
             return res.status(404).json({
                 success: false,
-                message: 'Patient not found'
+                message: "Patient not found",
             });
         }
 
-        const appointments = await Appointment.find({ patientId })
-            .populate('doctorEmployeeId', 'employeeCode name specialization department consultationFee')
-            .populate('createdByEmployeeId', 'email userId')
+        const filter = { patientId };
+        if (!["ADMIN", "OWNER"].some((r) => req.user.roles.includes(r))) {
+            filter.createdByEmployeeId = req.user.id;
+        }
+        const appointments = await Appointment.find(filter)
+            .populate(
+                "doctorEmployeeId",
+                "employeeCode name specialization department consultationFee",
+            )
+            .populate("createdByEmployeeId", "email userId")
             .sort({ date: -1, timeSlot: -1 });
 
         return res.status(200).json({
             success: true,
             message: `Appointments for ${patient.name} retrieved successfully`,
-            data: appointments
+            data: appointments,
         });
-
     } catch (error) {
-        console.log('Get patient appointments error:', error);
+        console.log("Get patient appointments error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -439,24 +483,25 @@ exports.getTodayAppointments = async (req, res) => {
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
 
-        const appointments = await Appointment.find({
-            date: {
-                $gte: today,
-                $lt: tomorrow
-            }
-        })
-            .populate('patientId', 'UHID name phone gender age')
-            .populate('doctorEmployeeId', 'employeeCode name specialization department')
+        const filter = { date: { $gte: today, $lt: tomorrow } };
+        if (!["ADMIN", "OWNER"].some((r) => req.user.roles.includes(r))) {
+            filter.createdByEmployeeId = req.user.id;
+        }
+        const appointments = await Appointment.find(filter)
+            .populate("patientId", "UHID name phone gender age")
+            .populate(
+                "doctorEmployeeId",
+                "employeeCode name specialization department",
+            )
             .sort({ timeSlot: 1 });
 
         return res.status(200).json({
             success: true,
             message: `Found ${appointments.length} appointment(s) for today`,
-            data: appointments
+            data: appointments,
         });
-
     } catch (error) {
-        console.log('Get today appointments error:', error);
+        console.log("Get today appointments error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -469,27 +514,36 @@ exports.getAppointmentById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const appointment = await Appointment.findById(id)
-            .populate('patientId', 'UHID name phone email gender age dob address medicalHistory')
-            .populate('doctorEmployeeId', 'employeeCode name specialization department consultationFee qualification')
-            .populate('createdByEmployeeId', 'email userId')
-            .populate('cancelledBy', 'email userId');
+        const filter = { _id: id };
+        if (!["ADMIN", "OWNER"].some((r) => req.user.roles.includes(r))) {
+            filter.createdByEmployeeId = req.user.id;
+        }
+        const appointment = await Appointment.findOne(filter)
+            .populate(
+                "patientId",
+                "UHID name phone email gender age dob address medicalHistory",
+            )
+            .populate(
+                "doctorEmployeeId",
+                "employeeCode name specialization department consultationFee qualification",
+            )
+            .populate("createdByEmployeeId", "email userId")
+            .populate("cancelledBy", "email userId");
 
         if (!appointment) {
             return res.status(404).json({
                 success: false,
-                message: 'Appointment not found'
+                message: "Appointment not found",
             });
         }
 
         return res.status(200).json({
             success: true,
-            message: 'Appointment retrieved successfully',
-            data: appointment
+            message: "Appointment retrieved successfully",
+            data: appointment,
         });
-
     } catch (error) {
-        console.log('Get appointment by ID error:', error);
+        console.log("Get appointment by ID error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -506,15 +560,15 @@ exports.updateAppointmentStatus = async (req, res) => {
         if (!status) {
             return res.status(400).json({
                 success: false,
-                message: 'Status is required'
+                message: "Status is required",
             });
         }
 
-        const validStatuses = ['BOOKED', 'CANCELLED', 'COMPLETED'];
+        const validStatuses = ["BOOKED", "CANCELLED", "COMPLETED"];
         if (!validStatuses.includes(status)) {
             return res.status(400).json({
                 success: false,
-                message: `Status must be one of: ${validStatuses.join(', ')}`
+                message: `Status must be one of: ${validStatuses.join(", ")}`,
             });
         }
 
@@ -522,22 +576,23 @@ exports.updateAppointmentStatus = async (req, res) => {
         if (!appointment) {
             return res.status(404).json({
                 success: false,
-                message: 'Appointment not found'
+                message: "Appointment not found",
             });
         }
 
         // Validate status transitions
-        if (appointment.status === 'COMPLETED' && status !== 'COMPLETED') {
+        if (appointment.status === "COMPLETED" && status !== "COMPLETED") {
             return res.status(400).json({
                 success: false,
-                message: 'Cannot change status of completed appointment'
+                message: "Cannot change status of completed appointment",
             });
         }
 
-        if (appointment.status === 'CANCELLED' && status === 'BOOKED') {
+        if (appointment.status === "CANCELLED" && status === "BOOKED") {
             return res.status(400).json({
                 success: false,
-                message: 'Cannot reactivate cancelled appointment. Create a new one instead'
+                message:
+                    "Cannot reactivate cancelled appointment. Create a new one instead",
             });
         }
 
@@ -545,17 +600,19 @@ exports.updateAppointmentStatus = async (req, res) => {
         await appointment.save();
 
         const updatedAppointment = await Appointment.findById(id)
-            .populate('patientId', 'UHID name phone email')
-            .populate('doctorEmployeeId', 'employeeCode name specialization department');
+            .populate("patientId", "UHID name phone email")
+            .populate(
+                "doctorEmployeeId",
+                "employeeCode name specialization department",
+            );
 
         return res.status(200).json({
             success: true,
             message: `Appointment status updated to ${status}`,
-            data: updatedAppointment
+            data: updatedAppointment,
         });
-
     } catch (error) {
-        console.log('Update appointment status error:', error);
+        console.log("Update appointment status error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -573,17 +630,23 @@ exports.addDoctorNotes = async (req, res) => {
         if (!appointment) {
             return res.status(404).json({
                 success: false,
-                message: 'Appointment not found'
+                message: "Appointment not found",
             });
         }
 
         // If user is DOCTOR, verify it's their appointment
         const user = await User.findById(req.user.id);
-        if (user.roles.includes('DOCTOR') && !user.roles.includes('ADMIN') && !user.roles.includes('OWNER')) {
-            if (appointment.doctorEmployeeId.toString() !== user.employeeId.toString()) {
+        if (
+            user.roles.includes("DOCTOR") &&
+            !user.roles.includes("ADMIN") &&
+            !user.roles.includes("OWNER")
+        ) {
+            if (
+                appointment.doctorEmployeeId.toString() !== user.employeeId.toString()
+            ) {
                 return res.status(403).json({
                     success: false,
-                    message: 'You can only add notes to your own appointments'
+                    message: "You can only add notes to your own appointments",
                 });
             }
         }
@@ -596,17 +659,16 @@ exports.addDoctorNotes = async (req, res) => {
         await appointment.save();
 
         const updatedAppointment = await Appointment.findById(id)
-            .populate('patientId', 'UHID name phone email')
-            .populate('doctorEmployeeId', 'employeeCode name specialization');
+            .populate("patientId", "UHID name phone email")
+            .populate("doctorEmployeeId", "employeeCode name specialization");
 
         return res.status(200).json({
             success: true,
-            message: 'Doctor notes added successfully',
-            data: updatedAppointment
+            message: "Doctor notes added successfully",
+            data: updatedAppointment,
         });
-
     } catch (error) {
-        console.log('Add doctor notes error:', error);
+        console.log("Add doctor notes error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -621,33 +683,33 @@ exports.cancelAppointment = async (req, res) => {
         const { cancellationReason } = req.body;
 
         const appointment = await Appointment.findById(id)
-            .populate('patientId', 'UHID name email')
-            .populate('doctorEmployeeId', 'name');
+            .populate("patientId", "UHID name email")
+            .populate("doctorEmployeeId", "name");
 
         if (!appointment) {
             return res.status(404).json({
                 success: false,
-                message: 'Appointment not found'
+                message: "Appointment not found",
             });
         }
 
-        if (appointment.status === 'CANCELLED') {
+        if (appointment.status === "CANCELLED") {
             return res.status(400).json({
                 success: false,
-                message: 'Appointment is already cancelled'
+                message: "Appointment is already cancelled",
             });
         }
 
-        if (appointment.status === 'COMPLETED') {
+        if (appointment.status === "COMPLETED") {
             return res.status(400).json({
                 success: false,
-                message: 'Cannot cancel completed appointment'
+                message: "Cannot cancel completed appointment",
             });
         }
 
-        appointment.status = 'CANCELLED';
+        appointment.status = "CANCELLED";
         appointment.cancelledBy = req.user.id;
-        appointment.cancellationReason = cancellationReason || 'No reason provided';
+        appointment.cancellationReason = cancellationReason || "No reason provided";
         await appointment.save();
 
         // Send cancellation email
@@ -659,20 +721,19 @@ exports.cancelAppointment = async (req, res) => {
                 date: appointment.date,
                 timeSlot: appointment.timeSlot,
                 reason: appointment.cancellationReason,
-                appointmentId: appointment.appointmentId
+                appointmentId: appointment.appointmentId,
             });
         } catch (emailError) {
-            console.error('Failed to send cancellation email:', emailError);
+            console.error("Failed to send cancellation email:", emailError);
         }
 
         return res.status(200).json({
             success: true,
-            message: 'Appointment cancelled successfully',
-            data: appointment
+            message: "Appointment cancelled successfully",
+            data: appointment,
         });
-
     } catch (error) {
-        console.log('Cancel appointment error:', error);
+        console.log("Cancel appointment error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -690,17 +751,16 @@ exports.deleteAppointment = async (req, res) => {
         if (!appointment) {
             return res.status(404).json({
                 success: false,
-                message: 'Appointment not found'
+                message: "Appointment not found",
             });
         }
 
         return res.status(200).json({
             success: true,
-            message: 'Appointment deleted successfully'
+            message: "Appointment deleted successfully",
         });
-
     } catch (error) {
-        console.log('Delete appointment error:', error);
+        console.log("Delete appointment error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -712,70 +772,81 @@ exports.deleteAppointment = async (req, res) => {
 exports.getAvailableSlots = async (req, res) => {
     try {
         const { doctorId } = req.params;
-        const { date } = req.query;
+        const { date, duration } = req.query;
 
         if (!date) {
             return res.status(400).json({
                 success: false,
-                message: 'Date is required'
+                message: "Date is required",
             });
         }
 
-        // Verify doctor exists
+        const slotDuration = parseInt(duration, 10) || 30;
+
+        if (![15, 30].includes(slotDuration)) {
+            return res.status(400).json({
+                success: false,
+                message: "Duration must be 15 or 30 minutes",
+            });
+        }
+
         const doctor = await Employee.findById(doctorId);
         if (!doctor) {
             return res.status(404).json({
                 success: false,
-                message: 'Doctor not found'
+                message: "Doctor not found",
             });
         }
 
         if (!doctor.availabilitySlots || doctor.availabilitySlots.length === 0) {
             return res.status(200).json({
                 success: true,
-                message: 'Doctor has no availability slots configured',
+                message: "Doctor has no availability slots configured",
                 data: {
+                    doctorName: doctor.name,
+                    date: new Date(date),
                     availableSlots: [],
-                    bookedSlots: []
-                }
+                    bookedSlots: [],
+                    totalSlots: 0,
+                    slotDuration,
+                },
             });
         }
 
-        // Get booked appointments for this doctor on this date
         const searchDate = new Date(date);
         const nextDay = new Date(searchDate);
         nextDay.setDate(nextDay.getDate() + 1);
 
         const bookedAppointments = await Appointment.find({
             doctorEmployeeId: doctorId,
-            date: {
-                $gte: searchDate,
-                $lt: nextDay
-            },
-            status: { $in: ['BOOKED', 'COMPLETED'] }
-        }).select('timeSlot');
+            date: { $gte: searchDate, $lt: nextDay },
+            status: { $in: ["BOOKED", "COMPLETED"] },
+        }).select("timeSlot");
 
-        const bookedSlots = bookedAppointments.map(apt => apt.timeSlot);
+        const bookedSlots = bookedAppointments.map((apt) => apt.timeSlot);
 
-        // Filter out booked slots
-        const availableSlots = doctor.availabilitySlots.filter(slot => {
-            return !bookedSlots.some(bookedSlot => doTimeSlotsOverlap(slot, bookedSlot));
-        });
+        const { available, allGenerated, mergedRanges } = generateBookableSlots(
+            doctor.availabilitySlots,
+            bookedSlots,
+            slotDuration,
+        );
 
         return res.status(200).json({
             success: true,
-            message: 'Available slots retrieved successfully',
+            message: `${available.length} slot(s) available (${slotDuration}-min intervals)`,
             data: {
                 doctorName: doctor.name,
                 date: searchDate,
-                availableSlots,
+                slotDuration,
+                mergedRanges,
+                allSlots: allGenerated,
+                availableSlots: available,
                 bookedSlots,
-                totalSlots: doctor.availabilitySlots.length
-            }
+                totalAvailable: available.length,
+            },
         });
-
     } catch (error) {
-        console.log('Get available slots error:', error);
+        console.log("Get available slots error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -788,34 +859,37 @@ exports.getAvailableDoctors = async (req, res) => {
     try {
         const { specialization, department } = req.query;
 
-        const filter = { status: 'ACTIVE' };
-        if (specialization) filter.specialization = { $regex: specialization, $options: 'i' };
+        const filter = { status: "ACTIVE" };
+        if (specialization)
+            filter.specialization = { $regex: specialization, $options: "i" };
         if (department) filter.department = department;
 
         // Get all doctors (employees with DOCTOR role)
-        const doctors = await Employee.find(filter)
-            .select('employeeCode name specialization department consultationFee availabilitySlots qualification');
+        const doctors = await Employee.find(filter).select(
+            "employeeCode name specialization department consultationFee availabilitySlots qualification",
+        );
 
         // Filter only those with DOCTOR role
-        const doctorIds = doctors.map(d => d._id);
+        const doctorIds = doctors.map((d) => d._id);
         const doctorUsers = await User.find({
             employeeId: { $in: doctorIds },
-            roles: 'DOCTOR',
-            status: 'ACTIVE',
-            approvalStatus: 'APPROVED'
-        }).select('employeeId');
+            roles: "DOCTOR",
+            status: "ACTIVE",
+            approvalStatus: "APPROVED",
+        }).select("employeeId");
 
-        const validDoctorIds = doctorUsers.map(u => u.employeeId.toString());
-        const availableDoctors = doctors.filter(d => validDoctorIds.includes(d._id.toString()));
+        const validDoctorIds = doctorUsers.map((u) => u.employeeId.toString());
+        const availableDoctors = doctors.filter((d) =>
+            validDoctorIds.includes(d._id.toString()),
+        );
 
         return res.status(200).json({
             success: true,
             message: `Found ${availableDoctors.length} available doctor(s)`,
-            data: availableDoctors
+            data: availableDoctors,
         });
-
     } catch (error) {
-        console.log('Get available doctors error:', error);
+        console.log("Get available doctors error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };

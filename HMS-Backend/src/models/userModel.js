@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema(
         status: {
             type: String,
             enum: ["ACTIVE", "INACTIVE"],
-            default: "ACTIVE",
+            default: "INACTIVE",
         },
         roles: {
             type: [String],
@@ -49,7 +49,7 @@ const userSchema = new mongoose.Schema(
         approvalStatus: {
             type: String,
             enum: ["PENDING", "APPROVED", "REJECTED"],
-            default: "APPROVED", // Admin/Owner are auto-approved
+            default: "PENDING", // Admin/Owner are auto-approved
         },
         isTemporaryPassword: {
             type: Boolean,

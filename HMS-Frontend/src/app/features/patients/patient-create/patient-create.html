@@ -1,0 +1,132 @@
+<div class="patient-create-container">
+  <div class="form-header">
+    <button (click)="goBack()" class="btn btn-secondary btn-sm">← Back</button>
+    <h2>Register New Patient</h2>
+  </div>
+
+  <div class="card">
+    <form [formGroup]="patientForm" (ngSubmit)="onSubmit()">
+
+      <!-- Personal Information -->
+      <div class="form-section">
+        <h3 class="section-title">Personal Information</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Full Name *</label>
+            <input type="text" formControlName="name" class="form-input" placeholder="Patient full name" />
+            @if (patientForm.get('name')?.invalid && patientForm.get('name')?.touched) {
+            <p class="form-error">Name is required</p>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email *</label>
+            <input type="email" formControlName="email" class="form-input" placeholder="patient@email.com" />
+            @if (patientForm.get('email')?.invalid && patientForm.get('email')?.touched) {
+            <p class="form-error">Valid email is required</p>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Phone *</label>
+            <input type="tel" formControlName="phone" class="form-input" placeholder="+919876543210" />
+            @if (patientForm.get('phone')?.invalid && patientForm.get('phone')?.touched) {
+            <p class="form-error">Phone is required</p>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Gender *</label>
+            <select formControlName="gender" class="form-select">
+              <option value="">Select Gender</option>
+              @for (gender of genders; track gender) {
+              <option [value]="gender">{{ gender }}</option>
+              }
+            </select>
+            @if (patientForm.get('gender')?.invalid && patientForm.get('gender')?.touched) {
+            <p class="form-error">Gender is required</p>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Date of Birth *</label>
+            <input type="date" formControlName="dob" class="form-input" />
+            @if (patientForm.get('dob')?.invalid && patientForm.get('dob')?.touched) {
+            <p class="form-error">Date of birth is required</p>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Address -->
+      <div class="form-section">
+        <h3 class="section-title">Address (Optional)</h3>
+        <div class="form-grid">
+          <div class="form-group form-group-full">
+            <label class="form-label">Address Line</label>
+            <input type="text" formControlName="addressLine1" class="form-input" placeholder="Street address" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">City</label>
+            <input type="text" formControlName="addressCity" class="form-input" placeholder="City" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Postcode</label>
+            <input type="text" formControlName="addressPostcode" class="form-input" placeholder="400001" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Emergency Contact -->
+      <div class="form-section">
+        <h3 class="section-title">Emergency Contact (Optional)</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Contact Name</label>
+            <input type="text" formControlName="emergencyName" class="form-input"
+              placeholder="Emergency contact name" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contact Phone</label>
+            <input type="tel" formControlName="emergencyPhone" class="form-input" placeholder="+919876543211" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Relation</label>
+            <input type="text" formControlName="emergencyRelation" class="form-input"
+              placeholder="Spouse, Parent, etc." />
+          </div>
+        </div>
+      </div>
+
+      <!-- Medical History -->
+      <div class="form-section">
+        <h3 class="section-title">Medical History (Optional)</h3>
+        <div class="form-group">
+          <label class="form-label">Medical History / Allergies / Current Medications</label>
+          <textarea formControlName="medicalHistory" class="form-textarea" rows="4"
+            placeholder="Any existing conditions, allergies, medications..."></textarea>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      @if (errorMessage) {
+      <div class="alert alert-error">{{ errorMessage }}</div>
+      }
+      @if (successMessage) {
+      <div class="alert alert-success">{{ successMessage }}</div>
+      }
+
+      <!-- Submit -->
+      <div class="form-actions">
+        <button type="button" (click)="goBack()" class="btn btn-secondary">Cancel</button>
+        <button type="submit" [disabled]="patientForm.invalid || loading" class="btn btn-primary">
+          @if (loading) {
+          <span>Registering...</span>
+          } @else {
+          <span>Register Patient</span>
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

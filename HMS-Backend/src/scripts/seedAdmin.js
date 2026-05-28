@@ -29,12 +29,6 @@ const seedAdmin = async () => {
             approvalStatus: 'APPROVED',
             employeeId: null, // Admin doesn't need employee record
         }).save();
-
-        console.log('Admin user created successfully!');
-        console.log(`Email: ${adminEmail}`);
-        console.log(`Password: ${adminPassword}`);
-        console.log(`User ID: ${admin.userId}`);
-
         process.exit(0);
     } catch (error) {
         console.error(' Error seeding admin:', error);

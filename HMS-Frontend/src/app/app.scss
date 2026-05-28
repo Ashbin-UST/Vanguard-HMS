@@ -1,0 +1,11 @@
+@use './styles/abstracts/variables' as *;
+
+.app-container {
+  min-height: 100vh;
+  background-color: $white;
+}
+
+.main-content {
+  // Main content wrapper
+  // Navbar is fixed, so no padding needed
+}

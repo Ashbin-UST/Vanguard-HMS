@@ -1,0 +1,172 @@
+<div class="detail-container">
+
+  <!-- ✅ Loading with spinner -->
+  @if (loading) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading appointment details...</p>
+    </div>
+  } @else if (appointment) {
+
+    <!-- Header -->
+    <div class="detail-header">
+      <div class="header-left">
+        <button (click)="goBack()" class="btn btn-secondary btn-sm">← Back</button>
+        <div class="apt-identity">
+          <h2>{{ appointment.appointmentId }}</h2>
+          <span [class]="'status-badge ' + getStatusClass(appointment.status)">
+            {{ appointment.status }}
+          </span>
+          <span class="type-badge">{{ appointment.appointmentType }}</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        @if (appointment.status === 'BOOKED' && canAddNotes()) {
+          <button (click)="addNotes()" class="btn btn-secondary">
+            📝 Add Notes
+          </button>
+        }
+        @if (appointment.status === 'BOOKED' && isDoctor()) {
+          <button (click)="completeAppointment()" class="btn btn-success">
+            ✓ Complete
+          </button>
+        }
+        @if (appointment.status === 'BOOKED' && canCancel()) {
+          <button (click)="cancelAppointment()" class="btn btn-danger">
+            ✕ Cancel
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Content Grid -->
+    <div class="detail-grid">
+
+      <!-- Patient Card -->
+      <div class="card">
+        <h3 class="card-section-title">Patient Information</h3>
+        <div class="info-list">
+          <div class="info-row">
+            <span class="info-label">UHID</span>
+            <span class="info-value uhid">{{ appointment.patientId?.UHID }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Name</span>
+            <span class="info-value">{{ appointment.patientId?.name }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Phone</span>
+            <span class="info-value">{{ appointment.patientId?.phone }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Email</span>
+            <span class="info-value">{{ appointment.patientId?.email }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Gender / Age</span>
+            <span class="info-value">
+              {{ appointment.patientId?.gender }} · {{ appointment.patientId?.age }} yrs
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Doctor Card -->
+      <div class="card">
+        <h3 class="card-section-title">Doctor Information</h3>
+        <div class="info-list">
+          <div class="info-row">
+            <span class="info-label">Code</span>
+            <span class="info-value">
+              {{ appointment.doctorEmployeeId?.employeeCode }}
+            </span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Name</span>
+            <span class="info-value">
+              Dr. {{ appointment.doctorEmployeeId?.name }}
+            </span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Specialization</span>
+            <span class="info-value">
+              {{ appointment.doctorEmployeeId?.specialization }}
+            </span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Department</span>
+            <span class="info-value">
+              {{ appointment.doctorEmployeeId?.department }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Schedule Card -->
+      <div class="card">
+        <h3 class="card-section-title">Schedule</h3>
+        <div class="info-list">
+          <div class="info-row">
+            <span class="info-label">Date</span>
+            <span class="info-value">{{ appointment.date | date:'fullDate' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Time</span>
+            <span class="info-value time-big">{{ appointment.timeSlot }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Fee</span>
+            <span class="info-value fee-big">₹{{ appointment.consultationFee }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Department</span>
+            <span class="info-value">{{ appointment.department }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reason Card -->
+      <div class="card">
+        <h3 class="card-section-title">Reason for Visit</h3>
+        <p class="reason-content">{{ appointment.reasonForVisit }}</p>
+      </div>
+
+    </div>
+
+    <!-- Doctor Notes -->
+    @if (appointment.doctorNotes || appointment.diagnosis || appointment.prescription) {
+      <div class="card notes-card">
+        <h3 class="card-section-title">Doctor's Consultation Notes</h3>
+        <div class="notes-grid">
+          @if (appointment.diagnosis) {
+            <div class="note-block">
+              <h4>Diagnosis</h4>
+              <p>{{ appointment.diagnosis }}</p>
+            </div>
+          }
+          @if (appointment.doctorNotes) {
+            <div class="note-block">
+              <h4>Notes</h4>
+              <p>{{ appointment.doctorNotes }}</p>
+            </div>
+          }
+          @if (appointment.prescription) {
+            <div class="note-block prescription-block">
+              <h4>Prescription</h4>
+              <pre>{{ appointment.prescription }}</pre>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Cancellation Info -->
+    @if (appointment.status === 'CANCELLED' && appointment.cancellationReason) {
+      <div class="card cancellation-card">
+        <h3 class="card-section-title">Cancellation Details</h3>
+        <p class="cancellation-reason">{{ appointment.cancellationReason }}</p>
+      </div>
+    }
+
+  }
+</div>

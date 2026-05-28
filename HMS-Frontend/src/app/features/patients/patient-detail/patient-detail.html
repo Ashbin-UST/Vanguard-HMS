@@ -1,0 +1,240 @@
+<div class="patient-detail-container">
+  @if (loading) {
+    <div class="loading-state">
+      <p>Loading patient details...</p>
+    </div>
+  } @else if (patient) {
+    <!-- Header -->
+    <div class="detail-header">
+      <div class="header-left">
+        <button (click)="goBack()" class="btn btn-secondary btn-sm">← Back</button>
+        <div class="patient-identity">
+          <h2>{{ patient.name }}</h2>
+          <span class="uhid-badge">{{ patient.UHID }}</span>
+          <span [class]="'status-badge status-' + patient.status.toLowerCase()">{{ patient.status }}</span>
+        </div>
+      </div>
+      <button (click)="bookAppointment()" class="btn btn-primary">+ Book Appointment</button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button
+        (click)="setActiveTab('details')"
+        [class.active]="activeTab === 'details'"
+        class="tab-button"
+      >
+        Patient Details
+      </button>
+      <button
+        (click)="setActiveTab('appointments')"
+        [class.active]="activeTab === 'appointments'"
+        class="tab-button"
+      >
+        Appointments ({{ appointments.length }})
+      </button>
+      @if (canEdit()) {
+        <button
+          (click)="setActiveTab('edit')"
+          [class.active]="activeTab === 'edit'"
+          class="tab-button"
+        >
+          Edit Patient
+        </button>
+      }
+    </div>
+
+    <!-- Details Tab -->
+    @if (activeTab === 'details') {
+      <div class="card">
+        <div class="info-grid">
+          <div class="info-item">
+            <label>UHID</label>
+            <p>{{ patient.UHID }}</p>
+          </div>
+          <div class="info-item">
+            <label>Name</label>
+            <p>{{ patient.name }}</p>
+          </div>
+          <div class="info-item">
+            <label>Email</label>
+            <p>{{ patient.email }}</p>
+          </div>
+          <div class="info-item">
+            <label>Phone</label>
+            <p>{{ patient.phone }}</p>
+          </div>
+          <div class="info-item">
+            <label>Gender</label>
+            <p>{{ patient.gender }}</p>
+          </div>
+          <div class="info-item">
+            <label>Date of Birth</label>
+            <p>{{ patient.dob | date:'mediumDate' }}</p>
+          </div>
+          <div class="info-item">
+            <label>Age</label>
+            <p>{{ patient.age }} years</p>
+          </div>
+          <div class="info-item">
+            <label>Status</label>
+            <p [class]="patient.status === 'ACTIVE' ? 'text-green' : 'text-red'">{{ patient.status }}</p>
+          </div>
+        </div>
+
+        @if (patient.address?.line1 || patient.address?.city) {
+          <div class="info-section">
+            <h3>Address</h3>
+            <p>{{ patient.address?.line1 }}, {{ patient.address?.city }} {{ patient.address?.postcode }}</p>
+          </div>
+        }
+
+        @if (patient.emergencyContact?.name) {
+          <div class="info-section">
+            <h3>Emergency Contact</h3>
+            <p>{{ patient.emergencyContact?.name }} ({{ patient.emergencyContact?.relation }}) - {{ patient.emergencyContact?.phone }}</p>
+          </div>
+        }
+
+        @if (patient.medicalHistory) {
+          <div class="info-section">
+            <h3>Medical History</h3>
+            <p class="medical-history">{{ patient.medicalHistory }}</p>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Appointments Tab -->
+    @if (activeTab === 'appointments') {
+      <div class="card">
+        @if (appointmentsLoading) {
+          <div class="loading-state"><p>Loading appointments...</p></div>
+        } @else if (appointments.length === 0) {
+          <div class="empty-state">
+            <p>No appointments found for this patient</p>
+            <button (click)="bookAppointment()" class="btn btn-primary btn-sm">Book First Appointment</button>
+          </div>
+        } @else {
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Doctor</th>
+                  <th>Date</th>
+                  <th>Time</th>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (apt of appointments; track apt._id) {
+                  <tr>
+                    <td><span class="uhid-badge">{{ apt.appointmentId }}</span></td>
+                    <td>{{ apt.doctorEmployeeId?.name || 'N/A' }}</td>
+                    <td>{{ apt.date | date:'mediumDate' }}</td>
+                    <td>{{ apt.timeSlot }}</td>
+                    <td>{{ apt.appointmentType }}</td>
+                    <td>
+                      <span [class]="'status-badge ' + getStatusClass(apt.status)">
+                        {{ apt.status }}
+                      </span>
+                    </td>
+                    <td>
+                      <button (click)="viewAppointment(apt._id)" class="btn btn-primary btn-sm">View</button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Edit Tab -->
+    @if (activeTab === 'edit' && canEdit() && editForm) {
+      <div class="card">
+        <form [formGroup]="editForm" (ngSubmit)="onEditSubmit()">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Name *</label>
+              <input type="text" formControlName="name" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email *</label>
+              <input type="email" formControlName="email" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone *</label>
+              <input type="tel" formControlName="phone" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Gender *</label>
+              <select formControlName="gender" class="form-select">
+                @for (gender of genders; track gender) {
+                  <option [value]="gender">{{ gender }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Date of Birth *</label>
+              <input type="date" formControlName="dob" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Status</label>
+              <select formControlName="status" class="form-select">
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="INACTIVE">INACTIVE</option>
+              </select>
+            </div>
+            <div class="form-group form-group-full">
+              <label class="form-label">Address</label>
+              <input type="text" formControlName="addressLine1" class="form-input" placeholder="Address line" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">City</label>
+              <input type="text" formControlName="addressCity" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Postcode</label>
+              <input type="text" formControlName="addressPostcode" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Emergency Contact Name</label>
+              <input type="text" formControlName="emergencyName" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Emergency Phone</label>
+              <input type="tel" formControlName="emergencyPhone" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Relation</label>
+              <input type="text" formControlName="emergencyRelation" class="form-input" />
+            </div>
+            <div class="form-group form-group-full">
+              <label class="form-label">Medical History</label>
+              <textarea formControlName="medicalHistory" class="form-textarea" rows="4"></textarea>
+            </div>
+          </div>
+
+          @if (editErrorMessage) {
+            <div class="alert alert-error">{{ editErrorMessage }}</div>
+          }
+          @if (editSuccessMessage) {
+            <div class="alert alert-success">{{ editSuccessMessage }}</div>
+          }
+
+          <div class="form-actions">
+            <button type="button" (click)="setActiveTab('details')" class="btn btn-secondary">Cancel</button>
+            <button type="submit" [disabled]="editForm.invalid || editLoading" class="btn btn-primary">
+              @if (editLoading) { <span>Saving...</span> } @else { <span>Save Changes</span> }
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+  }
+</div>

@@ -1,0 +1,29 @@
+@use '../abstracts/variables' as *;
+
+.badge {
+  display: inline-block;
+  padding: $spacing-1 $spacing-2;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+
+  &-primary {
+    background-color: $primary-100;
+    color: $primary-800;
+  }
+
+  &-secondary {
+    background-color: lighten($secondary-500, 45%);
+    color: $secondary-600;
+  }
+
+  &-success {
+    background-color: $green-50;
+    color: $green-600;
+  }
+
+  &-danger {
+    background-color: $red-50;
+    color: $red-600;
+  }
+}

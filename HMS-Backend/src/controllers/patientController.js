@@ -1,5 +1,5 @@
-const Patient = require('../models/patientModel');
-
+const Patient = require("../models/patientModel");
+const { buildOwnershipFilter } = require("../utils/ownershipFilter");
 /**
  * Create new patient
  * Access: RECEPTIONIST, NURSE, ADMIN, OWNER
@@ -15,23 +15,25 @@ exports.createPatient = async (req, res) => {
             address,
             emergencyContact,
             medicalHistory,
-            status
+            status,
         } = req.body;
 
         // Validate required fields
         if (!name || !phone || !email || !gender || !dob) {
             return res.status(400).json({
                 success: false,
-                message: 'Name, phone, email, gender, and date of birth are required'
+                message: "Name, phone, email, gender, and date of birth are required",
             });
         }
 
         // Check if email already exists
-        const existingEmail = await Patient.findOne({ email: email.toLowerCase().trim() });
+        const existingEmail = await Patient.findOne({
+            email: email.toLowerCase().trim(),
+        });
         if (existingEmail) {
             return res.status(409).json({
                 success: false,
-                message: `Patient with email "${email}" already exists`
+                message: `Patient with email "${email}" already exists`,
             });
         }
 
@@ -40,7 +42,7 @@ exports.createPatient = async (req, res) => {
         if (dobDate > new Date()) {
             return res.status(400).json({
                 success: false,
-                message: 'Date of birth cannot be in the future'
+                message: "Date of birth cannot be in the future",
             });
         }
 
@@ -54,13 +56,13 @@ exports.createPatient = async (req, res) => {
             address,
             emergencyContact,
             medicalHistory,
-            status: status || 'ACTIVE',
-            registeredBy: req.user.id
+            status: status || "ACTIVE",
+            registeredBy: req.user.id,
         }).save();
 
         return res.status(201).json({
             success: true,
-            message: 'Patient registered successfully',
+            message: "Patient registered successfully",
             data: {
                 UHID: patient.UHID,
                 name: patient.name,
@@ -69,16 +71,17 @@ exports.createPatient = async (req, res) => {
                 gender: patient.gender,
                 age: patient.age,
                 status: patient.status,
-                createdAt: patient.createdAt
-            }
+                createdAt: patient.createdAt,
+            },
         });
-
     } catch (error) {
-        console.log('Create patient error:', error);
+        console.log("Create patient error:", error);
 
-        if (error.name === 'ValidationError') {
-            const messages = Object.values(error.errors).map(e => e.message);
-            return res.status(400).json({ success: false, message: messages.join(', ') });
+        if (error.name === "ValidationError") {
+            const messages = Object.values(error.errors).map((e) => e.message);
+            return res
+                .status(400)
+                .json({ success: false, message: messages.join(", ") });
         }
 
         return res.status(500).json({ success: false, message: error.message });
@@ -93,32 +96,33 @@ exports.getAllPatients = async (req, res) => {
     try {
         const { page = 1, limit = 10, status, gender } = req.query;
 
-        const filter = {};
+        const filter = {
+            ...buildOwnershipFilter(req.user, "registeredBy"),
+        };
         if (status) filter.status = status;
         if (gender) filter.gender = gender;
 
         const patients = await Patient.find(filter)
-            .select('-__v')
+            .select("-__v")
             .sort({ createdAt: -1 })
             .limit(limit * 1)
             .skip((page - 1) * limit)
-            .populate('registeredBy', 'email userId');
+            .populate("registeredBy", "email userId");
 
         const count = await Patient.countDocuments(filter);
 
         return res.status(200).json({
             success: true,
-            message: 'Patients retrieved successfully',
+            message: "Patients retrieved successfully",
             data: patients,
             pagination: {
                 total: count,
                 page: parseInt(page),
-                pages: Math.ceil(count / limit)
-            }
+                pages: Math.ceil(count / limit),
+            },
         });
-
     } catch (error) {
-        console.log('Get all patients error:', error);
+        console.log("Get all patients error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -131,25 +135,28 @@ exports.getPatientById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const patient = await Patient.findById(id)
-            .select('-__v')
-            .populate('registeredBy', 'email userId');
+        const filter = {
+            _id: id,
+            ...buildOwnershipFilter(req.user, "registeredBy"),
+        };
+        const patient = await Patient.findOne(filter)
+            .select("-__v")
+            .populate("registeredBy", "email userId");
 
         if (!patient) {
             return res.status(404).json({
                 success: false,
-                message: 'Patient not found'
+                message: "Patient not found",
             });
         }
 
         return res.status(200).json({
             success: true,
-            message: 'Patient retrieved successfully',
-            data: patient
+            message: "Patient retrieved successfully",
+            data: patient,
         });
-
     } catch (error) {
-        console.log('Get patient by ID error:', error);
+        console.log("Get patient by ID error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -171,42 +178,46 @@ exports.updatePatient = async (req, res) => {
         if (updates.email) {
             const existingEmail = await Patient.findOne({
                 email: updates.email.toLowerCase().trim(),
-                _id: { $ne: id }
+                _id: { $ne: id },
             });
             if (existingEmail) {
                 return res.status(409).json({
                     success: false,
-                    message: `Email "${updates.email}" is already in use by another patient`
+                    message: `Email "${updates.email}" is already in use by another patient`,
                 });
             }
             updates.email = updates.email.toLowerCase().trim();
         }
 
-        const patient = await Patient.findByIdAndUpdate(
-            id,
-            updates,
-            { new: true, runValidators: true }
-        );
+        const filter = {
+            _id: id,
+            ...buildOwnershipFilter(req.user, "registeredBy"),
+        };
+        const patient = await Patient.findOneAndUpdate(filter, updates, {
+            new: true,
+            runValidators: true,
+        });
 
         if (!patient) {
             return res.status(404).json({
                 success: false,
-                message: 'Patient not found'
+                message: "Patient not found",
             });
         }
 
         return res.status(200).json({
             success: true,
-            message: 'Patient updated successfully',
-            data: patient
+            message: "Patient updated successfully",
+            data: patient,
         });
-
     } catch (error) {
-        console.log('Update patient error:', error);
+        console.log("Update patient error:", error);
 
-        if (error.name === 'ValidationError') {
-            const messages = Object.values(error.errors).map(e => e.message);
-            return res.status(400).json({ success: false, message: messages.join(', ') });
+        if (error.name === "ValidationError") {
+            const messages = Object.values(error.errors).map((e) => e.message);
+            return res
+                .status(400)
+                .json({ success: false, message: messages.join(", ") });
         }
 
         return res.status(500).json({ success: false, message: error.message });
@@ -221,22 +232,25 @@ exports.deletePatient = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const patient = await Patient.findByIdAndDelete(id);
+        const filter = {
+            _id: id,
+            ...buildOwnershipFilter(req.user, "registeredBy"),
+        };
+        const patient = await Patient.findOneAndDelete(filter);
 
         if (!patient) {
             return res.status(404).json({
                 success: false,
-                message: 'Patient not found'
+                message: "Patient not found",
             });
         }
 
         return res.status(200).json({
             success: true,
-            message: 'Patient deleted successfully'
+            message: "Patient deleted successfully",
         });
-
     } catch (error) {
-        console.log('Delete patient error:', error);
+        console.log("Delete patient error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -252,31 +266,35 @@ exports.searchPatients = async (req, res) => {
         if (!q || q.trim().length < 2) {
             return res.status(400).json({
                 success: false,
-                message: 'Search query must be at least 2 characters'
+                message: "Search query must be at least 2 characters",
             });
         }
 
         const searchQuery = q.trim();
-
-        const patients = await Patient.find({
+        const ownershipFilter = buildOwnershipFilter(req.user, "registeredBy");
+        const hasOwnershipFilter = Object.keys(ownershipFilter).length > 0;
+        const searchCriteria = {
             $or: [
-                { UHID: { $regex: searchQuery, $options: 'i' } },
-                { name: { $regex: searchQuery, $options: 'i' } },
-                { phone: { $regex: searchQuery, $options: 'i' } },
-                { email: { $regex: searchQuery, $options: 'i' } }
-            ]
-        })
-            .select('UHID name phone email gender dob status')
+                { UHID: { $regex: searchQuery, $options: "i" } },
+                { name: { $regex: searchQuery, $options: "i" } },
+                { phone: { $regex: searchQuery, $options: "i" } },
+                { email: { $regex: searchQuery, $options: "i" } },
+            ],
+        };
+        const finalFilter = hasOwnershipFilter
+            ? { $and: [ownershipFilter, searchCriteria] }
+            : searchCriteria;
+        const patients = await Patient.find(finalFilter)
+            .select("UHID name phone email gender dob status")
             .limit(20);
 
         return res.status(200).json({
             success: true,
             message: `Found ${patients.length} patient(s)`,
-            data: patients
+            data: patients,
         });
-
     } catch (error) {
-        console.log('Search patients error:', error);
+        console.log("Search patients error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };

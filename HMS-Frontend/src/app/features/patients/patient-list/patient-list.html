@@ -1,0 +1,151 @@
+<div class="patient-list-container">
+
+  <!-- Header -->
+  <div class="list-header">
+    <div class="header-left">
+      <p class="header-subtitle">Total: {{ totalPatients }} patient(s)</p>
+    </div>
+    <button (click)="createPatient()" class="btn btn-primary">
+      + Add New Patient
+    </button>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="search-section">
+    <div class="search-input-wrapper">
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        (keyup.enter)="onSearch()"
+        class="form-input search-input"
+        placeholder="Search by name, phone, UHID, or email..."
+      />
+      <div class="search-actions">
+        @if (searchQuery) {
+          <button (click)="clearSearch()" class="btn-icon" title="Clear">✕</button>
+        }
+        <button (click)="onSearch()" class="btn btn-primary btn-sm">Search</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  @if (!showSearchResults) {
+    <div class="filters-section">
+      <div class="filter-group">
+        <label class="filter-label">Status:</label>
+        <select [(ngModel)]="statusFilter" (change)="onFilterChange()" class="filter-select">
+          <option value="">All</option>
+          <option value="ACTIVE">Active</option>
+          <option value="INACTIVE">Inactive</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Gender:</label>
+        <select [(ngModel)]="genderFilter" (change)="onFilterChange()" class="filter-select">
+          <option value="">All</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+    </div>
+  }
+
+  <!-- Search Results Header -->
+  @if (showSearchResults) {
+    <div class="search-results-header">
+      <p>
+        Search results for "<strong>{{ searchQuery }}</strong>"
+        ({{ searchResults.length }} found)
+      </p>
+      <button (click)="clearSearch()" class="btn btn-secondary btn-sm">
+        Back to All
+      </button>
+    </div>
+  }
+
+  <!-- Loading Spinner -->
+  @if (loading || isSearching) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading...</p>
+    </div>
+  }
+
+  <!-- Patient Table -->
+  @if (!loading && !isSearching) {
+    <div class="card table-card">
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>UHID</th>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Gender</th>
+              <th>Age</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (patient of (showSearchResults ? searchResults : patients);
+              track patient._id) {
+              <tr>
+                <td>
+                  <span class="uhid-badge">{{ patient.UHID }}</span>
+                </td>
+                <td>
+                  <span class="patient-name">{{ patient.name }}</span>
+                </td>
+                <td>{{ patient.phone }}</td>
+                <td>{{ patient.gender }}</td>
+                <td>{{ patient.age }}</td>
+                <td>
+                  <span [class]="'status-badge status-' + patient.status.toLowerCase()">
+                    {{ patient.status }}
+                  </span>
+                </td>
+                <td>
+                  <div class="action-buttons">
+                    <button (click)="viewPatient(patient._id)"
+                      class="btn btn-primary btn-sm">
+                      View
+                    </button>
+                    @if (isAdmin()) {
+                      <button
+                        (click)="deletePatient(patient._id, patient.name)"
+                        class="btn btn-danger btn-sm">
+                        Delete
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7" class="empty-state">No patients found</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (!showSearchResults && totalPages > 1) {
+        <div class="pagination">
+          <button (click)="onPageChange(currentPage - 1)"
+            [disabled]="currentPage === 1"
+            class="btn btn-secondary btn-sm">Previous</button>
+          <span class="page-info">
+            Page {{ currentPage }} of {{ totalPages }}
+          </span>
+          <button (click)="onPageChange(currentPage + 1)"
+            [disabled]="currentPage === totalPages"
+            class="btn btn-secondary btn-sm">Next</button>
+        </div>
+      }
+    </div>
+  }
+
+</div>

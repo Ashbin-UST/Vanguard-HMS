@@ -1,0 +1,35 @@
+@use '../abstracts/variables' as *;
+@use '../abstracts/mixins' as *;
+
+.btn {
+  @include button-base;
+
+  &-primary {
+    @include button-primary;
+  }
+
+  &-secondary {
+    @include button-base;
+    background-color: $white;
+    color: $primary-600;
+    border: 2px solid $primary-600;
+
+    &:hover {
+      background-color: $primary-50;
+    }
+  }
+
+  &-danger {
+    @include button-base;
+    background-color: $red-600;
+    color: $white;
+
+    &:hover {
+      background-color: darken($red-600, 10%);
+    }
+  }
+
+  &-full {
+    width: 100%;
+  }
+}

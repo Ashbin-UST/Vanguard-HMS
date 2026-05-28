@@ -1,0 +1,19 @@
+@use '../abstracts/variables' as *;
+@use '../abstracts/mixins' as *;
+
+.grid {
+  display: grid;
+  gap: $spacing-6;
+
+  &-cols-2 {
+    @include respond-above('md') {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  &-cols-3 {
+    @include respond-above('md') {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+}

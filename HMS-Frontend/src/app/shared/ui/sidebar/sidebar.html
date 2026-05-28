@@ -1,0 +1,42 @@
+<aside class="sidebar">
+  <!-- Logo -->
+  <div class="sidebar-header">
+    <a routerLink="/" class="sidebar-logo">
+      <span class="logo-mark">H</span>
+      <div class="logo-text">
+        <span class="logo-title">{{ title }}</span>
+        @if (subtitle) {
+          <span class="logo-subtitle">{{ subtitle }}</span>
+        }
+      </div>
+    </a>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="sidebar-nav">
+    @for (item of menuItems; track item.route) {
+      <a
+        [routerLink]="item.route"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="sidebar-link"
+      >
+        {{ item.label }}
+      </a>
+    }
+  </nav>
+
+  <!-- User -->
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="user-avatar">{{ getUserInitial() }}</div>
+      <div class="user-info">
+        <p class="user-email">{{ currentUser?.email }}</p>
+        <p class="user-role">{{ currentUser?.roles?.join(', ') }}</p>
+      </div>
+    </div>
+    <button (click)="logout()" class="sidebar-logout">
+      Logout
+    </button>
+  </div>
+</aside>

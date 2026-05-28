@@ -1,0 +1,69 @@
+<div class="notes-container">
+  @if (loading) {
+    <div class="loading-state"><p>Loading...</p></div>
+  } @else if (appointment) {
+    <div class="notes-header">
+      <button (click)="goBack()" class="btn btn-secondary btn-sm">← Back</button>
+      <h2>Doctor Notes - {{ appointment.appointmentId }}</h2>
+    </div>
+
+    <!-- Appointment Summary -->
+    <div class="card summary-card">
+      <div class="summary-row">
+        <div class="summary-item">
+          <span class="label">Patient</span>
+          <span class="value">{{ appointment.patientId?.name }} ({{ appointment.patientId?.UHID }})</span>
+        </div>
+        <div class="summary-item">
+          <span class="label">Date & Time</span>
+          <span class="value">{{ appointment.date | date:'mediumDate' }} · {{ appointment.timeSlot }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="label">Reason</span>
+          <span class="value">{{ appointment.reasonForVisit }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes Form -->
+    <div class="card">
+      <h3 class="card-title">Consultation Notes</h3>
+
+      <form [formGroup]="notesForm" (ngSubmit)="onSubmit()">
+        <div class="form-group">
+          <label class="form-label">Diagnosis</label>
+          <input type="text" formControlName="diagnosis" class="form-input" placeholder="e.g., Hypertension Stage 1" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Doctor Notes</label>
+          <textarea formControlName="doctorNotes" class="form-textarea" rows="5" placeholder="Clinical observations, examination findings..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Prescription</label>
+          <textarea formControlName="prescription" class="form-textarea prescription-input" rows="6" placeholder="Tab Amlodipine 5mg - Once daily&#10;Tab Aspirin 75mg - After lunch&#10;&#10;Follow up after 2 weeks"></textarea>
+        </div>
+
+        @if (errorMessage) {
+          <div class="alert alert-error">{{ errorMessage }}</div>
+        }
+        @if (successMessage) {
+          <div class="alert alert-success">{{ successMessage }}</div>
+        }
+
+        <div class="form-actions">
+          <button type="button" (click)="goBack()" class="btn btn-secondary">Cancel</button>
+          <button type="submit" [disabled]="saving" class="btn btn-primary">
+            @if (saving) { <span>Saving...</span> } @else { <span>💾 Save Notes</span> }
+          </button>
+          @if (appointment.status === 'BOOKED') {
+            <button type="button" (click)="completeAndSave()" [disabled]="saving" class="btn btn-success">
+              ✓ Save & Complete
+            </button>
+          }
+        </div>
+      </form>
+    </div>
+  }
+</div>

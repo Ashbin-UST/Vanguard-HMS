@@ -1,0 +1,71 @@
+@use '../../../styles/abstracts/variables' as *;
+@use '../../../styles/abstracts/mixins' as *;
+
+.profile-wrapper {
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+.profile-content {
+  padding: $spacing-8;
+}
+
+.profile-section {
+  margin-bottom: $spacing-8;
+
+  &.section-border {
+    border-top: 1px solid $slate-200;
+    padding-top: $spacing-8;
+  }
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: $slate-900;
+  margin-bottom: $spacing-4;
+}
+
+.info-grid {
+  display: grid;
+  gap: $spacing-6;
+
+  @include respond-above('md') {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.info-item {
+  label {
+    font-size: 0.875rem;
+    color: $slate-600;
+    display: block;
+  }
+
+  p {
+    font-weight: 600;
+    color: $slate-900;
+    margin-top: $spacing-1;
+  }
+
+  &-full {
+    @include respond-above('md') {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
+.qualifications-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+  margin-top: $spacing-1;
+}
+
+.qualification-badge {
+  padding: $spacing-1 $spacing-3;
+  background-color: $slate-100;
+  color: $slate-800;
+  font-size: 0.875rem;
+  border-radius: $border-radius-sm;
+}

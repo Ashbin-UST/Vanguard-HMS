@@ -258,7 +258,7 @@ const selfRegister = async (req, res) => {
             email: normalizedEmail,
             department,
             designation,
-            medicalRegistrationNo,
+            medicalRegistrationNo: req.body.medicalRegistrationNo?.trim() || undefined,
             specialization,
             qualification,
             consultationFee,
@@ -526,23 +526,11 @@ const resetPassword = async (req, res) => {
             });
         }
 
-        // Verify token
-        let decoded;
-        try {
-            decoded = verifyAccessToken(token);
-        } catch (err) {
-            return res.status(400).json({
-                success: false,
-                message: 'Invalid or expired reset token',
-            });
-        }
-
         // Hash token and find user
         const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
         const user = await User.findOne({
-            _id: decoded.id,
-            resetPasswordToken: hashedToken,
+            resetPasswordToken: token,
             resetPasswordExpires: { $gt: Date.now() },
         }).select('+resetPasswordToken +resetPasswordExpires');
 

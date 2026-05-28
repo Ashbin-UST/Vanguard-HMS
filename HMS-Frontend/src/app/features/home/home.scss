@@ -1,0 +1,160 @@
+@use '../../../styles/abstracts/variables' as *;
+@use '../../../styles/abstracts/mixins' as *;
+
+.home-container {
+  min-height: 100vh;
+  background: linear-gradient(to bottom right, $primary-50, $white);
+}
+
+.hero-section {
+  max-width: $container-max-width;
+  margin: 0 auto;
+  padding: $spacing-16 $spacing-4;
+}
+
+.hero-content {
+  text-align: center;
+  max-width: 64rem;
+  margin: 0 auto;
+}
+
+.hero-title {
+  font-size: 3rem;
+  font-weight: 700;
+  color: $slate-900;
+  margin-bottom: $spacing-6;
+
+  @include respond-above('md') {
+    font-size: 3.75rem;
+  }
+}
+
+.hero-highlight {
+  color: $primary-600;
+}
+
+.hero-description {
+  font-size: 1.25rem;
+  color: $slate-600;
+  margin-bottom: $spacing-12;
+}
+
+.hero-actions {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  justify-content: center;
+
+  @include respond-above('sm') {
+    flex-direction: row;
+  }
+}
+
+.btn-large {
+  padding: $spacing-4 $spacing-8;
+  font-size: 1rem;
+}
+
+.features-section {
+  max-width: $container-max-width;
+  margin: 0 auto;
+  padding: $spacing-16 $spacing-4;
+}
+
+.section-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  text-align: center;
+  color: $slate-900;
+  margin-bottom: $spacing-12;
+}
+
+.features-grid {
+  display: grid;
+  gap: $spacing-8;
+  max-width: 72rem;
+  margin: 0 auto;
+
+  @include respond-above('md') {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.feature-card {
+  background-color: $white;
+  padding: $spacing-8;
+  border-radius: $border-radius-xl;
+  box-shadow: $shadow-md;
+  transition: box-shadow 0.3s;
+
+  &:hover {
+    box-shadow: $shadow-xl;
+  }
+}
+
+.feature-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: $border-radius-lg;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: $spacing-4;
+  font-size: 1.5rem;
+
+  &-primary {
+    background-color: $primary-100;
+  }
+
+  &-secondary {
+    background-color: lighten($secondary-500, 45%);
+  }
+
+  &-accent {
+    background-color: lighten($accent-500, 45%);
+  }
+}
+
+.feature-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: $slate-900;
+  margin-bottom: $spacing-3;
+}
+
+.feature-description {
+  color: $slate-600;
+}
+
+.cta-section {
+  background-color: $primary-600;
+  padding: $spacing-16 $spacing-4;
+}
+
+.cta-content {
+  text-align: center;
+  max-width: $container-max-width;
+  margin: 0 auto;
+}
+
+.cta-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: $white;
+  margin-bottom: $spacing-6;
+}
+
+.cta-description {
+  color: lighten($primary-600, 35%);
+  margin-bottom: $spacing-8;
+  font-size: 1.125rem;
+}
+
+.btn-light {
+  background-color: $white;
+  color: $primary-600;
+
+  &:hover {
+    background-color: $primary-50;
+  }
+}

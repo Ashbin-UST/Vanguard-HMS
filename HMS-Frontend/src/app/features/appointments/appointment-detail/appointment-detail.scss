@@ -1,0 +1,163 @@
+@use '../../../../styles/abstracts/variables' as *;
+@use '../../../../styles/abstracts/mixins' as *;
+
+.detail-container {
+  max-width: 100%;
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: $spacing-6;
+  flex-wrap: wrap;
+  gap: $spacing-4;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+}
+
+.apt-identity {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+
+  h2 { font-size: 1.5rem; font-weight: 700; font-family: monospace; color: $slate-900; }
+}
+
+.type-badge {
+  padding: 2px $spacing-2;
+  background-color: $slate-100;
+  color: $slate-600;
+  font-size: 0.8125rem;
+  border-radius: $border-radius-sm;
+}
+
+.header-actions {
+  display: flex;
+  gap: $spacing-2;
+  flex-wrap: wrap;
+}
+
+.detail-grid {
+  display: grid;
+  gap: $spacing-4;
+  margin-bottom: $spacing-6;
+
+  @include respond-above('md') { grid-template-columns: repeat(2, 1fr); }
+}
+
+.card-section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: $slate-800;
+  margin-bottom: $spacing-4;
+  padding-bottom: $spacing-2;
+  border-bottom: 1px solid $slate-100;
+}
+
+.info-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .info-label { font-size: 0.8125rem; color: $slate-500; }
+  .info-value { font-weight: 600; color: $slate-900; font-size: 0.9375rem; }
+  .uhid { font-family: monospace; color: $primary-700; }
+}
+
+.time-big { font-family: monospace; color: $primary-600 !important; font-size: 1.125rem !important; }
+.fee-big { color: $green-600 !important; font-size: 1.125rem !important; }
+
+.reason-content {
+  color: $slate-700;
+  line-height: 1.6;
+  padding: $spacing-3;
+  background-color: $slate-50;
+  border-radius: $border-radius-md;
+  border-left: 3px solid $primary-500;
+}
+
+.notes-card { margin-bottom: $spacing-4; }
+
+.notes-grid {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+}
+
+.note-block {
+  h4 { font-size: 0.875rem; font-weight: 700; color: $slate-700; margin-bottom: $spacing-2; }
+  p { color: $slate-600; line-height: 1.6; }
+}
+
+.prescription-block {
+  pre {
+    background-color: $slate-50;
+    padding: $spacing-4;
+    border-radius: $border-radius-md;
+    border-left: 3px solid $green-600;
+    font-family: inherit;
+    white-space: pre-wrap;
+    color: $slate-700;
+    line-height: 1.6;
+  }
+}
+
+.cancellation-card {
+  border-left: 4px solid $red-600;
+}
+
+.cancellation-reason {
+  color: $red-600;
+  font-weight: 500;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 2px $spacing-3;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 9999px;
+
+  &.status-booked { background-color: lighten($accent-500, 40%); color: darken($accent-500, 10%); }
+  &.status-completed { background-color: $green-50; color: $green-600; }
+  &.status-cancelled { background-color: $red-50; color: $red-600; }
+}
+
+.btn-success { background-color: $green-600; color: $white; &:hover { background-color: darken($green-600, 10%); } }
+.btn-danger { background-color: $red-600; color: $white; &:hover { background-color: darken($red-600, 10%); } }
+
+
+// Add at the bottom
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 3rem;
+  color: #64748b;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

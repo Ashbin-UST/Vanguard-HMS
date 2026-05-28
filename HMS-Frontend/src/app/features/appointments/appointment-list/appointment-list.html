@@ -1,0 +1,177 @@
+<div class="appointment-list-container">
+
+  <!-- Header -->
+  <div class="list-header">
+    <div class="header-left">
+      <p class="header-subtitle">
+        @if (showTodayOnly) {
+          Today's Appointments: {{ totalAppointments }}
+        } @else {
+          Total: {{ totalAppointments }} appointment(s)
+        }
+      </p>
+    </div>
+    @if (!doctorView) {
+      <button (click)="bookAppointment()" class="btn btn-primary">
+        + Book Appointment
+      </button>
+    }
+  </div>
+
+  <!-- Doctor Tabs -->
+  @if (doctorView) {
+    <div class="tabs">
+      <button (click)="onTabChange('today')"
+        [class.active]="activeTab === 'today'" class="tab-button">Today</button>
+      <button (click)="onTabChange('upcoming')"
+        [class.active]="activeTab === 'upcoming'" class="tab-button">Upcoming</button>
+      <button (click)="onTabChange('completed')"
+        [class.active]="activeTab === 'completed'" class="tab-button">Completed</button>
+    </div>
+  }
+
+  <!-- Filters -->
+  @if (!doctorView && !showTodayOnly) {
+    <div class="filters-section">
+      <div class="filter-group">
+        <label class="filter-label">Status:</label>
+        <select [(ngModel)]="statusFilter" (change)="onFilterChange()" class="filter-select">
+          <option value="">All</option>
+          @for (status of statuses; track status) {
+            <option [value]="status">{{ status }}</option>
+          }
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Date:</label>
+        <input type="date" [(ngModel)]="dateFilter"
+          (change)="onFilterChange()" class="filter-input" />
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Department:</label>
+        <select [(ngModel)]="departmentFilter" (change)="onFilterChange()" class="filter-select">
+          <option value="">All</option>
+          @for (dept of departments; track dept) {
+            <option [value]="dept">{{ dept }}</option>
+          }
+        </select>
+      </div>
+      @if (statusFilter || dateFilter || departmentFilter) {
+        <button (click)="clearFilters()" class="btn btn-secondary btn-sm">
+          Clear Filters
+        </button>
+      }
+    </div>
+  }
+
+  <!-- Loading Spinner -->
+  @if (loading) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading appointments...</p>
+    </div>
+  }
+
+  <!-- Appointment Cards -->
+  @if (!loading) {
+    @if (appointments.length === 0) {
+      <div class="card empty-state">
+        <p>No appointments found</p>
+      </div>
+    } @else {
+      <div class="appointments-list">
+        @for (apt of appointments; track apt._id) {
+          <div class="appointment-card"
+            [class]="'card border-' + apt.status.toLowerCase()">
+
+            <div class="card-header-row">
+              <div class="card-left">
+                <span class="apt-id">{{ apt.appointmentId }}</span>
+                <span [class]="'status-badge ' + getStatusClass(apt.status)">
+                  {{ apt.status }}
+                </span>
+              </div>
+              <div class="card-right">
+                <span class="apt-type">{{ apt.appointmentType }}</span>
+              </div>
+            </div>
+
+            <div class="card-body-grid">
+              <div class="info-block">
+                <span class="info-label">Patient</span>
+                <p class="info-value">{{ apt.patientId?.name || 'N/A' }}</p>
+                <p class="info-sub">
+                  {{ apt.patientId?.UHID }} · {{ apt.patientId?.phone }}
+                </p>
+              </div>
+              <div class="info-block">
+                <span class="info-label">Doctor</span>
+                <p class="info-value">
+                  Dr. {{ apt.doctorEmployeeId?.name || 'N/A' }}
+                </p>
+                <p class="info-sub">{{ apt.doctorEmployeeId?.specialization }}</p>
+              </div>
+              <div class="info-block">
+                <span class="info-label">Schedule</span>
+                <p class="info-value">{{ apt.date | date:'mediumDate' }}</p>
+                <p class="info-sub time-highlight">{{ apt.timeSlot }}</p>
+              </div>
+              <div class="info-block">
+                <span class="info-label">Fee</span>
+                <p class="info-value">₹{{ apt.consultationFee }}</p>
+                <p class="info-sub">{{ apt.department }}</p>
+              </div>
+            </div>
+
+            <div class="card-reason">
+              <span class="info-label">Reason: </span>
+              <span class="reason-text">{{ apt.reasonForVisit }}</span>
+            </div>
+
+            <div class="card-actions">
+              <button (click)="viewAppointment(apt._id)"
+                class="btn btn-primary btn-sm">
+                View Details
+              </button>
+
+              @if (apt.status === 'BOOKED' && isDoctor()) {
+                <button (click)="addNotes(apt._id)"
+                  class="btn btn-secondary btn-sm">
+                  Add Notes
+                </button>
+                <button (click)="completeAppointment(apt._id)"
+                  class="btn btn-success btn-sm">
+                  Complete
+                </button>
+              }
+
+              @if (apt.status === 'BOOKED' && canCancel()) {
+                <button (click)="cancelAppointment(apt._id)"
+                  class="btn btn-danger btn-sm">
+                  Cancel
+                </button>
+              }
+            </div>
+
+          </div>
+        }
+      </div>
+
+      <!-- Pagination -->
+      @if (totalPages > 1) {
+        <div class="pagination">
+          <button (click)="onPageChange(currentPage - 1)"
+            [disabled]="currentPage === 1"
+            class="btn btn-secondary btn-sm">Previous</button>
+          <span class="page-info">
+            Page {{ currentPage }} of {{ totalPages }}
+          </span>
+          <button (click)="onPageChange(currentPage + 1)"
+            [disabled]="currentPage === totalPages"
+            class="btn btn-secondary btn-sm">Next</button>
+        </div>
+      }
+    }
+  }
+
+</div>

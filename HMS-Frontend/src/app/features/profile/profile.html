@@ -1,0 +1,71 @@
+<div class="dashboard-container">
+  <div class="profile-wrapper">
+    <h1 class="dashboard-title">My Profile</h1>
+
+    <div class="card">
+      @if (loading) {
+      <div class="loading-state">
+        <p>Loading...</p>
+      </div>
+      } @else if (user) {
+      <div class="profile-content">
+
+        <!-- Employee Information -->
+        @if (employee) {
+        <div class="profile-section section-border">
+          <h2 class="section-title">Employee Information</h2>
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Employee Code</label>
+              <p>{{ employee.employeeCode }}</p>
+            </div>
+            <div class="info-item">
+              <label>Name</label>
+              <p>{{ employee.name }}</p>
+            </div>
+            <div class="info-item">
+              <label>Department</label>
+              <p>{{ employee.department }}</p>
+            </div>
+            <div class="info-item">
+              <label>Designation</label>
+              <p>{{ employee.designation }}</p>
+            </div>
+            <div class="info-item">
+              <label>Phone</label>
+              <p>{{ employee.phone }}</p>
+            </div>
+            <div class="info-item">
+              <label>Email</label>
+              <p>{{ employee.email }}</p>
+            </div>
+            @if (employee.specialization) {
+            <div class="info-item">
+              <label>Specialization</label>
+              <p>{{ employee.specialization }}</p>
+            </div>
+            }
+            @if (employee.consultationFee) {
+            <div class="info-item">
+              <label>Consultation Fee</label>
+              <p>${{ employee.consultationFee }}</p>
+            </div>
+            }
+            @if (employee.qualification && employee.qualification.length > 0) {
+            <div class="info-item info-item-full">
+              <label>Qualifications</label>
+              <div class="qualifications-list">
+                @for (qual of employee.qualification; track qual) {
+                <span class="qualification-badge">{{ qual }}</span>
+                }
+              </div>
+            </div>
+            }
+          </div>
+        </div>
+        }
+      </div>
+      }
+    </div>
+  </div>
+</div>

@@ -1,0 +1,397 @@
+@use '../../../../styles/abstracts/variables' as *;
+@use '../../../../styles/abstracts/mixins' as *;
+
+.wizard-container {
+  max-width: 900px;
+}
+
+.wizard-header {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+  margin-bottom: $spacing-6;
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: $slate-900;
+  }
+}
+
+// Progress Bar
+.progress-bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-8;
+  padding: 0 $spacing-4;
+}
+
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.step-circle {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background-color: $slate-200;
+  color: $slate-600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.875rem;
+  transition: all 0.3s;
+
+  .active & {
+    background-color: $primary-600;
+    color: $white;
+  }
+
+  .current & {
+    box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.2);
+  }
+}
+
+.step-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: $slate-500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+
+  .active & {
+    color: $primary-600;
+  }
+}
+
+.step-line {
+  flex: 1;
+  height: 2px;
+  background-color: $slate-200;
+  margin: 0 $spacing-2;
+  margin-bottom: 1.5rem;
+  transition: background-color 0.3s;
+
+  &.active {
+    background-color: $primary-600;
+  }
+}
+
+.wizard-step {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.step-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: $slate-900;
+  margin-bottom: $spacing-4;
+}
+
+.step-subtitle {
+  color: $slate-600;
+  margin-bottom: $spacing-6;
+}
+
+.step-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: $spacing-6;
+  padding-top: $spacing-4;
+  border-top: 1px solid $slate-100;
+}
+
+// Search
+.search-row {
+  display: flex;
+  gap: $spacing-2;
+  margin-bottom: $spacing-4;
+}
+
+.search-results {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.patient-option {
+  padding: $spacing-3 $spacing-4;
+  border: 1px solid $slate-200;
+  border-radius: $border-radius-md;
+  margin-bottom: $spacing-2;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: $primary-500;
+    background-color: $primary-50;
+  }
+}
+
+.option-main {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+}
+
+.option-uhid {
+  font-family: monospace;
+  font-weight: 600;
+  color: $primary-700;
+  font-size: 0.8125rem;
+  background-color: $primary-50;
+  padding: 1px $spacing-2;
+  border-radius: $border-radius-sm;
+}
+
+.option-name {
+  font-weight: 600;
+  color: $slate-900;
+}
+
+.option-sub {
+  font-size: 0.8125rem;
+  color: $slate-600;
+  margin-top: 2px;
+  padding-left: calc(3rem + $spacing-3);
+}
+
+// Selected info
+.selected-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: $spacing-4;
+}
+
+.selected-card {
+  background-color: $primary-50;
+  border: 1px solid $primary-200;
+  border-radius: $border-radius-md;
+  padding: $spacing-4;
+
+  h4 { color: $slate-900; margin-top: $spacing-1; }
+  p { color: $slate-600; font-size: 0.875rem; margin-top: $spacing-1; }
+}
+
+.selected-badge {
+  font-family: monospace;
+  font-weight: 700;
+  color: $primary-700;
+  font-size: 0.8125rem;
+}
+
+// Doctors
+.filters-row {
+  display: flex;
+  gap: $spacing-4;
+  margin-bottom: $spacing-6;
+  flex-wrap: wrap;
+}
+
+.filter-sm {
+  max-width: 250px;
+}
+
+.doctors-grid {
+  display: grid;
+  gap: $spacing-4;
+
+  @include respond-above('md') {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.doctor-card {
+  border: 2px solid $slate-200;
+  border-radius: $border-radius-lg;
+  padding: $spacing-4;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: $primary-400;
+    box-shadow: $shadow-md;
+  }
+
+  &.selected {
+    border-color: $primary-600;
+    background-color: $primary-50;
+  }
+}
+
+.doctor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-2;
+
+  h4 { color: $slate-900; }
+}
+
+.doctor-code {
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: $slate-500;
+}
+
+.doctor-spec { color: $primary-600; font-weight: 600; font-size: 0.875rem; }
+.doctor-dept { color: $slate-600; font-size: 0.8125rem; }
+.doctor-fee { color: $slate-900; font-weight: 700; margin-top: $spacing-2; }
+
+.slots-count {
+  font-size: 0.75rem;
+  color: $slate-500;
+  background-color: $slate-100;
+  padding: 1px $spacing-2;
+  border-radius: $border-radius-sm;
+}
+
+// Date
+.date-picker-section {
+  max-width: 300px;
+  margin-bottom: $spacing-4;
+}
+
+.date-input {
+  font-size: 1.125rem;
+  padding: $spacing-3 $spacing-4;
+}
+
+.selected-date-text {
+  color: $primary-600;
+  font-weight: 600;
+  margin-top: $spacing-2;
+}
+
+// Slots
+.slots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: $spacing-3;
+  margin-bottom: $spacing-6;
+}
+
+.slot-button {
+  padding: $spacing-3;
+  border: 2px solid $slate-200;
+  border-radius: $border-radius-md;
+  background-color: $white;
+  font-family: monospace;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: $slate-700;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: $primary-500;
+    background-color: $primary-50;
+    color: $primary-700;
+  }
+
+  &.selected {
+    border-color: $primary-600;
+    background-color: $primary-600;
+    color: $white;
+  }
+}
+
+.no-slots {
+  text-align: center;
+  padding: $spacing-6;
+  color: $slate-600;
+  background-color: $slate-50;
+  border-radius: $border-radius-md;
+
+  button { margin-top: $spacing-4; }
+}
+
+.booked-slots-info {
+  margin-top: $spacing-4;
+  padding: $spacing-3;
+  background-color: $red-50;
+  border-radius: $border-radius-md;
+}
+
+.booked-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: $red-600;
+  margin-bottom: $spacing-2;
+}
+
+.booked-slots-list {
+  display: flex;
+  gap: $spacing-2;
+  flex-wrap: wrap;
+}
+
+.slot-booked {
+  padding: $spacing-1 $spacing-2;
+  background-color: $red-100;
+  color: $red-600;
+  font-family: monospace;
+  font-size: 0.8125rem;
+  border-radius: $border-radius-sm;
+  text-decoration: line-through;
+}
+
+// Summary
+.summary-section {
+  background-color: $slate-50;
+  border-radius: $border-radius-lg;
+  padding: $spacing-6;
+  margin-bottom: $spacing-6;
+}
+
+.summary-grid {
+  display: grid;
+  gap: $spacing-4;
+  @include respond-above('md') { grid-template-columns: repeat(3, 1fr); }
+}
+
+.summary-item {
+  .summary-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: $slate-500;
+  }
+  .summary-value {
+    font-weight: 600;
+    color: $slate-900;
+    margin-top: 2px;
+  }
+}
+
+.time-highlight {
+  color: $primary-600 !important;
+  font-family: monospace;
+  font-size: 1.125rem;
+}
+
+.btn-lg {
+  padding: $spacing-3 $spacing-8;
+  font-size: 1rem;
+}
+
+.loading-text {
+  color: $slate-600;
+  padding: $spacing-4 0;
+}
+
+.empty-text {
+  color: $slate-600;
+  text-align: center;
+  padding: $spacing-6;
+}

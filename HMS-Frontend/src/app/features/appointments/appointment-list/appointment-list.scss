@@ -1,0 +1,292 @@
+@use '../../../../styles/abstracts/variables' as *;
+@use '../../../../styles/abstracts/mixins' as *;
+
+.appointment-list-container {
+  max-width: 100%;
+}
+
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-6;
+  flex-wrap: wrap;
+  gap: $spacing-4;
+}
+
+.header-subtitle {
+  color: $slate-600;
+  font-size: 0.875rem;
+}
+
+.tabs {
+  display: flex;
+  gap: $spacing-1;
+  margin-bottom: $spacing-6;
+  border-bottom: 2px solid $slate-200;
+}
+
+.tab-button {
+  padding: $spacing-3 $spacing-6;
+  border: none;
+  background: none;
+  font-weight: 600;
+  color: $slate-600;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: transparent;
+    transition: background-color 0.2s;
+  }
+
+  &:hover { color: $primary-600; }
+
+  &.active {
+    color: $primary-600;
+    &::after { background-color: $primary-600; }
+  }
+}
+
+.filters-section {
+  display: flex;
+  gap: $spacing-4;
+  margin-bottom: $spacing-6;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.filter-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: $slate-700;
+}
+
+.filter-select,
+.filter-input {
+  padding: $spacing-2 $spacing-3;
+  border: 1px solid $slate-200;
+  border-radius: $border-radius-md;
+  font-size: 0.875rem;
+  color: $slate-700;
+  background-color: $white;
+}
+
+.appointments-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+}
+
+.appointment-card {
+  border-left: 4px solid transparent;
+  transition: box-shadow 0.2s;
+
+  &:hover {
+    box-shadow: $shadow-lg;
+  }
+
+  &.border-booked {
+    border-left-color: $accent-500;
+  }
+
+  &.border-completed {
+    border-left-color: $green-600;
+  }
+
+  &.border-cancelled {
+    border-left-color: $red-600;
+  }
+}
+
+.card-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-4;
+}
+
+.card-left {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+}
+
+.apt-id {
+  font-family: monospace;
+  font-weight: 700;
+  color: $slate-900;
+  font-size: 0.9375rem;
+}
+
+.apt-type {
+  font-size: 0.8125rem;
+  color: $slate-600;
+  background-color: $slate-100;
+  padding: 2px $spacing-2;
+  border-radius: $border-radius-sm;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 2px $spacing-3;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.status-booked {
+  background-color: lighten($accent-500, 40%);
+  color: darken($accent-500, 10%);
+}
+
+.status-completed {
+  background-color: $green-50;
+  color: $green-600;
+}
+
+.status-cancelled {
+  background-color: $red-50;
+  color: $red-600;
+}
+
+.card-body-grid {
+  display: grid;
+  gap: $spacing-4;
+  margin-bottom: $spacing-4;
+
+  @include respond-above('sm') {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include respond-above('lg') {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.info-block {
+  .info-label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: $slate-500;
+  }
+
+  .info-value {
+    font-weight: 600;
+    color: $slate-900;
+    font-size: 0.9375rem;
+    margin-top: 2px;
+  }
+
+  .info-sub {
+    font-size: 0.8125rem;
+    color: $slate-600;
+  }
+}
+
+.time-highlight {
+  font-family: monospace;
+  color: $primary-600 !important;
+  font-weight: 600;
+}
+
+.card-reason {
+  padding: $spacing-3;
+  background-color: $slate-50;
+  border-radius: $border-radius-md;
+  margin-bottom: $spacing-4;
+  font-size: 0.875rem;
+
+  .info-label {
+    font-weight: 600;
+    color: $slate-700;
+    margin-right: $spacing-2;
+  }
+
+  .reason-text {
+    color: $slate-600;
+  }
+}
+
+.card-actions {
+  display: flex;
+  gap: $spacing-2;
+  flex-wrap: wrap;
+}
+
+.btn-success {
+  background-color: $green-600;
+  color: $white;
+  &:hover { background-color: darken($green-600, 10%); }
+}
+
+.btn-danger {
+  background-color: $red-600;
+  color: $white;
+  &:hover { background-color: darken($red-600, 10%); }
+}
+
+.empty-state {
+  text-align: center;
+  padding: $spacing-8;
+  color: $slate-600;
+}
+
+.loading-state {
+  text-align: center;
+  padding: $spacing-8;
+  color: $slate-600;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: $spacing-4;
+  padding: $spacing-6 0;
+}
+
+.page-info {
+  font-size: 0.875rem;
+  color: $slate-600;
+}
+
+// Spinner
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2rem;
+  color: #64748b;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

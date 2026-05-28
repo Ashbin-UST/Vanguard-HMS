@@ -24,7 +24,7 @@ const sendAppointmentConfirmationEmail = async (appointmentData) => {
 
         const response = await apiInstance.sendTransacEmail({
             sender: {
-                email: process.env.FROM_EMAIL || "noreply@hospital.com",
+                email: process.env.BREVO_SENDER_EMAIL || "noreply@hospital.com",
                 name: "Hospital Management System",
             },
             to: [
@@ -61,7 +61,7 @@ const sendAppointmentConfirmationEmail = async (appointmentData) => {
       `,
         });
 
-        console.log(`✅ Appointment confirmation email sent to ${patientEmail}`);
+        console.log(`Appointment confirmation email sent to ${patientEmail}`);
         return response;
     } catch (err) {
         console.log("BREVO FULL ERROR:", err.response?.body || err);
@@ -85,7 +85,7 @@ const sendAppointmentCancellationEmail = async (appointmentData) => {
 
         const response = await apiInstance.sendTransacEmail({
             sender: {
-                email: process.env.FROM_EMAIL || "noreply@hospital.com",
+                email: process.env.BREVO_SENDER_EMAIL || "noreply@hospital.com",
                 name: "Hospital Management System",
             },
             to: [
@@ -119,7 +119,7 @@ const sendAppointmentCancellationEmail = async (appointmentData) => {
       `,
         });
 
-        console.log(`✅ Appointment cancellation email sent to ${patientEmail}`);
+        console.log(`Appointment cancellation email sent to ${patientEmail}`);
         return response;
     } catch (err) {
         console.log("BREVO FULL ERROR:", err.response?.body || err);
@@ -143,7 +143,7 @@ const sendAppointmentReminderEmail = async (appointmentData) => {
 
         const response = await apiInstance.sendTransacEmail({
             sender: {
-                email: process.env.FROM_EMAIL || "noreply@hospital.com",
+                email: process.env.BREVO_SENDER_EMAIL || "noreply@hospital.com",
                 name: "Hospital Management System",
             },
             to: [
@@ -155,7 +155,7 @@ const sendAppointmentReminderEmail = async (appointmentData) => {
             subject: "Appointment Reminder - Tomorrow",
             htmlContent: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #d97706;">Appointment Reminder 🔔</h2>
+          <h2 style="color: #d97706;">Appointment Reminder</h2>
           
           <p>Dear <strong>${patientName}</strong>,</p>
           
@@ -176,7 +176,7 @@ const sendAppointmentReminderEmail = async (appointmentData) => {
       `,
         });
 
-        console.log(`✅ Appointment reminder email sent to ${patientEmail}`);
+        console.log(`Appointment reminder email sent to ${patientEmail}`);
         return response;
     } catch (err) {
         console.log("BREVO FULL ERROR:", err.response?.body || err);

@@ -16,7 +16,7 @@ const sendRegistrationPendingEmail = async (employeeEmail, employeeName) => {
     try {
         const response = await apiInstance.sendTransacEmail({
             sender: {
-                email: process.env.FROM_EMAIL || "noreply@hospital.com",
+                email: process.env.BREVO_SENDER_EMAIL || "noreply@hospital.com",
                 name: "Hospital Management System",
             },
             to: [
@@ -39,7 +39,7 @@ const sendRegistrationPendingEmail = async (employeeEmail, employeeName) => {
       `,
         });
 
-        console.log(`✅ Registration pending email sent to ${employeeEmail}`);
+        console.log(`Registration pending email sent to ${employeeEmail}`);
         return response;
     } catch (err) {
         console.log("BREVO FULL ERROR:", err.response?.body || err);
@@ -54,7 +54,7 @@ const sendApprovalEmail = async (employeeEmail, employeeName, loginUrl) => {
     try {
         const response = await apiInstance.sendTransacEmail({
             sender: {
-                email: process.env.FROM_EMAIL || "noreply@hospital.com",
+                email: process.env.BREVO_SENDER_EMAIL || "noreply@hospital.com",
                 name: "Hospital Management System",
             },
             to: [
@@ -66,7 +66,7 @@ const sendApprovalEmail = async (employeeEmail, employeeName, loginUrl) => {
             subject: "Account Approved - You Can Now Login",
             htmlContent: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #059669;">Account Approved! 🎉</h2>
+          <h2 style="color: #059669;">Account Approved!</h2>
           <p>Dear <strong>${employeeName}</strong>,</p>
           <p>Great news! Your account has been <strong>approved</strong> by the administrator.</p>
           <p>You can now login to the Hospital Management System using your email and password.</p>
@@ -77,7 +77,7 @@ const sendApprovalEmail = async (employeeEmail, employeeName, loginUrl) => {
       `,
         });
 
-        console.log(`✅ Approval email sent to ${employeeEmail}`);
+        console.log(`Approval email sent to ${employeeEmail}`);
         return response;
     } catch (err) {
         console.log("BREVO FULL ERROR:", err.response?.body || err);
@@ -92,7 +92,7 @@ const sendRejectionEmail = async (employeeEmail, employeeName, reason) => {
     try {
         const response = await apiInstance.sendTransacEmail({
             sender: {
-                email: process.env.FROM_EMAIL || "noreply@hospital.com",
+                email: process.env.BREVO_SENDER_EMAIL || "noreply@hospital.com",
                 name: "Hospital Management System",
             },
             to: [
@@ -115,7 +115,7 @@ const sendRejectionEmail = async (employeeEmail, employeeName, reason) => {
       `,
         });
 
-        console.log(`✅ Rejection email sent to ${employeeEmail}`);
+        console.log(`Rejection email sent to ${employeeEmail}`);
         return response;
     } catch (err) {
         console.log("BREVO FULL ERROR:", err.response?.body || err);
@@ -126,11 +126,15 @@ const sendRejectionEmail = async (employeeEmail, employeeName, reason) => {
 /**
  * Send Admin Notification Email (New Self-Registration)
  */
-const sendAdminNotificationEmail = async (adminEmail, employeeName, employeeEmail) => {
+const sendAdminNotificationEmail = async (
+    adminEmail,
+    employeeName,
+    employeeEmail,
+) => {
     try {
         const response = await apiInstance.sendTransacEmail({
             sender: {
-                email: process.env.FROM_EMAIL || "noreply@hospital.com",
+                email: process.env.BREVO_SENDER_EMAIL || "noreply@hospital.com",
                 name: "Hospital Management System",
             },
             to: [
@@ -153,7 +157,7 @@ const sendAdminNotificationEmail = async (adminEmail, employeeName, employeeEmai
       `,
         });
 
-        console.log(`✅ Admin notification email sent to ${adminEmail}`);
+        console.log(`Admin notification email sent to ${adminEmail}`);
         return response;
     } catch (err) {
         console.log("BREVO FULL ERROR:", err.response?.body || err);
@@ -162,13 +166,18 @@ const sendAdminNotificationEmail = async (adminEmail, employeeName, employeeEmai
 };
 
 /**
- * Send Temporary Password Email (Admin Creates Employee)
+ * Send login Email (Admin Creates Employee)
  */
-const sendTemporaryPasswordEmail = async (employeeEmail, employeeName, temporaryPassword, resetUrl) => {
+const sendTemporaryPasswordEmail = async (
+    employeeEmail,
+    employeeName,
+    temporaryPassword,
+    resetUrl,
+) => {
     try {
         const response = await apiInstance.sendTransacEmail({
             sender: {
-                email: process.env.FROM_EMAIL || "noreply@hospital.com",
+                email: process.env.BREVO_SENDER_EMAIL || "noreply@hospital.com",
                 name: "Hospital Management System",
             },
             to: [
@@ -186,10 +195,9 @@ const sendTemporaryPasswordEmail = async (employeeEmail, employeeName, temporary
           
           <div style="background-color: #f3f4f6; padding: 20px; border-radius: 5px; margin: 20px 0;">
             <p style="margin: 0;"><strong>Email:</strong> ${employeeEmail}</p>
-            <p style="margin: 10px 0 0 0;"><strong>Temporary Password:</strong> <code style="background-color: #e5e7eb; padding: 5px 10px; border-radius: 3px;">${temporaryPassword}</code></p>
           </div>
           
-          <p><strong>⚠️ Important:</strong> You must reset your password before you can login.</p>
+          <p><strong>Important:</strong> You must create a password before you can login.</p>
           <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background-color: #0d9488; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0;">Reset Password Now</a>
           
           <p style="color: #6b7280; font-size: 14px;">This link will expire in 1 hour.</p>
@@ -199,7 +207,7 @@ const sendTemporaryPasswordEmail = async (employeeEmail, employeeName, temporary
       `,
         });
 
-        console.log(`✅ Temporary password email sent to ${employeeEmail}`);
+        console.log(`Create password email sent to ${employeeEmail}`);
         return response;
     } catch (err) {
         console.log("BREVO FULL ERROR:", err.response?.body || err);
@@ -214,7 +222,7 @@ const sendPasswordResetEmail = async (userEmail, userName, resetUrl) => {
     try {
         const response = await apiInstance.sendTransacEmail({
             sender: {
-                email: process.env.FROM_EMAIL || "noreply@hospital.com",
+                email: process.env.BREVO_SENDER_EMAIL || "noreply@hospital.com",
                 name: "Hospital Management System",
             },
             to: [
@@ -238,7 +246,7 @@ const sendPasswordResetEmail = async (userEmail, userName, resetUrl) => {
       `,
         });
 
-        console.log(`✅ Password reset email sent to ${userEmail}`);
+        console.log(`Password reset email sent to ${userEmail}`);
         return response;
     } catch (err) {
         console.log("BREVO FULL ERROR:", err.response?.body || err);

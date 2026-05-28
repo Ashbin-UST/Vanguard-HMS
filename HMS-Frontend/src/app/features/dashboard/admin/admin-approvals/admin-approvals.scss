@@ -1,0 +1,57 @@
+@use '../../../../../styles/abstracts/variables' as *;
+
+.employee-info {
+  .emp-name { font-weight: 600; color: $slate-900; display: block; }
+  .emp-code { font-size: 0.8125rem; color: $slate-500; }
+}
+
+.role-badge {
+  padding: 2px $spacing-2;
+  background-color: $primary-100;
+  color: $primary-700;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: $border-radius-sm;
+}
+
+.action-buttons { display: flex; gap: $spacing-2; }
+
+.btn-success { background-color: $green-600; color: $white; &:hover { background-color: darken($green-600, 10%); } }
+.btn-danger { background-color: $red-600; color: $white; &:hover { background-color: darken($red-600, 10%); } }
+.empty-state { text-align: center; padding: $spacing-8; color: $slate-600; }
+.loading-state { text-align: center; padding: $spacing-8; color: $slate-600; }
+
+// Add at the bottom
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 3rem;
+  color: #64748b;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.btn-success {
+  background-color: #16a34a;
+  color: #ffffff;
+  &:hover { background-color: #15803d; }
+}
+
+.btn-danger {
+  background-color: #dc2626;
+  color: #ffffff;
+  &:hover { background-color: #b91c1c; }
+}

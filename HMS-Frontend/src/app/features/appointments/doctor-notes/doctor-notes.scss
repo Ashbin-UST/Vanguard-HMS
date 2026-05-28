@@ -1,0 +1,77 @@
+@use '../../../../styles/abstracts/variables' as *;
+@use '../../../../styles/abstracts/mixins' as *;
+
+.notes-container {
+  max-width: 800px;
+}
+
+.notes-header {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+  margin-bottom: $spacing-6;
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: $slate-900;
+  }
+}
+
+.summary-card {
+  margin-bottom: $spacing-6;
+  background-color: $primary-50;
+  border: 1px solid lighten($primary-500, 30%);
+}
+
+.summary-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-6;
+}
+
+.summary-item {
+  .label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: $slate-500;
+    margin-bottom: 2px;
+  }
+
+  .value {
+    font-weight: 600;
+    color: $slate-900;
+  }
+}
+
+.card-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: $slate-900;
+  margin-bottom: $spacing-6;
+}
+
+.prescription-input {
+  font-family: monospace;
+  line-height: 1.8;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-3;
+  margin-top: $spacing-6;
+  padding-top: $spacing-4;
+  border-top: 1px solid $slate-100;
+}
+
+.btn-success {
+  background-color: $green-600;
+  color: $white;
+
+  &:hover {
+    background-color: darken($green-600, 10%);
+  }
+}

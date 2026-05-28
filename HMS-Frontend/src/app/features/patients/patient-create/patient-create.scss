@@ -1,0 +1,76 @@
+@use '../../../../styles/abstracts/variables' as *;
+@use '../../../../styles/abstracts/mixins' as *;
+
+.patient-create-container {
+  max-width: 900px;
+}
+
+.form-header {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+  margin-bottom: $spacing-6;
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: $slate-900;
+  }
+}
+
+.form-section {
+  margin-bottom: $spacing-8;
+  padding-bottom: $spacing-6;
+  border-bottom: 1px solid $slate-100;
+
+  &:last-of-type {
+    border-bottom: none;
+    margin-bottom: $spacing-4;
+  }
+}
+
+.section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: $slate-800;
+  margin-bottom: $spacing-4;
+}
+
+.form-grid {
+  display: grid;
+  gap: $spacing-4;
+
+  @include respond-above('md') {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.form-group-full {
+  @include respond-above('md') {
+    grid-column: 1 / -1;
+  }
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid $slate-200;
+  border-radius: $border-radius-lg;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: $primary-500;
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+  }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-4;
+  padding-top: $spacing-4;
+}

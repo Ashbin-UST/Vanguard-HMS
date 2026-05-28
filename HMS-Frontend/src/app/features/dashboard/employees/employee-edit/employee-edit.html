@@ -1,0 +1,176 @@
+<div class="patient-list-container">
+  <!-- HEADER -->
+  <div class="list-header">
+    <div class="header-left">
+      <h2 class="header-title">Edit Employee</h2>
+      <p class="header-subtitle">{{ form.name || 'Loading...' }}</p>
+    </div>
+    <button (click)="cancel()" class="btn btn-secondary">← Back to Employees</button>
+  </div>
+
+  <!-- LOADING -->
+  @if (loading) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading employee data...</p>
+    </div>
+  }
+
+  <!-- EDIT FORM -->
+  @if (!loading) {
+    <div class="card form-card">
+      <form (ngSubmit)="onSubmit()" #employeeForm="ngForm">
+
+        <!-- Section: Basic Info -->
+        <div class="form-section">
+          <h3 class="section-title">Basic Information</h3>
+
+          <div class="form-grid">
+            <!-- Name -->
+            <div class="form-group">
+              <label class="form-label">Name <span class="required">*</span></label>
+              <input type="text" [(ngModel)]="form.name" name="name"
+                     class="form-input" placeholder="Full name" required />
+            </div>
+
+            <!-- Phone -->
+            <div class="form-group">
+              <label class="form-label">Phone <span class="required">*</span></label>
+              <input type="text" [(ngModel)]="form.phone" name="phone"
+                     class="form-input" placeholder="Phone number" required />
+            </div>
+
+            <!-- Email -->
+            <div class="form-group">
+              <label class="form-label">Email <span class="required">*</span></label>
+              <input type="email" [(ngModel)]="form.email" name="email"
+                     class="form-input" placeholder="Email address" required />
+            </div>
+
+            <!-- Department -->
+            <div class="form-group">
+              <label class="form-label">Department <span class="required">*</span></label>
+              <select [(ngModel)]="form.department" name="department"
+                      class="form-input" required>
+                <option value="">Select Department</option>
+                @for (dept of departments; track dept) {
+                  <option [value]="dept">{{ dept }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Designation -->
+            <div class="form-group">
+              <label class="form-label">Designation</label>
+              <input type="text" [(ngModel)]="form.designation" name="designation"
+                     class="form-input" placeholder="e.g. Senior Doctor, Receptionist" />
+            </div>
+
+            <!-- Medical Registration No -->
+            <div class="form-group">
+              <label class="form-label">Medical Registration No</label>
+              <input type="text" [(ngModel)]="form.medicalRegistrationNo" name="medicalRegistrationNo"
+                     class="form-input" placeholder="Registration number" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Professional Info -->
+        <div class="form-section">
+          <h3 class="section-title">Professional Details</h3>
+
+          <div class="form-grid">
+            <!-- Specialization -->
+            <div class="form-group">
+              <label class="form-label">Specialization</label>
+              <input type="text" [(ngModel)]="form.specialization" name="specialization"
+                     class="form-input" placeholder="e.g. Cardiology, Pediatrics" />
+            </div>
+
+            <!-- Consultation Fee -->
+            <div class="form-group">
+              <label class="form-label">Consultation Fee (₹)</label>
+              <input type="number" [(ngModel)]="form.consultationFee" name="consultationFee"
+                     class="form-input" placeholder="0" min="0" />
+            </div>
+
+            <!-- Status -->
+            <div class="form-group">
+              <label class="form-label">Status</label>
+              <select [(ngModel)]="form.status" name="status" class="form-input">
+                @for (s of statuses; track s) {
+                  <option [value]="s">{{ s }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <!-- Qualifications -->
+          <div class="form-group">
+            <label class="form-label">Qualifications</label>
+            <div class="chip-input-wrapper">
+              <div class="chip-list">
+                @for (qual of form.qualification; track qual; let i = $index) {
+                  <span class="chip">
+                    {{ qual }}
+                    <button type="button" (click)="removeQualification(i)" class="chip-remove">✕</button>
+                  </span>
+                }
+              </div>
+              <div class="chip-add-row">
+                <input type="text" [(ngModel)]="newQualification" name="newQualification"
+                       class="form-input chip-input"
+                       placeholder="Add qualification (e.g. MBBS, MD)"
+                       (keyup.enter)="addQualification(); $event.preventDefault()" />
+                <button type="button" (click)="addQualification()" class="btn btn-secondary btn-sm">Add</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Availability -->
+        <div class="form-section">
+          <h3 class="section-title">Availability Slots</h3>
+          <p class="section-hint">
+            Enter time slots in HH:MM-HH:MM format (e.g. 09:00-12:00).
+            Leave empty if not applicable.
+          </p>
+
+          <div class="form-group">
+            <div class="chip-list">
+              @for (slot of form.availabilitySlots; track slot; let i = $index) {
+                <span class="chip chip-slot">
+                  {{ slot }}
+                  <button type="button" (click)="removeAvailabilitySlot(i)" class="chip-remove">✕</button>
+                </span>
+              }
+            </div>
+            <p class="input-hint">
+              Current slots:
+              @if (form.availabilitySlots.length === 0) {
+                <em>None configured</em>
+              }
+              @if (form.availabilitySlots.length > 0) {
+                {{ form.availabilitySlots.join(', ') }}
+              }
+            </p>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+          <button type="button" (click)="cancel()" class="btn btn-secondary">Cancel</button>
+          <button type="submit" class="btn btn-primary"
+                  [disabled]="submitting || !employeeForm.form.valid">
+            @if (submitting) {
+              Saving...
+            } @else {
+              Save Changes
+            }
+          </button>
+        </div>
+
+      </form>
+    </div>
+  }
+</div>

@@ -1,0 +1,162 @@
+@use '../../../../styles/abstracts/variables' as *;
+@use '../../../../styles/abstracts/mixins' as *;
+
+.patient-detail-container {
+  max-width: 100%;
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: $spacing-6;
+  flex-wrap: wrap;
+  gap: $spacing-4;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+}
+
+.patient-identity {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: $slate-900;
+  }
+}
+
+.tabs {
+  display: flex;
+  gap: $spacing-1;
+  margin-bottom: $spacing-6;
+  border-bottom: 2px solid $slate-200;
+}
+
+.tab-button {
+  padding: $spacing-3 $spacing-4;
+  border: none;
+  background: none;
+  font-weight: 600;
+  color: $slate-600;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: transparent;
+    transition: background-color 0.2s;
+  }
+
+  &:hover {
+    color: $primary-600;
+  }
+
+  &.active {
+    color: $primary-600;
+    &::after {
+      background-color: $primary-600;
+    }
+  }
+}
+
+.info-grid {
+  display: grid;
+  gap: $spacing-6;
+
+  @include respond-above('md') {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include respond-above('lg') {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.info-item {
+  label {
+    font-size: 0.8125rem;
+    color: $slate-600;
+    display: block;
+    margin-bottom: $spacing-1;
+  }
+  p {
+    font-weight: 600;
+    color: $slate-900;
+    font-size: 0.9375rem;
+  }
+}
+
+.info-section {
+  margin-top: $spacing-6;
+  padding-top: $spacing-6;
+  border-top: 1px solid $slate-100;
+
+  h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: $slate-800;
+    margin-bottom: $spacing-2;
+  }
+
+  p {
+    color: $slate-700;
+    font-size: 0.9375rem;
+  }
+}
+
+.medical-history {
+  white-space: pre-wrap;
+  background-color: $slate-50;
+  padding: $spacing-3;
+  border-radius: $border-radius-md;
+  border-left: 3px solid $primary-500;
+}
+
+.text-green {
+  color: $green-600;
+  font-weight: 600;
+}
+
+.text-red {
+  color: $red-600;
+  font-weight: 600;
+}
+
+.status-booked {
+  background-color: lighten($accent-500, 45%);
+  color: darken($accent-500, 10%);
+}
+
+.status-completed {
+  background-color: $green-50;
+  color: $green-600;
+}
+
+.status-cancelled {
+  background-color: $red-50;
+  color: $red-600;
+}
+
+.empty-state {
+  text-align: center;
+  padding: $spacing-8;
+  color: $slate-600;
+
+  button {
+    margin-top: $spacing-4;
+  }
+}

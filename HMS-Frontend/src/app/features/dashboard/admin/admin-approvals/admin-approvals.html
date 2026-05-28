@@ -1,0 +1,66 @@
+<app-dashboard-layout
+  [menuItems]="sidebarItems"
+  title="HMS"
+  subtitle="Admin Panel"
+  pageTitle="Pending Approvals"
+>
+  <!-- ✅ Loading with spinner -->
+  @if (loading) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading pending approvals...</p>
+    </div>
+  } @else if (pendingApprovals.length === 0) {
+    <div class="card empty-state">
+      <p>No pending approvals 🎉</p>
+    </div>
+  } @else {
+    <div class="card">
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Employee</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Department</th>
+              <th>Registered</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (approval of pendingApprovals; track approval.userId) {
+              <tr>
+                <td>
+                  <div class="employee-info">
+                    <span class="emp-name">{{ approval.employee.name }}</span>
+                    <span class="emp-code">{{ approval.employee.employeeCode }}</span>
+                  </div>
+                </td>
+                <td>{{ approval.email }}</td>
+                <td>
+                  <span class="role-badge">{{ approval.roles.join(', ') }}</span>
+                </td>
+                <td>{{ approval.employee.department }}</td>
+                <td>{{ approval.createdAt | date:'short' }}</td>
+                <td>
+                  <div class="action-buttons">
+                    <button
+                      (click)="approve(approval.userId)"
+                      class="btn btn-success btn-sm"
+                    >Approve</button>
+                    <button
+                      (click)="reject(approval.userId)"
+                      class="btn btn-danger btn-sm"
+                    >Reject</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+</app-dashboard-layout>

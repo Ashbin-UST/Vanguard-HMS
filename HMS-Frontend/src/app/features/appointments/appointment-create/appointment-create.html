@@ -1,0 +1,290 @@
+<div class="wizard-container">
+  <div class="wizard-header">
+    <button (click)="goBack()" class="btn btn-secondary btn-sm">← Back</button>
+    <h2>Book Appointment</h2>
+  </div>
+
+  <!-- Progress Bar -->
+  <div class="progress-bar">
+    @for (step of [1,2,3,4,5]; track step) {
+      <div class="progress-step" [class.active]="currentStep >= step" [class.current]="currentStep === step">
+        <div class="step-circle">{{ step }}</div>
+        <span class="step-label">
+          @switch (step) {
+            @case (1) { Patient }
+            @case (2) { Doctor }
+            @case (3) { Date }
+            @case (4) { Time }
+            @case (5) { Confirm }
+          }
+        </span>
+      </div>
+      @if (step < 5) {
+        <div class="step-line" [class.active]="currentStep > step"></div>
+      }
+    }
+  </div>
+
+  <!-- Step 1: Select Patient -->
+  @if (currentStep === 1) {
+    <div class="card wizard-step">
+      <h3 class="step-title">Step 1: Select Patient</h3>
+
+      @if (!selectedPatient) {
+        <div class="search-section">
+          <div class="search-row">
+            <input
+              type="text"
+              [(ngModel)]="patientSearchQuery"
+              (keyup.enter)="searchPatients()"
+              class="form-input"
+              placeholder="Search by name, phone, UHID..."
+            />
+            <button (click)="searchPatients()" class="btn btn-primary">Search</button>
+          </div>
+
+          @if (searchingPatient) {
+            <p class="loading-text">Searching...</p>
+          }
+
+          @if (patientSearchResults.length > 0) {
+            <div class="search-results">
+              @for (patient of patientSearchResults; track patient._id) {
+                <div class="patient-option" (click)="selectPatient(patient)">
+                  <div class="option-main">
+                    <span class="option-uhid">{{ patient.UHID }}</span>
+                    <span class="option-name">{{ patient.name }}</span>
+                  </div>
+                  <div class="option-sub">
+                    {{ patient.phone }} · {{ patient.gender }} · Age: {{ patient.age }}
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="selected-info">
+          <div class="selected-card">
+            <span class="selected-badge">{{ selectedPatient.UHID }}</span>
+            <h4>{{ selectedPatient.name }}</h4>
+            <p>{{ selectedPatient.phone }} · {{ selectedPatient.gender }} · Age: {{ selectedPatient.age }}</p>
+          </div>
+          <button (click)="selectedPatient = null; patientSearchResults = []" class="btn btn-secondary btn-sm">
+            Change Patient
+          </button>
+        </div>
+        <div class="step-actions">
+          <button (click)="nextStep()" class="btn btn-primary">Next: Select Doctor →</button>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Step 2: Select Doctor -->
+  @if (currentStep === 2) {
+    <div class="card wizard-step">
+      <h3 class="step-title">Step 2: Select Doctor</h3>
+
+      <div class="filters-row">
+        <input
+          type="text"
+          [(ngModel)]="doctorFilter"
+          (keyup.enter)="onDoctorFilterChange()"
+          class="form-input filter-sm"
+          placeholder="Filter by specialization..."
+        />
+        <select [(ngModel)]="departmentFilter" (change)="onDoctorFilterChange()" class="form-select filter-sm">
+          <option value="">All Departments</option>
+          @for (dept of departments; track dept) {
+            <option [value]="dept">{{ dept }}</option>
+          }
+        </select>
+      </div>
+
+      @if (loadingDoctors) {
+        <p class="loading-text">Loading doctors...</p>
+      }
+
+      <div class="doctors-grid">
+        @for (doctor of availableDoctors; track doctor._id) {
+          <div class="doctor-card" [class.selected]="selectedDoctor?._id === doctor._id" (click)="selectDoctor(doctor)">
+            <div class="doctor-header">
+              <h4>Dr. {{ doctor.name }}</h4>
+              <span class="doctor-code">{{ doctor.employeeCode }}</span>
+            </div>
+            <p class="doctor-spec">{{ doctor.specialization || 'General' }}</p>
+            <p class="doctor-dept">{{ doctor.department }}</p>
+            <p class="doctor-fee">₹{{ doctor.consultationFee || 0 }}</p>
+            <div class="doctor-slots">
+              <span class="slots-count">{{ doctor.availabilitySlots.length || 0 }} slots/day</span>
+            </div>
+          </div>
+        } @empty {
+          <p class="empty-text">No doctors available</p>
+        }
+      </div>
+
+      <div class="step-actions">
+        <button (click)="prevStep()" class="btn btn-secondary">← Back</button>
+      </div>
+    </div>
+  }
+
+  <!-- Step 3: Select Date -->
+  @if (currentStep === 3) {
+    <div class="card wizard-step">
+      <h3 class="step-title">Step 3: Select Date</h3>
+
+      <div class="date-picker-section">
+        <label class="form-label">Appointment Date</label>
+        <input
+          type="date"
+          [(ngModel)]="selectedDate"
+          [min]="minDate"
+          class="form-input date-input"
+        />
+      </div>
+
+      @if (selectedDate) {
+        <p class="selected-date-text">Selected: {{ getFormattedDate() }}</p>
+      }
+
+      <div class="step-actions">
+        <button (click)="prevStep()" class="btn btn-secondary">← Back</button>
+        <button (click)="confirmDate()" [disabled]="!selectedDate" class="btn btn-primary">Next: Select Time →</button>
+      </div>
+    </div>
+  }
+
+  <!-- Step 4: Select Time Slot -->
+  @if (currentStep === 4) {
+    <div class="card wizard-step">
+      <h3 class="step-title">Step 4: Select Time Slot</h3>
+      <p class="step-subtitle">Dr. {{ selectedDoctor?.name }} · {{ getFormattedDate() }}</p>
+
+      @if (loadingSlots) {
+        <p class="loading-text">Loading available slots...</p>
+      } @else if (availableSlots) {
+        @if (availableSlots.availableSlots.length === 0) {
+          <div class="no-slots">
+            <p>No available slots on this date. All {{ availableSlots.totalSlots }} slot(s) are booked.</p>
+            <button (click)="prevStep()" class="btn btn-secondary btn-sm">Choose Different Date</button>
+          </div>
+        } @else {
+          <div class="slots-grid">
+            @for (slot of availableSlots.availableSlots; track slot) {
+              <button
+                (click)="selectSlot(slot)"
+                [class.selected]="selectedSlot === slot"
+                class="slot-button"
+              >
+                {{ slot }}
+              </button>
+            }
+          </div>
+
+          @if (availableSlots.bookedSlots.length > 0) {
+            <div class="booked-slots-info">
+              <p class="booked-label">Already booked:</p>
+              <div class="booked-slots-list">
+                @for (slot of availableSlots.bookedSlots; track slot) {
+                  <span class="slot-booked">{{ slot }}</span>
+                }
+              </div>
+            </div>
+          }
+        }
+      }
+
+      <div class="step-actions">
+        <button (click)="prevStep()" class="btn btn-secondary">← Back</button>
+      </div>
+    </div>
+  }
+
+  <!-- Step 5: Confirm -->
+  @if (currentStep === 5) {
+    <div class="card wizard-step">
+      <h3 class="step-title">Step 5: Confirm Appointment</h3>
+
+      <!-- Summary -->
+      <div class="summary-section">
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="summary-label">Patient</span>
+            <p class="summary-value">{{ selectedPatient?.name }} ({{ selectedPatient?.UHID }})</p>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Doctor</span>
+            <p class="summary-value">Dr. {{ selectedDoctor?.name }}</p>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Date</span>
+            <p class="summary-value">{{ getFormattedDate() }}</p>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Time Slot</span>
+            <p class="summary-value time-highlight">{{ selectedSlot }}</p>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Department</span>
+            <p class="summary-value">{{ selectedDoctor?.department }}</p>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Specialization</span>
+            <p class="summary-value">{{ selectedDoctor?.specialization }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Additional Details Form -->
+      <form [formGroup]="appointmentForm" (ngSubmit)="onSubmit()">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Appointment Type *</label>
+            <select formControlName="appointmentType" class="form-select">
+              @for (type of appointmentTypes; track type) {
+                <option [value]="type">{{ type }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Consultation Fee *</label>
+            <input type="number" formControlName="consultationFee" class="form-input" />
+          </div>
+          <div class="form-group form-group-full">
+            <label class="form-label">Reason for Visit *</label>
+            <textarea
+              formControlName="reasonForVisit"
+              class="form-textarea"
+              rows="3"
+              placeholder="Describe the reason for this visit..."
+            ></textarea>
+            @if (appointmentForm.get('reasonForVisit')?.invalid && appointmentForm.get('reasonForVisit')?.touched) {
+              <p class="form-error">Reason for visit is required</p>
+            }
+          </div>
+        </div>
+
+        @if (errorMessage) {
+          <div class="alert alert-error">{{ errorMessage }}</div>
+        }
+        @if (successMessage) {
+          <div class="alert alert-success">{{ successMessage }}</div>
+        }
+
+        <div class="step-actions">
+          <button type="button" (click)="prevStep()" class="btn btn-secondary">← Back</button>
+          <button type="submit" [disabled]="appointmentForm.invalid || submitting" class="btn btn-primary btn-lg">
+            @if (submitting) {
+              <span>Booking...</span>
+            } @else {
+              <span>✓ Confirm & Book</span>
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+</div>

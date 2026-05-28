@@ -1,9 +1,24 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 
-const { createEmployee } = require('../controllers/employeeController');
+const {
+    createEmployee,
+    getEmployees,
+    getEmployeeById,
+    updateEmployee,
+    toggleEmployeeStatus,
+} = require("../controllers/employeeController");
+
 const { protect, authorize } = require("../middleware/authMiddleware");
 
-router.post('/', createEmployee);
+// All routes require ADMIN or OWNER
+router.use(protect, authorize("ADMIN", "OWNER"));
+
+// ── CRUD ──────────────────────────────────────────────────────
+router.post("/", createEmployee);
+router.get("/", getEmployees);
+router.get("/:id", getEmployeeById);
+router.put("/:id", updateEmployee);
+router.patch("/:id/status", toggleEmployeeStatus);
 
 module.exports = router;

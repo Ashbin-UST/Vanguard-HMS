@@ -1,0 +1,31 @@
+@use '../abstracts/variables' as *;
+@use '../abstracts/mixins' as *;
+
+.card {
+  @include card;
+
+  &-header {
+    margin-bottom: $spacing-6;
+
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: $slate-900;
+    }
+
+    p {
+      color: $slate-600;
+      margin-top: $spacing-2;
+    }
+  }
+
+  &-body {
+    // Card body styles
+  }
+
+  &-footer {
+    margin-top: $spacing-6;
+    padding-top: $spacing-6;
+    border-top: 1px solid $slate-200;
+  }
+}
