@@ -2,11 +2,8 @@ import { inject } from '@angular/core';
 import { Router, CanActivateFn } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
-/**
- * Blocks access to protected routes for unauthenticated users and redirects
- * them to /login, preserving the attempted URL as returnUrl so they land
- * back where they intended after signing in (e.g. an emailed /dashboard link).
- */
+// Blocks access to protected routes for unauthenticated users and redirects them to /login
+
 export const authGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);

@@ -1,9 +1,4 @@
 import { Designation } from './employee.model';
-
-/**
- * Sidebar node — mirrors the backend Nodes schema. Returned by
- * GET /nodes/my-nodes, already filtered to the current user's designation.
- */
 export interface SidebarNode {
   nodeId: string;
   name: string;

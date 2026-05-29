@@ -1,8 +1,3 @@
-/**
- * Audit log models — mirror the backend AuditLogs schema. Used to render the
- * "Recent Activity" feed on the overview dashboard.
- */
-
 export type AuditAction =
   | 'EMPLOYEE_CREATED'
   | 'EMPLOYEE_APPROVED'

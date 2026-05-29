@@ -1,8 +1,3 @@
-/**
- * Employee domain models — aligned with the backend Employees schema and
- * the buildEmployeeProfile() utility.
- */
-
 // Designations are the real roles in this system (stored on the employee).
 export type Designation =
   | 'OWNER'
@@ -44,10 +39,7 @@ export interface AvailabilitySlot {
   endTime: string;   // HH:mm
 }
 
-/**
- * Employee profile — the exact object buildEmployeeProfile() returns.
- * Optional medical fields are only present for the relevant designations.
- */
+//Employee profile
 export interface EmployeeProfile {
   employeeCode: string;
   name: string;
@@ -65,11 +57,6 @@ export interface EmployeeProfile {
   consultationFee?: number;
   availabilitySlots?: AvailabilitySlot[];
 }
-
-/**
- * Combined employee row returned by buildEmployeeResponse() for the
- * employee/pending/admin list endpoints.
- */
 export interface EmployeeListItem {
   employee: EmployeeProfile;
   status: EmployeeStatus;

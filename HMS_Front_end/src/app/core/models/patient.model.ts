@@ -1,7 +1,3 @@
-/**
- * Patient domain models — aligned exactly with the backend Patients schema.
- */
-
 export type Gender = 'Male' | 'Female';
 export type PatientStatus = 'ACTIVE' | 'INACTIVE';
 

@@ -5,8 +5,6 @@ import { AuthService } from '../services/auth.service';
 import { ToastService } from '../services/toast.service';
 import { Router } from '@angular/router';
 
-// Endpoints where a 401 is an expected "bad credentials" case, not a session
-// expiry — we must not force-logout / redirect for these.
 const PUBLIC_AUTH_PATHS = [
   '/auth/login',
   '/auth/forgot-password',
@@ -35,8 +33,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((error: HttpErrorResponse) => {
       switch (error.status) {
         case 401:
-          // Bad credentials on a public auth call are surfaced by the
-          // component itself; only treat 401 elsewhere as session expiry.
+
           if (!isPublicAuthCall) {
             toastService.error('Session expired. Please login again.');
             authService.forceClearSession();
@@ -53,7 +50,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           break;
       }
 
-      // Re-throw so component-level handlers can react too.
       return throwError(() => error);
     }),
   );

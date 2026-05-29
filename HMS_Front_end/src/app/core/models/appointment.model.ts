@@ -1,12 +1,5 @@
 import { AvailabilitySlot } from './employee.model';
 
-/**
- * Appointment domain models — aligned with the backend Appointments schema.
- * The backend stores only: patientId, doctorEmployeeId, appointmentDate,
- * timeSlot, status. List/detail endpoints enrich each row with `patient`
- * and `doctor` display objects (see appointmentController.enrichAppointments).
- */
-
 export type AppointmentStatus = 'BOOKED' | 'CANCELED' | 'COMPLETED';
 
 export const APPOINTMENT_STATUSES: AppointmentStatus[] = [

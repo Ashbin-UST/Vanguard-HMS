@@ -1,8 +1,3 @@
-/**
- * Profile change request models — mirror the backend ProfileChangeRequests
- * schema. Each changed field is stored as { old, new } and shown to admins.
- */
-
 export type ProfileChangeStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 // A single field diff: old value -> new value.
