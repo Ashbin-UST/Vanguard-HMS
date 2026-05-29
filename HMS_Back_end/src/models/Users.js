@@ -22,38 +22,56 @@ const userSchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ["ACTIVE", "INACTIVE"],
-            default: "ACTIVE"
+            enum: ["ACTIVE", "INACTIVE", "PENDING", "REJECTED"],
+            default: "PENDING"
         },
         roles: [{
             type: String,
-            enum: ["OWNER", "ADMIN", "DOCTOR", "RECEPTIONIST", 
-                "CASHIER", "NURSE", "LAB_TECH", "PHARMACIST"],
+            enum: ["OWNER", "ADMIN", "STAFF"],
             required: true
         }],
         employeeCode: {
             type: String,
-            required: true,
-            ref: "Employees"
+            required: true
         },
-        isVerified: {
+        mustChangePassword: {
             type: Boolean,
             default: false
         },
-        verificationToken: {
-            type: String
+        createdByAdmin: {
+            type: Boolean,
+            default: false
         },
-        verificationTokenExpiry: {
-            type: Date
+        approvedBy: {
+            type: String,
+            default: null
+        },
+        approvedAt: {
+            type: Date,
+            default: null
+        },
+        createdBy: {
+            type: String,
+            default: null
+        },
+        resetPasswordTokenHash: {
+            type: String,
+            default: null
+        },
+        resetPasswordTokenExpiry:{
+            type: Date,
+            default: null
         },
         lastLoginAt: {
             type: Date,
             default: null
         }
     },
-    {timestamps: {
-        createdAt: 'created_at', updatedAt: 'updated_at'
-    }}
+    {
+        timestamps: {
+            createdAt: 'created_at', updatedAt: 'updated_at'
+        }
+    }
 );
 
 module.exports = mongoose.model("User", userSchema);

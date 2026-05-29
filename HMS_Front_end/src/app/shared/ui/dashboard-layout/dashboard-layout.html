@@ -1,0 +1,15 @@
+<div class="dashboard-layout">
+  <app-sidebar></app-sidebar>
+
+  <div class="dashboard-main">
+    @if (pageTitle) {
+      <header class="dashboard-topbar">
+        <h1 class="page-title">{{ pageTitle }}</h1>
+      </header>
+    }
+
+    <div class="dashboard-content">
+      <ng-content></ng-content>
+    </div>
+  </div>
+</div>

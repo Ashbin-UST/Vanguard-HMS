@@ -1,0 +1,185 @@
+<app-dashboard-layout [pageTitle]="mode === 'admin' ? 'Create Admin' : 'Create Employee'">
+  <div class="page">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">
+          {{ mode === 'admin' ? 'New Administrator' : 'New Employee' }}
+        </h3>
+        <p class="card-sub">
+          A temporary password will be emailed to the new account.
+        </p>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="card-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Username *</label>
+            <input type="text" formControlName="username" class="form-input"
+                   placeholder="john.doe" />
+            @if (form.get('username')?.touched && form.get('username')?.invalid) {
+              <p class="form-error">Username is required</p>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Full Name *</label>
+            <input type="text" formControlName="name" class="form-input"
+                   placeholder="John Doe" />
+            @if (form.get('name')?.touched && form.get('name')?.invalid) {
+              <p class="form-error">Name is required</p>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email *</label>
+            <input type="email" formControlName="email" class="form-input"
+                   placeholder="john.doe@hospital.com" />
+            @if (form.get('email')?.touched) {
+              @if (form.get('email')?.hasError('required')) {
+                <p class="form-error">Email is required</p>
+              }
+              @if (form.get('email')?.hasError('email')) {
+                <p class="form-error">Enter a valid email address</p>
+              }
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Phone *</label>
+            <input type="tel" formControlName="phone" class="form-input"
+                   placeholder="+91 1234567890" />
+            @if (form.get('phone')?.touched) {
+              @if (form.get('phone')?.hasError('required')) {
+                <p class="form-error">Phone is required</p>
+              }
+              @if (form.get('phone')?.hasError('phone')) {
+                <p class="form-error">
+                  Enter 10 digits, optionally with a country code (e.g. +91 1234567890 or 1234567890)
+                </p>
+              }
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Department *</label>
+            <select formControlName="department" class="form-select">
+              <option value="">Select department</option>
+              @for (d of departments; track d) {
+                <option [value]="d">{{ d }}</option>
+              }
+            </select>
+            @if (form.get('department')?.touched && form.get('department')?.invalid) {
+              <p class="form-error">Department is required</p>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Designation *</label>
+            <select formControlName="designation" (change)="onDesignationChange()"
+                    class="form-select" [disabled]="mode === 'admin'">
+              @if (mode !== 'admin') {
+                <option value="">Select designation</option>
+              }
+              @for (d of designations; track d) {
+                <option [value]="d">{{ d }}</option>
+              }
+            </select>
+            @if (form.get('designation')?.touched && form.get('designation')?.invalid) {
+              <p class="form-error">Designation is required</p>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Joining Date *</label>
+            <input type="date" formControlName="joiningDate" class="form-input" />
+            @if (form.get('joiningDate')?.touched && form.get('joiningDate')?.invalid) {
+              <p class="form-error">Joining date is required</p>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Qualification *</label>
+            <input type="text" formControlName="qualification" class="form-input"
+                   placeholder="MBBS, MD (comma separated)" />
+            @if (form.get('qualification')?.touched && form.get('qualification')?.invalid) {
+              <p class="form-error">At least one qualification is required</p>
+            }
+          </div>
+
+          @if (showMedical) {
+            <div class="form-group">
+              <label class="form-label">Medical Registration No *</label>
+              <input type="text" formControlName="medicalRegistrationNumber"
+                     class="form-input" placeholder="MED123456" />
+              @if (form.get('medicalRegistrationNumber')?.touched && form.get('medicalRegistrationNumber')?.invalid) {
+                <p class="form-error">Medical registration number is required</p>
+              }
+            </div>
+          }
+
+          @if (showSpecialization) {
+            <div class="form-group">
+              <label class="form-label">Specialization *</label>
+              <input type="text" formControlName="specialization"
+                     class="form-input" placeholder="Cardiology" />
+              @if (form.get('specialization')?.touched && form.get('specialization')?.invalid) {
+                <p class="form-error">Specialization is required</p>
+              }
+            </div>
+          }
+
+          @if (isDoctor) {
+            <div class="form-group">
+              <label class="form-label">Consultation Fee *</label>
+              <input type="number" formControlName="consultationFee"
+                     class="form-input" placeholder="500" min="0" />
+              @if (form.get('consultationFee')?.touched) {
+                @if (form.get('consultationFee')?.hasError('required')) {
+                  <p class="form-error">Consultation fee is required</p>
+                }
+                @if (form.get('consultationFee')?.hasError('negative')) {
+                  <p class="form-error">Fee cannot be negative</p>
+                }
+              }
+            </div>
+          }
+        </div>
+
+        @if (isDoctor) {
+          <div class="slots-section" formArrayName="availabilitySlots">
+            <div class="slots-header">
+              <label class="form-label">Availability Slots *</label>
+              <button type="button" class="btn btn-secondary btn-sm"
+                      (click)="addSlot()">+ Add Slot</button>
+            </div>
+
+            @for (slot of availabilitySlots.controls; track $index; let i = $index) {
+              <div class="slot-row" [formGroupName]="i">
+                <select formControlName="day" class="form-select">
+                  @for (day of weekDays; track day) {
+                    <option [value]="day">{{ day }}</option>
+                  }
+                </select>
+                <input type="time" formControlName="startTime" class="form-input" />
+                <span class="slot-sep">to</span>
+                <input type="time" formControlName="endTime" class="form-input" />
+                <button type="button" class="slot-remove"
+                        (click)="removeSlot(i)" aria-label="Remove">✕</button>
+              </div>
+            }
+          </div>
+        }
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="onCancel()">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading">
+            @if (loading) { <span>Creating…</span> }
+            @else { <span>Create</span> }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</app-dashboard-layout>

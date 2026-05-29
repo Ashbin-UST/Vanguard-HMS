@@ -18,6 +18,10 @@ const patientSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    passwordHash: {
+        type: String,
+        required: true
+    },
     gender: {
         type: String,
         enum: ["Male", "Female"],
@@ -28,29 +32,39 @@ const patientSchema = new mongoose.Schema({
         required: true
     },
     address: {
-        houseName: {type: String},
-        houseNumber: {type: String},
-        city: {type: String, required: true},
-        postCode: {type: String, required: true}
+        houseName: { type: String, required: true },
+        houseNumber: { type: String, required: true },
+        city: { type: String, required: true },
+        postCode: { type: String, required: true }
     },
     emergencyContact: {
-        type: String
+        contactName: { type: String, required: true },
+        relationship: { type: String, required: true },
+        contactNumber: { type: String, required: true }
     },
     status: {
         type: String,
-        enum: ["ACTIVE", "INACTIVE"]
+        enum: ["ACTIVE", "INACTIVE"],
+        default: "ACTIVE"
+    },
+    mustChangePassword: {
+        type: Boolean,
+        default: true
+    },
+    createdByEmployeeId: {
+        type: String,
     }
 });
 
 // Pre-save hook to generate sequential ID
 patientSchema.pre('save', async function () {
     if (this.isNew) {
-            const counter = await Counter.findOneAndUpdate(
-                { name: 'patients' },
-                { $inc: { seq: 1 } }, // Creates sequence
-                { new: true, upsert: true } // upsert is update and insert
-            );
-            this.UHID = `UHID-${String(counter.seq).padStart(6, '0')}`; // create 6 digit sequence number
+        const counter = await Counter.findOneAndUpdate(
+            { name: 'patients' },
+            { $inc: { seq: 1 } }, // Creates sequence
+            { new: true, upsert: true } // upsert is update and insert
+        );
+        this.UHID = `UHID-${String(counter.seq).padStart(6, '0')}`; // create 6 digit sequence number
     }
 });
 
