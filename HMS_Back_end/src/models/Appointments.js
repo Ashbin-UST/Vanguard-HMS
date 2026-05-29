@@ -9,7 +9,7 @@ const appointmentSchema = new mongoose.Schema({
     patientId: {
         type: String,
         required: true,
-        ref: "Appointments"
+        ref: "Patients"
     },
     doctorEmployeeId: {
         type: String,
@@ -31,7 +31,7 @@ const appointmentSchema = new mongoose.Schema({
     },
     createdByEmployeeId: {
         type: String,
-        ref: "Employees"
+        ref: "Employee"
     }
 });
 

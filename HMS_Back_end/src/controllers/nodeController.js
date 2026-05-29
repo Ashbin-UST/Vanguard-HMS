@@ -159,7 +159,9 @@ exports.getMyNodes = async (req, res) => {
 
             allowedDesignations: designation
 
-        }).select("-_id -__v");
+        })
+            .select("-_id -__v")
+            .sort({ created_at: 1 });
 
         return res.status(200).json({
             totalNodes: nodes.length,

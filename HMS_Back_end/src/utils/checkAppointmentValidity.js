@@ -78,7 +78,8 @@ const checkAppointmentValidity =
             await Appointment.findOne({
                 patientId,
                 appointmentDate,
-                timeSlot
+                timeSlot,
+                status: { $ne: "CANCELED" }
             });
 
         if (patientAppointment) {
@@ -95,7 +96,8 @@ const checkAppointmentValidity =
             await Appointment.findOne({
                 doctorEmployeeId: doctorId,
                 appointmentDate,
-                timeSlot
+                timeSlot,
+                status: { $ne: "CANCELED" }
             });
 
         if (doctorAppointment) {

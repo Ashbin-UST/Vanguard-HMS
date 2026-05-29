@@ -6,11 +6,13 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const mongoose = require("mongoose");
 
+const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const ownerRoutes = require("./routes/ownerRoutes");
-const registrationRoutes = require("./routes/registrationRoutes");
 const patientRoutes = require("./routes/patientRoutes");
 const appointmentRoutes = require("./routes/appointmentRoutes");
+const employeeRoutes = require("./routes/employeeRoutes");
+const nodeRoutes = require("./routes/nodeRoutes");
 
 const app = express();
 
@@ -32,16 +34,13 @@ app.use(morgan("dev"));
 app.use(express.json());
 
 // Routes
-const authRoutes = require("./routes/authRoutes");
-
 app.use("/api/auth", authRoutes);
-
 app.use("/api/admin", adminRoutes);
 app.use("/api/owner", ownerRoutes);
-app.use("/api/register", registrationRoutes);
 app.use("/api/patients", patientRoutes);
 app.use("/api/appointments", appointmentRoutes);
-
+app.use("/api/employees", employeeRoutes);
+app.use("/api/nodes", nodeRoutes);
 
 // Default route
 app.get("/", (req, res) => res.json({

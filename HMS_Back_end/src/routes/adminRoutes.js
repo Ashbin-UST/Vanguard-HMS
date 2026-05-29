@@ -51,8 +51,8 @@ const employeeCreationValidation = [
         .withMessage("Name is required"),
 
     body("phone")
-    .matches(/^\d{10}$/)
-    .withMessage("Phone number must contain exactly 10 digits"),
+    .matches(/^\+\d{1,3}\d{10}$/)
+    .withMessage("Phone must include a country code (e.g. +91) followed by exactly 10 digits"),
 
     body("email")
         .isEmail()
@@ -148,6 +148,38 @@ router.delete(
     employeeCodeValidation,
     validate,
     controller.deleteEmployee
+);
+
+// Audit logs (recent activity)
+router.get(
+    "/audit-logs",
+    controller.getAuditLogs
+);
+
+// Profile change requests
+router.get(
+    "/profile-change-requests",
+    controller.getProfileChangeRequests
+);
+
+const requestIdValidation = [
+    param("requestId")
+        .notEmpty()
+        .withMessage("Request ID is required")
+];
+
+router.put(
+    "/approve-profile-change/:requestId",
+    requestIdValidation,
+    validate,
+    controller.approveProfileChange
+);
+
+router.put(
+    "/reject-profile-change/:requestId",
+    requestIdValidation,
+    validate,
+    controller.rejectProfileChange
 );
 
 module.exports = router;

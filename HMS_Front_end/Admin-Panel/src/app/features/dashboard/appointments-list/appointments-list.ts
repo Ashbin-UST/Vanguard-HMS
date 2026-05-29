@@ -1,0 +1,242 @@
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { CommonModule, DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
+import { AppointmentService } from '../../../core/services/appointment.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { ToastService } from '../../../core/services/toast.service';
+import { ConfirmModalService } from '../../../core/services/confirm-modal.service';
+import {
+  Appointment,
+  APPOINTMENT_STATUSES,
+} from '../../../core/models/appointment.model';
+import { todayIsoDate } from '../../../core/validators/app-validators';
+
+type DoctorTab = 'today' | 'upcoming' | 'completed';
+
+/**
+ * Appointments list — role-aware.
+ *
+ *   OWNER / ADMIN / RECEPTIONIST: see ALL appointments with status + date
+ *     filters. Can cancel BOOKED appointments. + Book Appointment button.
+ *   DOCTOR: sees only their own appointments via /appointments/my, split into
+ *     Today / Upcoming / Completed tabs. Can mark BOOKED appointments as
+ *     completed.
+ */
+@Component({
+  selector: 'app-appointments-list',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    DashboardLayoutComponent,
+    DatePipe,
+  ],
+  templateUrl: './appointments-list.html',
+  styleUrl: './appointments-list.css',
+})
+export class AppointmentsListComponent implements OnInit {
+  private appointmentService = inject(AppointmentService);
+  private authService = inject(AuthService);
+  private toast = inject(ToastService);
+  private confirmModal = inject(ConfirmModalService);
+  private router = inject(Router);
+
+  loading = signal(true);
+  appointments = signal<Appointment[]>([]);
+
+  statuses = APPOINTMENT_STATUSES;
+  statusFilter = signal<string>('');
+  dateFilter = signal<string>('');
+
+  // Doctor tabs
+  doctorTab = signal<DoctorTab>('today');
+  todayIso = todayIsoDate();
+
+  // Pagination (reception view)
+  page = signal(1);
+  limit = 10;
+  totalPages = signal(1);
+  total = signal(0);
+
+  isDoctor = computed(() => this.authService.getDesignation() === 'DOCTOR');
+  hasReceptionAccess = computed(() => {
+    const d = this.authService.getDesignation();
+    return (
+      d === 'OWNER' || d === 'ADMIN' || d === 'RECEPTIONIST'
+    );
+  });
+
+  // For the doctor view, slice the fetched list by tab.
+  visibleAppointments = computed<Appointment[]>(() => {
+    if (!this.isDoctor()) {
+      return this.appointments();
+    }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return this.appointments().filter((a) => {
+      const apptDate = new Date(a.appointmentDate);
+      apptDate.setHours(0, 0, 0, 0);
+      const isToday = apptDate.getTime() === today.getTime();
+      const isUpcoming = apptDate.getTime() > today.getTime();
+
+      switch (this.doctorTab()) {
+        case 'today':
+          return isToday && a.status === 'BOOKED';
+        case 'upcoming':
+          return isUpcoming && a.status === 'BOOKED';
+        case 'completed':
+          return a.status === 'COMPLETED';
+      }
+    });
+  });
+
+  doctorTabCount(tab: DoctorTab): number {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return this.appointments().filter((a) => {
+      const d = new Date(a.appointmentDate);
+      d.setHours(0, 0, 0, 0);
+      switch (tab) {
+        case 'today':
+          return d.getTime() === today.getTime() && a.status === 'BOOKED';
+        case 'upcoming':
+          return d.getTime() > today.getTime() && a.status === 'BOOKED';
+        case 'completed':
+          return a.status === 'COMPLETED';
+      }
+    }).length;
+  }
+
+  ngOnInit(): void {
+    this.load();
+  }
+
+  load(): void {
+    this.loading.set(true);
+
+    if (this.isDoctor()) {
+      // Pull a large window of the doctor's appointments and slice client-side.
+      this.appointmentService.getMyAppointments(1, 200).subscribe({
+        next: (res) => {
+          this.appointments.set(res.appointments || []);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.loading.set(false);
+          this.toast.error('Failed to load appointments.');
+        },
+      });
+      return;
+    }
+
+    this.appointmentService
+      .getAppointments(this.page(), this.limit, {
+        status: this.statusFilter() || undefined,
+        date: this.dateFilter() || undefined,
+      })
+      .subscribe({
+        next: (res) => {
+          this.appointments.set(res.appointments || []);
+          this.totalPages.set(res.totalPages || 1);
+          this.total.set(res.total || 0);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.loading.set(false);
+          this.toast.error('Failed to load appointments.');
+        },
+      });
+  }
+
+  switchTab(tab: DoctorTab): void {
+    this.doctorTab.set(tab);
+  }
+
+  onStatusChange(value: string): void {
+    this.statusFilter.set(value);
+    this.page.set(1);
+    this.load();
+  }
+
+  onDateChange(value: string): void {
+    this.dateFilter.set(value);
+    this.page.set(1);
+    this.load();
+  }
+
+  clearDate(): void {
+    this.dateFilter.set('');
+    this.page.set(1);
+    this.load();
+  }
+
+  prevPage(): void {
+    if (this.page() > 1) {
+      this.page.update((p) => p - 1);
+      this.load();
+    }
+  }
+
+  nextPage(): void {
+    if (this.page() < this.totalPages()) {
+      this.page.update((p) => p + 1);
+      this.load();
+    }
+  }
+
+  open(a: Appointment): void {
+    this.router.navigate(['/dashboard/appointments', a.appointmentId]);
+  }
+
+  async cancel(a: Appointment, event: Event): Promise<void> {
+    event.stopPropagation();
+    const result = await this.confirmModal.open({
+      title: 'Cancel Appointment',
+      message: `Cancel appointment ${a.appointmentId}? The slot will become available again.`,
+      confirmText: 'Cancel It',
+      cancelText: 'Keep',
+      type: 'danger',
+    });
+    if (!result.confirmed) {
+      return;
+    }
+    this.appointmentService.cancelAppointment(a.appointmentId).subscribe({
+      next: (res) => {
+        this.toast.success(res.message || 'Appointment cancelled.');
+        this.load();
+      },
+      error: (err) => {
+        this.toast.error(err.error?.message || 'Failed to cancel.');
+      },
+    });
+  }
+
+  async complete(a: Appointment, event: Event): Promise<void> {
+    event.stopPropagation();
+    const result = await this.confirmModal.open({
+      title: 'Mark as Completed',
+      message: `Mark appointment ${a.appointmentId} as completed?`,
+      confirmText: 'Mark Completed',
+      cancelText: 'Cancel',
+      type: 'success',
+    });
+    if (!result.confirmed) {
+      return;
+    }
+    this.appointmentService.completeAppointment(a.appointmentId).subscribe({
+      next: (res) => {
+        this.toast.success(res.message || 'Appointment marked completed.');
+        this.load();
+      },
+      error: (err) => {
+        this.toast.error(err.error?.message || 'Failed to complete.');
+      },
+    });
+  }
+
+  trackById = (_: number, a: Appointment) => a.appointmentId;
+}

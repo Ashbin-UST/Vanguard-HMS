@@ -7,7 +7,10 @@ const generateTemporaryPassword = require("../utils/generateTemporaryPassword");
 const buildEmployeeData = require("../utils/buildEmployeeData");
 const buildEmployeeProfile = require("../utils/buildEmployeeProfile");
 const buildEmployeeResponse = require("../utils/buildEmployeeResponse");
+const updateEmployeeData = require("../utils/updateEmployeeData");
 const validateUniqueEmployeeFields = require("../utils/validateUniqueEmployeeFields");
+const recordAudit = require("../utils/recordAudit");
+const resolveActor = require("../utils/resolveActor");
 
 // Create Admin
 const createAdmin = async (req, res) => {
@@ -35,25 +38,25 @@ const createAdmin = async (req, res) => {
     // Build Admin Employee Data
     const employeeData = buildEmployeeData(req.body);
 
-      // Create employee
-      employee = new Employee(employeeData);
-      await employee.save();
+    // Create employee
+    employee = new Employee(employeeData);
+    await employee.save();
 
-      // Create user
-      user = new User({
-        username,
-        email,
-        passwordHash: hashedPassword,
-        status: "ACTIVE",
-        roles: ["ADMIN"],
-        employeeCode: employee.employeeCode,
-        mustChangePassword: true,
-        createdByAdmin: true,
-        approvedBy: req.user.employeeCode,
-        approvedAt: new Date(),
-        createdBy: req.user.employeeCode,
-      });
-      await user.save();
+    // Create user
+    user = new User({
+      username,
+      email,
+      passwordHash: hashedPassword,
+      status: "ACTIVE",
+      roles: ["ADMIN"],
+      employeeCode: employee.employeeCode,
+      mustChangePassword: true,
+      createdByAdmin: true,
+      approvedBy: req.user.employeeCode,
+      approvedAt: new Date(),
+      createdBy: req.user.employeeCode,
+    });
+    await user.save();
 
     // Send email
     try {
@@ -87,6 +90,16 @@ const createAdmin = async (req, res) => {
     } catch (emailError) {
       console.error("Email sending error:", emailError);
     }
+
+    // Record audit
+    const actor = await resolveActor(req.user);
+    await recordAudit({
+      actor,
+      action: "ADMIN_CREATED",
+      targetType: "EMPLOYEE",
+      targetId: employee.employeeCode,
+      message: `Admin account created for ${employee.name} (${employee.employeeCode})`,
+    });
 
     return res.status(201).json({
       message:
@@ -135,7 +148,7 @@ const getAdmins = async (req, res) => {
       admins: formattedAdmins,
     });
   } catch (err) {
-    console.error("Error during admin retrieval: ",err);
+    console.error("Error during admin retrieval: ", err);
     return res.status(500).json({
       message: "Internal server error",
     });
@@ -162,6 +175,16 @@ const updateAdmin = async (req, res) => {
 
     // Save employee
     await employee.save();
+
+    // Record audit
+    const actor = await resolveActor(req.user);
+    await recordAudit({
+      actor,
+      action: "ADMIN_UPDATED",
+      targetType: "EMPLOYEE",
+      targetId: employee.employeeCode,
+      message: `Admin ${employee.name} (${employee.employeeCode}) was updated`,
+    });
 
     return res.status(200).json({
       message: "Admin updated successfully",
@@ -210,6 +233,16 @@ const deleteAdmin = async (req, res) => {
     // Delete employee
     await Employee.findOneAndDelete({
       employeeCode,
+    });
+
+    // Record audit
+    const actor = await resolveActor(req.user);
+    await recordAudit({
+      actor,
+      action: "ADMIN_DELETED",
+      targetType: "EMPLOYEE",
+      targetId: employeeCode,
+      message: `Admin ${employee.name} (${employeeCode}) was deleted`,
     });
 
     return res.status(200).json({

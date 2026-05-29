@@ -20,8 +20,8 @@ const adminCreationValidation = [
         .withMessage("Name is required"),
 
     body("phone")
-        .matches(/^\d{10}$/)
-        .withMessage("Phone number must contain exactly 10 digits"),
+        .matches(/^\+\d{1,3}\d{10}$/)
+        .withMessage("Phone must include a country code (e.g. +91) followed by exactly 10 digits"),
 
     body("email")
         .isEmail()

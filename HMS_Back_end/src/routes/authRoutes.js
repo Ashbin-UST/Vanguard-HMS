@@ -5,6 +5,112 @@ const validate = require("../middlewares/validate");
 const auth = require("../middlewares/authMiddleware");
 const controller = require("../controllers/authController");
 
+// Phone: optional country code (+ 1 to 3 digits) followed by exactly 10 digits
+const PHONE_REGEX = /^\+\d{1,3}\d{10}$/;
+
+const allowedDesignationTypes = new Set([
+    "DOCTOR",
+    "RECEPTIONIST",
+    "CASHIER",
+    "NURSE",
+    "LAB_TECH",
+    "PHARMACIST"
+]);
+
+const allowedDepartmentTypes = new Set([
+    "OPD",
+    "IPD",
+    "Lab",
+    "Pharmacy",
+    "Administration",
+    "Reception",
+    "Billing"
+]);
+
+const medicalFields = new Set([
+    "DOCTOR",
+    "NURSE",
+    "LAB_TECH",
+    "PHARMACIST"
+]);
+
+const specializationFields = new Set([
+    "DOCTOR",
+    "LAB_TECH"
+]);
+
+const selfRegisterValidation = [
+
+    body("username")
+        .notEmpty()
+        .withMessage("Username is required"),
+
+    body("name")
+        .notEmpty()
+        .withMessage("Name is required"),
+
+    body("phone")
+        .matches(PHONE_REGEX)
+        .withMessage("Phone must include a country code (e.g. +91) followed by exactly 10 digits"),
+
+    body("email")
+        .isEmail()
+        .withMessage("Valid email is required"),
+
+    body("password")
+        .isLength({ min: 8 })
+        .withMessage("Password must be at least 8 characters long")
+        .matches(/[A-Z]/)
+        .withMessage("Password must contain at least one uppercase letter")
+        .matches(/[a-z]/)
+        .withMessage("Password must contain at least one lowercase letter")
+        .matches(/\d/)
+        .withMessage("Password must contain at least one number")
+        .matches(/[^A-Za-z0-9]/)
+        .withMessage("Password must contain at least one special character"),
+
+    body("department")
+        .isIn([...allowedDepartmentTypes])
+        .withMessage("Valid department is required"),
+
+    body("designation")
+        .isIn([...allowedDesignationTypes])
+        .withMessage("Valid designation is required"),
+
+    body("joiningDate")
+        .isISO8601()
+        .toDate()
+        .withMessage("Valid joining date is required"),
+
+    body("qualification")
+        .isArray({ min: 1 })
+        .withMessage("At least one qualification is required"),
+
+    body("medicalRegistrationNumber")
+        .if((value, { req }) =>
+            medicalFields.has(req.body.designation)
+        )
+        .notEmpty()
+        .withMessage("Medical registration number is required"),
+
+    body("specialization")
+        .if((value, { req }) =>
+            specializationFields.has(req.body.designation)
+        )
+        .notEmpty()
+        .withMessage("Specialization is required"),
+
+    body("consultationFee")
+        .if(body("designation").equals("DOCTOR"))
+        .notEmpty()
+        .withMessage("Consultation fee is required for doctor"),
+
+    body("availabilitySlots")
+        .if(body("designation").equals("DOCTOR"))
+        .isArray({ min: 1 })
+        .withMessage("Availability slots are required for doctor")
+];
+
 const loginValidation = [
 
     body("email")
@@ -96,6 +202,13 @@ router.post(
     controller.login
 );
 
+router.post(
+    "/self-register",
+    selfRegisterValidation,
+    validate,
+    controller.selfRegister
+);
+
 router.put(
     "/change-password",
     auth,
@@ -122,6 +235,12 @@ router.post(
     "/logout",
     auth,
     controller.logout
+);
+
+router.get(
+    "/me",
+    auth,
+    controller.me
 );
 
 module.exports = router;
