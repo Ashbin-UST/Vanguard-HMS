@@ -31,7 +31,6 @@ exports.createEmployee = async (req, res) => {
       });
     }
 
-    // Validating that the employee doesn't already exist in the database
     const uniquenessResult = await validateUniqueEmployeeFields(req.body);
 
     if (!uniquenessResult.success) {
@@ -51,6 +50,7 @@ exports.createEmployee = async (req, res) => {
 
     // Create employee
     employee = new Employee(employeeData);
+
     await employee.save();
 
     // Create user
@@ -67,9 +67,10 @@ exports.createEmployee = async (req, res) => {
       approvedAt: new Date(),
       createdBy: req.user.employeeCode,
     });
+
     await user.save();
 
-    // Send email after successful account creation
+    // Send email AFTER successful transaction
     try {
       await sendEmail({
         to: user.email,
@@ -121,7 +122,7 @@ exports.createEmployee = async (req, res) => {
       action: "EMPLOYEE_CREATED",
       targetType: "EMPLOYEE",
       targetId: employee.employeeCode,
-      message: `Employee ${employee.name} (${employee.employeeCode}) was created as ${employee.designation}`,
+      message: `Employee ${employee.name} (${employee.employeeCode}) was created as ${employee.designation}`
     });
 
     return res.status(201).json({
@@ -167,7 +168,6 @@ exports.getEmployees = async (req, res) => {
       },
     });
 
-    // Build the employee response data of all employees
     const formattedEmployees = buildEmployeeResponse(employees, users);
 
     return res.status(200).json({
@@ -186,7 +186,7 @@ exports.getEmployees = async (req, res) => {
 // Get employees having account status pending
 exports.getPendingEmployees = async (req, res) => {
   try {
-    // Find all STAFF users with account status PENDING
+    // Find all STAFF users
     const users = await User.find({
       roles: "STAFF",
       status: "PENDING",
@@ -202,7 +202,6 @@ exports.getPendingEmployees = async (req, res) => {
       },
     });
 
-    // Build the employee response data of all PENDING employees
     const formattedEmployees = buildEmployeeResponse(employees, users);
 
     return res.status(200).json({
@@ -249,7 +248,6 @@ exports.approveEmployee = async (req, res) => {
       });
     }
 
-    // Approve user
     user.status = "ACTIVE";
     user.approvedBy = req.user.employeeCode;
     user.approvedAt = new Date();
@@ -294,7 +292,7 @@ exports.approveEmployee = async (req, res) => {
       action: "EMPLOYEE_APPROVED",
       targetType: "EMPLOYEE",
       targetId: user.employeeCode,
-      message: `Employee account ${user.employeeCode} (${user.username}) was approved`,
+      message: `Employee account ${user.employeeCode} (${user.username}) was approved`
     });
 
     res.status(200).json({
@@ -343,7 +341,6 @@ exports.rejectEmployee = async (req, res) => {
       });
     }
 
-    // Reject user
     user.status = "REJECTED";
 
     await user.save();
@@ -380,7 +377,7 @@ exports.rejectEmployee = async (req, res) => {
       action: "EMPLOYEE_REJECTED",
       targetType: "EMPLOYEE",
       targetId: user.employeeCode,
-      message: `Employee registration ${user.employeeCode} (${user.username}) was rejected`,
+      message: `Employee registration ${user.employeeCode} (${user.username}) was rejected`
     });
 
     res.status(200).json({
@@ -421,7 +418,6 @@ exports.updateEmployee = async (req, res) => {
       });
     }
 
-    // Update employee data
     updateEmployeeData(employee, req.body);
 
     // Save employee
@@ -434,7 +430,7 @@ exports.updateEmployee = async (req, res) => {
       action: "EMPLOYEE_UPDATED",
       targetType: "EMPLOYEE",
       targetId: employee.employeeCode,
-      message: `Employee ${employee.name} (${employee.employeeCode}) was updated`,
+      message: `Employee ${employee.name} (${employee.employeeCode}) was updated`
     });
 
     return res.status(200).json({
@@ -506,7 +502,7 @@ exports.deleteEmployee = async (req, res) => {
       action: "EMPLOYEE_DELETED",
       targetType: "EMPLOYEE",
       targetId: employeeCode,
-      message: `Employee ${employee.name} (${employeeCode}) was deleted`,
+      message: `Employee ${employee.name} (${employeeCode}) was deleted`
     });
 
     return res.status(200).json({

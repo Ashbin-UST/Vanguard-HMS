@@ -32,18 +32,30 @@
             <span class="stat-label">Patients</span>
             <span class="stat-value">{{ totalPatients() ?? '—' }}</span>
           </a>
-          <a routerLink="/dashboard/appointments" class="stat-card stat-card--link">
-            <span class="stat-label">Appointments</span>
-            <span class="stat-value">{{ todayAppointments() ?? '—' }}</span>
+          <a
+            routerLink="/dashboard/appointments"
+            [queryParams]="{ status: 'BOOKED' }"
+            class="stat-card stat-card--link"
+          >
+            <span class="stat-label">Booked Appointments</span>
+            <span class="stat-value">{{ bookedAppointments() ?? '—' }}</span>
           </a>
         }
 
         @if (isDoctor()) {
-          <a routerLink="/dashboard/appointments" class="stat-card stat-card--link">
+          <a
+            routerLink="/dashboard/appointments"
+            [queryParams]="{ tab: 'today' }"
+            class="stat-card stat-card--link"
+          >
             <span class="stat-label">My Appointments Today</span>
             <span class="stat-value">{{ myAppointmentsToday() ?? '—' }}</span>
           </a>
-          <a routerLink="/dashboard/appointments" class="stat-card stat-card--link">
+          <a
+            routerLink="/dashboard/appointments"
+            [queryParams]="{ tab: 'upcoming' }"
+            class="stat-card stat-card--link"
+          >
             <span class="stat-label">Upcoming Appointments</span>
             <span class="stat-value">{{ myAppointmentsUpcoming() ?? '—' }}</span>
           </a>

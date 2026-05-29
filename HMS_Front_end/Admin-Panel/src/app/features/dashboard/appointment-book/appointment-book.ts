@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -77,6 +77,7 @@ export class AppointmentBookComponent
   private employeeService = inject(EmployeeService);
   private appointmentService = inject(AppointmentService);
   private toast = inject(ToastService);
+  private cdr = inject(ChangeDetectorRef);
   private formDraft = inject(FormDraftService);
   private router = inject(Router);
 
@@ -271,6 +272,7 @@ export class AppointmentBookComponent
     this.appointmentService.createAppointment(payload).subscribe({
       next: (res) => {
         this.loading = false;
+        this.cdr.markForCheck();
         this.submittedOk = true;
         this.formDraft.clear(DRAFT_KEY);
         this.toast.success(res.message || 'Appointment booked.');
@@ -281,6 +283,7 @@ export class AppointmentBookComponent
       },
       error: (err) => {
         this.loading = false;
+        this.cdr.markForCheck();
         this.toast.error(err.error?.message || 'Failed to book appointment.');
         // Refresh slots in case a race produced the conflict.
         this.refreshSlots();

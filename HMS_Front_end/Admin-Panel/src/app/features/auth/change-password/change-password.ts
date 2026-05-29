@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -37,6 +37,7 @@ export class ChangePasswordComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
   private toast = inject(ToastService);
+  private cdr = inject(ChangeDetectorRef);
 
   changeForm: FormGroup;
   loading = false;
@@ -87,17 +88,20 @@ export class ChangePasswordComponent implements OnInit {
           this.authService.refreshCurrentUser().subscribe({
             next: () => {
               this.loading = false;
+              this.cdr.markForCheck();
               this.router.navigate(['/dashboard/overview']);
             },
             error: () => {
               // Even if the refresh fails, the password changed; continue.
               this.loading = false;
+              this.cdr.markForCheck();
               this.router.navigate(['/dashboard/overview']);
             },
           });
         },
         error: (error) => {
           this.loading = false;
+          this.cdr.markForCheck();
           this.toast.error(
             error.error?.message ||
               'Failed to change password. Please try again.',

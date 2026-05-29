@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -26,6 +26,7 @@ export class ResetPasswordComponent implements OnInit {
   private authService = inject(AuthService);
   private route = inject(ActivatedRoute);
   private toast = inject(ToastService);
+  private cdr = inject(ChangeDetectorRef);
 
   resetPasswordForm: FormGroup;
   loading = false;
@@ -80,6 +81,7 @@ export class ResetPasswordComponent implements OnInit {
       .subscribe({
         next: (response) => {
           this.loading = false;
+          this.cdr.markForCheck();
           this.passwordReset = true;
           this.toast.success(
             response?.message || 'Password reset successfully.',
@@ -87,6 +89,7 @@ export class ResetPasswordComponent implements OnInit {
         },
         error: (error) => {
           this.loading = false;
+          this.cdr.markForCheck();
           const msg = error.error?.message || '';
 
           // The backend rejects a new password equal to the current one; show

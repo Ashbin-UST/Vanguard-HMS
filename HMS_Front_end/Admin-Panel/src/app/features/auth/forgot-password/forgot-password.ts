@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -21,6 +21,7 @@ export class ForgotPasswordComponent {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private toast = inject(ToastService);
+  private cdr = inject(ChangeDetectorRef);
 
   forgotPasswordForm: FormGroup;
   loading = false;
@@ -47,6 +48,7 @@ export class ForgotPasswordComponent {
     this.authService.forgotPassword(email).subscribe({
       next: (response) => {
         this.loading = false;
+        this.cdr.markForCheck();
         this.emailSent = true;
         this.toast.success(
           response?.message || 'Password reset link sent to your email.',
@@ -54,6 +56,7 @@ export class ForgotPasswordComponent {
       },
       error: (error) => {
         this.loading = false;
+        this.cdr.markForCheck();
         this.errorMessage =
           error.error?.message ||
           'Failed to send reset link. Please try again.';

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -41,6 +41,7 @@ export class PatientCreateComponent
   private fb = inject(FormBuilder);
   private patientService = inject(PatientService);
   private toast = inject(ToastService);
+  private cdr = inject(ChangeDetectorRef);
   private formDraft = inject(FormDraftService);
   private router = inject(Router);
 
@@ -98,6 +99,7 @@ export class PatientCreateComponent
     this.patientService.createPatient(raw).subscribe({
       next: (res) => {
         this.loading = false;
+        this.cdr.markForCheck();
         this.submittedOk = true;
         this.formDraft.clear(DRAFT_KEY);
         this.toast.success(res.message || 'Patient created.');
@@ -110,6 +112,7 @@ export class PatientCreateComponent
       },
       error: (err) => {
         this.loading = false;
+        this.cdr.markForCheck();
         this.toast.error(err.error?.message || 'Failed to create patient.');
       },
     });

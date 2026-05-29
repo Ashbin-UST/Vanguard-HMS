@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormArray,
@@ -53,6 +53,7 @@ export class CreateEmployeeComponent
   private adminService = inject(AdminService);
   private ownerService = inject(OwnerService);
   private toast = inject(ToastService);
+  private cdr = inject(ChangeDetectorRef);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private formDraft = inject(FormDraftService);
@@ -209,6 +210,7 @@ export class CreateEmployeeComponent
     call.subscribe({
       next: (res) => {
         this.loading = false;
+        this.cdr.markForCheck();
         this.submittedOk = true;
         this.formDraft.clear(this.draftKey);
         this.toast.success(
@@ -221,6 +223,7 @@ export class CreateEmployeeComponent
       },
       error: (err) => {
         this.loading = false;
+        this.cdr.markForCheck();
         this.toast.error(err.error?.message || 'Failed to create.');
       },
     });

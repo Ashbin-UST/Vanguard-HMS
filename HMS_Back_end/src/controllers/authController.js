@@ -14,179 +14,190 @@ const restrictedSelfRegisterDesignations = new Set(["ADMIN", "OWNER"]);
 
 // Login
 exports.login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(401).json({
-        message: "Invalid email or password",
-      });
+    try {
+        const { email, password } = req.body;
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(401).json({
+                message: "Invalid email or password"
+            });
+        }
+
+        const isMatch = Boolean(await bcrypt.compare(password, user.passwordHash));
+        if (!isMatch) {
+            return res.status(401).json({
+                message: "Invalid email or password"
+            });
+        }
+
+        const blockedStatuses = {
+            PENDING: "Admin approval is pending",
+            REJECTED: "Registration request is rejected",
+            INACTIVE: "Account is inactive"
+        };
+
+        const blockedMessage = blockedStatuses[user.status];
+
+        if (blockedMessage) {
+            return res.status(403).json({
+                message: blockedMessage
+            });
+        }
+
+        user.lastLoginAt = new Date();
+        await user.save();
+
+        const employee = await Employee.findOne({
+            employeeCode: user.employeeCode
+        }).select("-__v");
+
+        if (!employee) {
+            return res.status(404).json({
+                message: "Employee profile not found!!"
+            });
+        }
+
+        const profile = buildEmployeeProfile(employee);
+
+        const token = jwt.sign(
+            {
+                employeeCode: user.employeeCode,
+                roles: user.roles
+            },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: process.env.JWT_EXPIRES_IN
+            }
+        );
+
+        res.status(200).json({
+            message: "Login successful",
+            token,
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                roles: user.roles,
+                mustChangePassword: user.mustChangePassword,
+                lastLoginAt: user.lastLoginAt,
+                profile
+            }
+        });
     }
-
-    const isMatch = Boolean(await bcrypt.compare(password, user.passwordHash));
-    if (!isMatch) {
-      return res.status(401).json({
-        message: "Invalid email or password",
-      });
+    catch (err) {
+        console.log("Login error: ", err);
+        res.status(500).json({
+            message: "Server error during login"
+        });
     }
-
-    const blockedStatuses = {
-      PENDING: "Admin approval is pending",
-      REJECTED: "Registration request is rejected",
-      INACTIVE: "Account is inactive",
-    };
-
-    const blockedMessage = blockedStatuses[user.status];
-
-    if (blockedMessage) {
-      return res.status(403).json({
-        message: blockedMessage,
-      });
-    }
-
-    user.lastLoginAt = new Date();
-    await user.save();
-
-    const employee = await Employee.findOne({
-      employeeCode: user.employeeCode,
-    }).select("-__v");
-
-    if (!employee) {
-      return res.status(404).json({
-        message: "Employee profile not found!!",
-      });
-    }
-
-    const profile = buildEmployeeProfile(employee);
-
-    const token = jwt.sign(
-      {
-        employeeCode: user.employeeCode,
-        roles: user.roles,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: process.env.JWT_EXPIRES_IN,
-      },
-    );
-
-    res.status(200).json({
-      message: "Login successful",
-      token,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        roles: user.roles,
-        mustChangePassword: user.mustChangePassword,
-        lastLoginAt: user.lastLoginAt,
-        profile,
-      },
-    });
-  } catch (err) {
-    console.log("Login error: ", err);
-    res.status(500).json({
-      message: "Server error during login",
-    });
-  }
-};
+}
 
 // Change password
 exports.changePassword = async (req, res) => {
-  try {
-    const employeeCode = req.user.employeeCode;
 
-    const { currentPassword, newPassword, confirmPassword } = req.body;
+    try {
+        const employeeCode = req.user.employeeCode;
 
-    const user = await User.findOne({
-      employeeCode,
-    });
+        const {
+            currentPassword,
+            newPassword,
+            confirmPassword
+        } = req.body;
 
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found!!",
-      });
+        const user = await User.findOne({
+            employeeCode
+        });
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found!!"
+            });
+        }
+
+        const isMatch = Boolean(await bcrypt.compare(currentPassword, user.passwordHash));
+        if (!isMatch) {
+            return res.status(401).json({
+                message: "Current password is incorrect"
+            });
+        }
+
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({
+                message: "Passwords do not match!!"
+            });
+        }
+
+        const samePassword = Boolean(await bcrypt.compare(newPassword, user.passwordHash));
+        if (samePassword) {
+            return res.status(400).json({
+                message: "New password cannot be the same as current password"
+            })
+        }
+
+        const newPassHash = await bcrypt.hash(newPassword, 10);
+
+        user.passwordHash = newPassHash;
+        user.mustChangePassword = false;
+
+        await user.save();
+
+        res.status(200).json({
+            message: "Password changed successfully"
+        });
+
     }
-
-    const isMatch = Boolean(
-      await bcrypt.compare(currentPassword, user.passwordHash),
-    );
-    if (!isMatch) {
-      return res.status(401).json({
-        message: "Current password is incorrect",
-      });
+    catch (err) {
+        console.error("Error during password change: ", err);
+        return res.status(500).json({
+            message: "Server error during password change"
+        });
     }
-
-    if (newPassword !== confirmPassword) {
-      return res.status(400).json({
-        message: "Passwords do not match!!",
-      });
-    }
-
-    const samePassword = Boolean(
-      await bcrypt.compare(newPassword, user.passwordHash),
-    );
-    if (samePassword) {
-      return res.status(400).json({
-        message: "New password cannot be the same as current password",
-      });
-    }
-
-    const newPassHash = await bcrypt.hash(newPassword, 10);
-
-    user.passwordHash = newPassHash;
-    user.mustChangePassword = false;
-
-    await user.save();
-
-    res.status(200).json({
-      message: "Password changed successfully",
-    });
-  } catch (err) {
-    console.error("Error during password change: ", err);
-    return res.status(500).json({
-      message: "Server error during password change",
-    });
-  }
-};
+}
 
 // Forgot Password
 exports.forgotPassword = async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    const user = await User.findOne({
-      email,
-    });
-
-    if (!user || String(user.status) !== "ACTIVE") {
-      return res.status(200).json({
-        message: "If the email exists, a reset link has been sent",
-      });
-    }
-
-    const resetPasswordToken = crypto.randomBytes(32).toString("hex");
-    const resetPasswordTokenExpiry = new Date(Date.now() + 15 * 60 * 1000);
-
-    const resetPasswordTokenHash = crypto
-      .createHash("sha256")
-      .update(resetPasswordToken)
-      .digest("hex");
-
-    user.resetPasswordTokenHash = resetPasswordTokenHash;
-    user.resetPasswordTokenExpiry = resetPasswordTokenExpiry;
-
-    await user.save();
-
-    // Send email with reset token
+    
     try {
-      await sendEmail({
-        to: user.email,
+        const { email } = req.body;
 
-        subject: "HMS Password Reset Request",
+        const user = await User.findOne({
+            email
+        });
 
-        html: `
+        if (
+            !user ||
+            String(user.status) !== "ACTIVE"
+        ) {
+            return res.status(200).json({
+                message:
+                    "If the email exists, a reset link has been sent"
+            });
+        }
+
+        const resetPasswordToken = crypto.randomBytes(32).toString("hex");
+        const resetPasswordTokenExpiry = new Date(Date.now() + 15 * 60 * 1000);
+
+        const resetPasswordTokenHash =
+            crypto
+                .createHash("sha256")
+                .update(resetPasswordToken)
+                .digest("hex");
+
+        user.resetPasswordTokenHash = resetPasswordTokenHash;
+        user.resetPasswordTokenExpiry = resetPasswordTokenExpiry;
+
+        await user.save();
+
+        // Send email with reset token
+        try {
+            await sendEmail({
+                to: user.email,
+
+                subject: "HMS Password Reset Request",
+
+                html: `
                   <h2>HMS Password Reset</h2>
         
                   <p>
@@ -209,207 +220,219 @@ exports.forgotPassword = async (req, res) => {
                     HMS Team
                   </p>
                 `,
-      });
-    } catch (emailError) {
-      console.error("Email sending error:", emailError);
-    }
+            });
+        } catch (emailError) {
+            console.error("Email sending error:", emailError);
+        }
 
-    res.status(200).json({
-      message: "If the email exists, a reset link has been sent.",
-    });
-  } catch (err) {
-    console.error("Error during forgot password: ", err);
-    return res.status(500).json({
-      message: "Server error during forgot password",
-    });
-  }
-};
+        res.status(200).json({
+            message: "If the email exists, a reset link has been sent."
+        });
+
+    }
+    catch (err) {
+        console.error("Error during forgot password: ", err);
+        return res.status(500).json({
+            message: "Server error during forgot password"
+        });
+    }
+}
 
 // Reset password
 exports.resetPassword = async (req, res) => {
-  try {
-    const { resetToken, newPassword, confirmPassword } = req.body;
 
-    if (newPassword !== confirmPassword) {
-      return res.status(400).json({
-        message: "Passwords do not match!!",
-      });
+    try {
+        const {
+            resetToken,
+            newPassword,
+            confirmPassword
+        } = req.body;
+
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({
+                message: "Passwords do not match!!"
+            });
+        }
+
+        const hashedToken =
+            crypto
+                .createHash("sha256")
+                .update(resetToken)
+                .digest("hex");
+
+        const user = await User.findOne({
+            resetPasswordTokenHash: hashedToken,
+            resetPasswordTokenExpiry: {
+                $gt: new Date()
+            }
+        });
+
+        if (!user){
+            return res.status(400).json({
+                message: "Invalid or expired token"
+            });
+        }
+
+        if (String(user.status) !== "ACTIVE"){
+            return res.status(400).json({
+                message: "Invalid or expired token"
+            })
+        }
+
+        const isSamePassword = Boolean(await bcrypt.compare(newPassword, user.passwordHash));
+        if (isSamePassword){
+            return res.status(400).json({
+                message: "New password cannot be the same as current password"
+            });
+        }
+
+        const newHash = await bcrypt.hash(newPassword, 10);
+
+        user.passwordHash = newHash;
+
+        user.resetPasswordTokenHash = null;
+        user.resetPasswordTokenExpiry = null;
+        user.mustChangePassword = false;
+
+        await user.save();
+
+        res.status(200).json({
+            message: "Password reset successful"
+        })
+
     }
-
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(resetToken)
-      .digest("hex");
-
-    const user = await User.findOne({
-      resetPasswordTokenHash: hashedToken,
-      resetPasswordTokenExpiry: {
-        $gt: new Date(),
-      },
-    });
-
-    if (!user) {
-      return res.status(400).json({
-        message: "Invalid or expired token",
-      });
+    catch (err) {
+        console.error("Error during reset password: ", err);
+        res.status(500).json({
+            message: "Server error during reset password"
+        });
     }
-
-    if (String(user.status) !== "ACTIVE") {
-      return res.status(400).json({
-        message: "Invalid or expired token",
-      });
-    }
-
-    const isSamePassword = Boolean(
-      await bcrypt.compare(newPassword, user.passwordHash),
-    );
-    if (isSamePassword) {
-      return res.status(400).json({
-        message: "New password cannot be the same as current password",
-      });
-    }
-
-    const newHash = await bcrypt.hash(newPassword, 10);
-
-    user.passwordHash = newHash;
-
-    user.resetPasswordTokenHash = null;
-    user.resetPasswordTokenExpiry = null;
-    user.mustChangePassword = false;
-
-    await user.save();
-
-    res.status(200).json({
-      message: "Password reset successful",
-    });
-  } catch (err) {
-    console.error("Error during reset password: ", err);
-    res.status(500).json({
-      message: "Server error during reset password",
-    });
-  }
-};
+}
 
 // Logout
 exports.logout = (req, res) => {
-  res.status(200).json({
-    message: "User has been logged out successfuly",
-  });
-};
+    res.status(200).json({
+        message: "User has been logged out successfuly"
+    });
+}
 
-// Get current authenticated user + profile
+// Get current authenticated user + profile (used after a page refresh)
 exports.me = async (req, res) => {
-  try {
-    const user = await User.findOne({
-      employeeCode: req.user.employeeCode,
-    }).select(
-      "-passwordHash -resetPasswordTokenHash -resetPasswordTokenExpiry -__v",
-    );
 
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-      });
+    try {
+        const user = await User.findOne({
+            employeeCode: req.user.employeeCode
+        }).select(
+            "-passwordHash -resetPasswordTokenHash -resetPasswordTokenExpiry -__v"
+        );
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+        const employee = await Employee.findOne({
+            employeeCode: user.employeeCode
+        }).select("-__v");
+
+        if (!employee) {
+            return res.status(404).json({
+                message: "Employee profile not found"
+            });
+        }
+
+        const profile = buildEmployeeProfile(employee);
+
+        return res.status(200).json({
+            message: "User retrieved successfully",
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                roles: user.roles,
+                mustChangePassword: user.mustChangePassword,
+                lastLoginAt: user.lastLoginAt,
+                profile
+            }
+        });
     }
-
-    const employee = await Employee.findOne({
-      employeeCode: user.employeeCode,
-    }).select("-__v");
-
-    if (!employee) {
-      return res.status(404).json({
-        message: "Employee profile not found",
-      });
+    catch (err) {
+        console.error("Error during me: ", err);
+        return res.status(500).json({
+            message: "Server error while fetching current user"
+        });
     }
-
-    const profile = buildEmployeeProfile(employee);
-
-    return res.status(200).json({
-      message: "User retrieved successfully",
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        roles: user.roles,
-        mustChangePassword: user.mustChangePassword,
-        lastLoginAt: user.lastLoginAt,
-        profile,
-      },
-    });
-  } catch (err) {
-    console.error("Error during me: ", err);
-    return res.status(500).json({
-      message: "Server error while fetching current user",
-    });
-  }
-};
+}
 
 // Employee self registration
 exports.selfRegister = async (req, res) => {
-  const { username, email, password, designation } = req.body;
 
-  try {
-    // Prevent self-registration as ADMIN or OWNER
-    if (restrictedSelfRegisterDesignations.has(designation)) {
-      return res.status(403).json({
-        message: "Invalid designation. Cannot create admin or owner accounts.",
-      });
-    }
+    const { username, email, password, designation } = req.body;
 
-    const uniquenessResult = await validateUniqueEmployeeFields(req.body);
-
-    if (!uniquenessResult.success) {
-      return res.status(uniquenessResult.status).json({
-        message: uniquenessResult.message,
-      });
-    }
-
-    // Hash password
-    const passwordHash = await bcrypt.hash(password, 10);
-
-    // Build employee data
-    const employeeData = buildEmployeeData(req.body);
-
-    // Create employee
-    const employee = new Employee(employeeData);
-    await employee.save();
-
-    // Create user
-    const user = new User({
-      username,
-      email,
-      passwordHash,
-      roles: ["STAFF"],
-      employeeCode: employee.employeeCode,
-      status: "PENDING",
-      mustChangePassword: false,
-      createdByAdmin: false,
-      approvedBy: null,
-      approvedAt: null,
-      createdBy: "Self registration",
-    });
-
-    await user.save();
-
-    // Send approval request email to admin(s)
     try {
-      // Find all active admin users
-      const admins = await User.find({
-        roles: "ADMIN",
-        status: "ACTIVE",
-      });
+        // Prevent self-registration as ADMIN or OWNER
+        if (restrictedSelfRegisterDesignations.has(designation)) {
+            return res.status(403).json({
+                message:
+                    "Invalid designation. Cannot create admin or owner accounts."
+            });
+        }
 
-      // Extract admin emails
-      const adminEmails = admins.map((admin) => admin.email);
+        const uniquenessResult = await validateUniqueEmployeeFields(req.body);
 
-      // Send email to all admins
-      if (adminEmails.length) {
-        await sendEmail({
-          to: adminEmails,
+        if (!uniquenessResult.success) {
+            return res.status(uniquenessResult.status).json({
+                message: uniquenessResult.message
+            });
+        }
 
-          subject: "New Employee Registration Request",
+        // Hash password
+        const passwordHash = await bcrypt.hash(password, 10);
 
-          html: `
+        // Build employee data
+        const employeeData = buildEmployeeData(req.body);
+
+        // Create employee
+        const employee = new Employee(employeeData);
+        await employee.save();
+
+        // Create user
+        const user = new User({
+            username,
+            email,
+            passwordHash,
+            roles: ["STAFF"],
+            employeeCode: employee.employeeCode,
+            status: "PENDING",
+            mustChangePassword: false,
+            createdByAdmin: false,
+            approvedBy: null,
+            approvedAt: null,
+            createdBy: "Self registration"
+        });
+
+        await user.save();
+
+        // Send approval request email to admin(s)
+        try {
+            // Find all active admin users
+            const admins = await User.find({
+                roles: "ADMIN",
+                status: "ACTIVE"
+            });
+
+            // Extract admin emails
+            const adminEmails = admins.map((admin) => admin.email);
+
+            // Send email to all admins
+            if (adminEmails.length) {
+                await sendEmail({
+                    to: adminEmails,
+
+                    subject: "New Employee Registration Request",
+
+                    html: `
                         <h2>New Employee Registration Request</h2>
 
                         <p>
@@ -451,34 +474,35 @@ exports.selfRegister = async (req, res) => {
                             <br />
                             HMS System
                         </p>
-                    `,
+                    `
+                });
+            }
+        } catch (emailError) {
+            console.error("Admin notification email error:", emailError);
+        }
+
+        return res.status(201).json({
+            message: "Registration request successful. Wait for admin approval.",
+
+            user: {
+                username: user.username,
+                email: user.email,
+                roles: user.roles
+            },
+
+            employee: {
+                employeeCode: employee.employeeCode,
+                name: employee.name,
+                department: employee.department,
+                designation: employee.designation
+            }
         });
-      }
-    } catch (emailError) {
-      console.error("Admin notification email error:", emailError);
     }
+    catch (err) {
+        console.error("Employee self registration error:", err);
 
-    return res.status(201).json({
-      message: "Registration request successful. Wait for admin approval.",
-
-      user: {
-        username: user.username,
-        email: user.email,
-        roles: user.roles,
-      },
-
-      employee: {
-        employeeCode: employee.employeeCode,
-        name: employee.name,
-        department: employee.department,
-        designation: employee.designation,
-      },
-    });
-  } catch (err) {
-    console.error("Employee self registration error:", err);
-
-    return res.status(500).json({
-      message: "Server error during employee self registration",
-    });
-  }
-};
+        return res.status(500).json({
+            message: "Server error during employee self registration"
+        });
+    }
+}

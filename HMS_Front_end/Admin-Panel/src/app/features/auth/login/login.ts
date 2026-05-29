@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -23,6 +23,7 @@ export class LoginComponent {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private toast = inject(ToastService);
+  private cdr = inject(ChangeDetectorRef);
 
   loginForm: FormGroup;
   loading = false;
@@ -49,6 +50,7 @@ export class LoginComponent {
     this.authService.login(email, password).subscribe({
       next: (response) => {
         this.loading = false;
+        this.cdr.markForCheck();
         if (response?.token && response?.user) {
           this.toast.success(
             `Welcome back, ${response.user.profile?.name || response.user.username}!`,
@@ -74,6 +76,7 @@ export class LoginComponent {
         this.errorMessage =
           error.error?.message || 'Login failed. Please try again.';
         this.toast.error(this.errorMessage);
+        this.cdr.markForCheck();
       },
     });
   }

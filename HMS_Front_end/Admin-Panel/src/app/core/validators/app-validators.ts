@@ -15,8 +15,13 @@ import {
 
 // --- Shared patterns (kept identical to the backend) ---------------------
 
-// Country code (+1 to 3 digits) followed by exactly 10 digits, e.g. +919876543210
-export const PHONE_PATTERN = /^\+\d{1,3}\d{10}$/;
+// An optional country code (+ then 1-3 digits) followed by a single space,
+// then exactly 10 digits — OR a bare 10-digit number.
+// Accepts: "+91 1234567890", "+1 9876543210", "1234567890"
+// Rejects: "+919876543210" (no space), "+91 987654321" (9 digits),
+//          "+91 98765432101" (11 digits), "+91-9876543210" (wrong separator),
+//          "+91 98765 43210" (inner space), "+9123 1234567890" (4-digit code)
+export const PHONE_PATTERN = /^(\+\d{1,3} )?\d{10}$/;
 
 // At least one lowercase, one uppercase, one digit, one special char.
 export const PASSWORD_PATTERN =

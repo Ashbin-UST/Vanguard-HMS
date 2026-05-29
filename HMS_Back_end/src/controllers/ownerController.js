@@ -38,25 +38,25 @@ const createAdmin = async (req, res) => {
     // Build Admin Employee Data
     const employeeData = buildEmployeeData(req.body);
 
-    // Create employee
-    employee = new Employee(employeeData);
-    await employee.save();
+      // Create employee
+      employee = new Employee(employeeData);
+      await employee.save();
 
-    // Create user
-    user = new User({
-      username,
-      email,
-      passwordHash: hashedPassword,
-      status: "ACTIVE",
-      roles: ["ADMIN"],
-      employeeCode: employee.employeeCode,
-      mustChangePassword: true,
-      createdByAdmin: true,
-      approvedBy: req.user.employeeCode,
-      approvedAt: new Date(),
-      createdBy: req.user.employeeCode,
-    });
-    await user.save();
+      // Create user
+      user = new User({
+        username,
+        email,
+        passwordHash: hashedPassword,
+        status: "ACTIVE",
+        roles: ["ADMIN"],
+        employeeCode: employee.employeeCode,
+        mustChangePassword: true,
+        createdByAdmin: true,
+        approvedBy: req.user.employeeCode,
+        approvedAt: new Date(),
+        createdBy: req.user.employeeCode,
+      });
+      await user.save();
 
     // Send email
     try {
@@ -98,7 +98,7 @@ const createAdmin = async (req, res) => {
       action: "ADMIN_CREATED",
       targetType: "EMPLOYEE",
       targetId: employee.employeeCode,
-      message: `Admin account created for ${employee.name} (${employee.employeeCode})`,
+      message: `Admin account created for ${employee.name} (${employee.employeeCode})`
     });
 
     return res.status(201).json({
@@ -148,7 +148,7 @@ const getAdmins = async (req, res) => {
       admins: formattedAdmins,
     });
   } catch (err) {
-    console.error("Error during admin retrieval: ", err);
+    console.error("Error during admin retrieval: ",err);
     return res.status(500).json({
       message: "Internal server error",
     });
@@ -183,7 +183,7 @@ const updateAdmin = async (req, res) => {
       action: "ADMIN_UPDATED",
       targetType: "EMPLOYEE",
       targetId: employee.employeeCode,
-      message: `Admin ${employee.name} (${employee.employeeCode}) was updated`,
+      message: `Admin ${employee.name} (${employee.employeeCode}) was updated`
     });
 
     return res.status(200).json({
@@ -242,7 +242,7 @@ const deleteAdmin = async (req, res) => {
       action: "ADMIN_DELETED",
       targetType: "EMPLOYEE",
       targetId: employeeCode,
-      message: `Admin ${employee.name} (${employeeCode}) was deleted`,
+      message: `Admin ${employee.name} (${employeeCode}) was deleted`
     });
 
     return res.status(200).json({

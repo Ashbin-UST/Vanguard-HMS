@@ -39,6 +39,7 @@
         <div class="toolbar-filters">
           <select
             class="form-select toolbar-filter"
+            [value]="statusFilter()"
             (change)="onStatusChange($any($event.target).value)"
           >
             <option value="">All Statuses</option>
@@ -102,7 +103,7 @@
                     <button class="btn btn-sm btn-danger-outline"
                             (click)="cancel(a, $event)">Cancel</button>
                   }
-                  @if (isDoctor() && a.status === 'BOOKED') {
+                  @if (isDoctor() && canComplete(a)) {
                     <button class="btn btn-sm btn-success-outline"
                             (click)="complete(a, $event)">Complete</button>
                   }

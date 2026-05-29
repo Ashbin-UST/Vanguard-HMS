@@ -7,7 +7,7 @@ const authorizeDesignation = require("../middlewares/authorizeDesignations");
 const controller = require("../controllers/patientController");
 
 // Phone: optional country code (+ 1 to 3 digits) followed by exactly 10 digits
-const PHONE_REGEX = /^\+\d{1,3}\d{10}$/;
+const PHONE_REGEX = /^(\+\d{1,3} )?\d{10}$/;
 
 // All routes require authentication and reception-level authorization
 router.use(auth, authorizeDesignation("OWNER", "ADMIN", "RECEPTIONIST"));
@@ -25,7 +25,7 @@ const createPatientValidation = [
     body("phone")
         .matches(PHONE_REGEX)
         .withMessage(
-            "Phone must include a country code (e.g. +91) followed by exactly 10 digits"
+            "Phone must be 10 digits, optionally prefixed with a country code and a space (e.g. +91 1234567890 or 1234567890)"
         ),
 
     body("email")
@@ -86,7 +86,7 @@ const updatePatientValidation = [
         .optional()
         .matches(PHONE_REGEX)
         .withMessage(
-            "Phone must include a country code (e.g. +91) followed by exactly 10 digits"
+            "Phone must be 10 digits, optionally prefixed with a country code and a space (e.g. +91 1234567890 or 1234567890)"
         ),
 
     body("email")

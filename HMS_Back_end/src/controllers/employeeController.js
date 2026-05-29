@@ -6,11 +6,12 @@ const sendEmail = require("../utils/sendEmail");
 const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
 
-// Fields an employee is allowed to self-update
+// Fields an employee is allowed to self-update (via approval flow)
 const SELF_EDITABLE_FIELDS = ["phone", "qualification"];
 
 // Get current logged in user's profile
 exports.getProfile = async (req, res) => {
+
     try {
         const employee = await Employee.findOne({
             employeeCode: req.user.employeeCode

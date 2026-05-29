@@ -1,7 +1,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { AppointmentService } from '../../../core/services/appointment.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -43,6 +43,7 @@ export class AppointmentsListComponent implements OnInit {
   private toast = inject(ToastService);
   private confirmModal = inject(ConfirmModalService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   loading = signal(true);
   appointments = signal<Appointment[]>([]);
@@ -112,6 +113,17 @@ export class AppointmentsListComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Allow the overview cards (and any deep link) to preselect a doctor tab
+    // via ?tab=today|upcoming|completed.
+    const tab = this.route.snapshot.queryParamMap.get('tab');
+    if (tab === 'today' || tab === 'upcoming' || tab === 'completed') {
+      this.doctorTab.set(tab);
+    }
+    // Reception/admin status filter deep link via ?status=BOOKED etc.
+    const status = this.route.snapshot.queryParamMap.get('status');
+    if (status) {
+      this.statusFilter.set(status);
+    }
     this.load();
   }
 
@@ -154,6 +166,22 @@ export class AppointmentsListComponent implements OnInit {
 
   switchTab(tab: DoctorTab): void {
     this.doctorTab.set(tab);
+  }
+
+  // An appointment can only be completed once its scheduled start (day +
+  // slot start time) has passed. Mirrors the backend guard so the button
+  // doesn't appear for future appointments.
+  canComplete(a: Appointment): boolean {
+    if (a.status !== 'BOOKED') {
+      return false;
+    }
+    const slotStart = (a.timeSlot || '').split('-')[0];
+    const [h, m] = slotStart.split(':').map(Number);
+    const scheduled = new Date(a.appointmentDate);
+    if (!Number.isNaN(h) && !Number.isNaN(m)) {
+      scheduled.setHours(h, m, 0, 0);
+    }
+    return scheduled.getTime() <= Date.now();
   }
 
   onStatusChange(value: string): void {

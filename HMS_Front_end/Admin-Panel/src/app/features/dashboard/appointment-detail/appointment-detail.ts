@@ -52,7 +52,20 @@ export class AppointmentDetailComponent implements OnInit {
     const a = this.appointment();
     if (!a || a.status !== 'BOOKED') return false;
     if (!this.isDoctor()) return false;
-    return a.doctorEmployeeId === this.authService.getCurrentUser()?.profile?.employeeCode;
+    if (
+      a.doctorEmployeeId !==
+      this.authService.getCurrentUser()?.profile?.employeeCode
+    ) {
+      return false;
+    }
+    // Only completable once the scheduled start (day + slot start) has passed.
+    const slotStart = (a.timeSlot || '').split('-')[0];
+    const [h, m] = slotStart.split(':').map(Number);
+    const scheduled = new Date(a.appointmentDate);
+    if (!Number.isNaN(h) && !Number.isNaN(m)) {
+      scheduled.setHours(h, m, 0, 0);
+    }
+    return scheduled.getTime() <= Date.now();
   });
 
   ngOnInit(): void {

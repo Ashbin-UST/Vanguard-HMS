@@ -41,7 +41,8 @@ export class OverviewComponent implements OnInit {
   activeEmployees = signal<number | null>(null);
   pendingApprovals = signal<number | null>(null);
   totalPatients = signal<number | null>(null);
-  todayAppointments = signal<number | null>(null);
+  // All booked appointments (shown to owner/admin/receptionist).
+  bookedAppointments = signal<number | null>(null);
 
   // Recent activity (audit log feed)
   auditLogs = signal<AuditLog[]>([]);
@@ -81,7 +82,6 @@ export class OverviewComponent implements OnInit {
   }
 
   private loadAdminOverview(): void {
-    const today = todayIsoDate();
     this.loadingAudit.set(true);
 
     forkJoin({
@@ -98,7 +98,7 @@ export class OverviewComponent implements OnInit {
         .getPatients(1, 1)
         .pipe(catchError(() => of({ total: 0 } as any))),
       appts: this.appointmentService
-        .getAppointments(1, 1, { date: today })
+        .getAppointments(1, 1, { status: 'BOOKED' })
         .pipe(catchError(() => of({ total: 0 } as any))),
       logs: this.adminService
         .getAuditLogs(1, 15)
@@ -109,7 +109,7 @@ export class OverviewComponent implements OnInit {
         (res.pending.totalEmployees || 0) + (res.pendingChanges.total || 0),
       );
       this.totalPatients.set(res.patients.total || 0);
-      this.todayAppointments.set(res.appts.total || 0);
+      this.bookedAppointments.set(res.appts.total || 0);
       this.auditLogs.set(res.logs.logs || []);
       this.loading.set(false);
       this.loadingAudit.set(false);
@@ -117,17 +117,16 @@ export class OverviewComponent implements OnInit {
   }
 
   private loadReceptionistOverview(): void {
-    const today = todayIsoDate();
     forkJoin({
       patients: this.patientService
         .getPatients(1, 1)
         .pipe(catchError(() => of({ total: 0 } as any))),
       appts: this.appointmentService
-        .getAppointments(1, 1, { date: today })
+        .getAppointments(1, 1, { status: 'BOOKED' })
         .pipe(catchError(() => of({ total: 0 } as any))),
     }).subscribe((res) => {
       this.totalPatients.set(res.patients.total || 0);
-      this.todayAppointments.set(res.appts.total || 0);
+      this.bookedAppointments.set(res.appts.total || 0);
       this.loading.set(false);
     });
   }

@@ -12,7 +12,7 @@ const mongoose = require("mongoose");
 const Node = require("../models/Nodes");
 
 const DEFAULT_NODES = [
-    // Employee management (OWNER, ADMIN)
+    // --- Employee management (OWNER, ADMIN) ---
     {
         name: "Employees",
         path: "/dashboard/employees",
@@ -32,7 +32,7 @@ const DEFAULT_NODES = [
         allowedDesignations: ["OWNER", "ADMIN"]
     },
 
-    // Admin management (OWNER only)
+    // --- Admin management (OWNER only) ---
     {
         name: "Admins",
         path: "/dashboard/admins",
@@ -40,7 +40,7 @@ const DEFAULT_NODES = [
         allowedDesignations: ["OWNER"]
     },
 
-    // Patients (OWNER, ADMIN, RECEPTIONIST)
+    // --- Patients (OWNER, ADMIN, RECEPTIONIST) ---
     {
         name: "Patients",
         path: "/dashboard/patients",
@@ -54,7 +54,8 @@ const DEFAULT_NODES = [
         allowedDesignations: ["OWNER", "ADMIN", "RECEPTIONIST"]
     },
 
-    // Appointments- View + Creation (OWNER, ADMIN, RECEPTIONIST) 
+    // --- Appointments ---
+    // Reception level can view + book
     {
         name: "Appointments",
         path: "/dashboard/appointments",

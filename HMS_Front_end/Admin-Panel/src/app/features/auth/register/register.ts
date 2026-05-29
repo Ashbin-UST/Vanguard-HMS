@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -41,6 +41,7 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
   private authService = inject(AuthService);
   private router = inject(Router);
   private toast = inject(ToastService);
+  private cdr = inject(ChangeDetectorRef);
   private formDraft = inject(FormDraftService);
 
   registerForm: FormGroup;
@@ -197,6 +198,7 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
     this.authService.selfRegister(payload).subscribe({
       next: (response) => {
         this.loading = false;
+        this.cdr.markForCheck();
         this.submitted = true;
         this.formDraft.clear(DRAFT_KEY);
         this.toast.success(
@@ -207,6 +209,7 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
       },
       error: (error) => {
         this.loading = false;
+        this.cdr.markForCheck();
         this.toast.error(
           error.error?.message || 'Registration failed. Please try again.',
         );
