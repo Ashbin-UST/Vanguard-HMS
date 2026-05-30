@@ -12,8 +12,8 @@ import { User } from '../../../core/models/user.model';
   styleUrl: './navbar.css'
 })
 export class NavbarComponent {
-  private authService = inject(AuthService);
-  private router = inject(Router);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   currentUser: User | null = null;
 

@@ -25,12 +25,12 @@ import { Appointment } from '../../../core/models/appointment.model';
   styleUrl: './appointment-detail.css',
 })
 export class AppointmentDetailComponent implements OnInit {
-  private appointmentService = inject(AppointmentService);
-  private authService = inject(AuthService);
-  private toast = inject(ToastService);
-  private confirmModal = inject(ConfirmModalService);
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
+  private readonly appointmentService = inject(AppointmentService);
+  private readonly authService = inject(AuthService);
+  private readonly toast = inject(ToastService);
+  private readonly confirmModal = inject(ConfirmModalService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   appointment = signal<Appointment | null>(null);
   loading = signal(true);
@@ -50,7 +50,9 @@ export class AppointmentDetailComponent implements OnInit {
 
   canComplete = computed(() => {
     const a = this.appointment();
-    if (!a || a.status !== 'BOOKED') return false;
+    if (a?.status !== 'BOOKED') {
+      return false;
+    }
     if (!this.isDoctor()) return false;
     if (
       a.doctorEmployeeId !==

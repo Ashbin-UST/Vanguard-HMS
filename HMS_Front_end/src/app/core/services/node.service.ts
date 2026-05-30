@@ -8,7 +8,7 @@ import { MyNodesResponse } from '../models/node.model';
   providedIn: 'root',
 })
 export class NodeService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/nodes`;
 
   // Sidebar nodes for the logged-in user (already filtered by designation).

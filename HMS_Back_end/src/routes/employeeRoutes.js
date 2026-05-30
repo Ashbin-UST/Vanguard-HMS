@@ -50,7 +50,7 @@ router.put(
     "/update-profile",
     profileUpdateValidation,
     validate,
-    controller.requestProfileUpdate
+    controller.profileUpdate
 );
 
 module.exports = router;

@@ -30,10 +30,10 @@ import { ConfirmModalComponent } from './shared/ui/confirm-modal/confirm-modal';
   styleUrl: './app.css',
 })
 export class AppComponent {
-  private router = inject(Router);
+  private readonly router = inject(Router);
 
   // Routes that should NOT render the public navbar.
-  private chromelessPrefixes = [
+  private readonly chromelessPrefixes = [
     '/dashboard',
     '/login',
     '/register',
@@ -42,7 +42,7 @@ export class AppComponent {
     '/change-password',
   ];
 
-  private currentUrl = toSignal(
+  private readonly currentUrl = toSignal(
     this.router.events.pipe(
       filter((e): e is NavigationEnd => e instanceof NavigationEnd),
       map((e) => e.urlAfterRedirects),

@@ -41,13 +41,13 @@ export class SlotPickerComponent implements ControlValueAccessor {
   get slots(): string[] {
     return this._slots();
   }
-  private _slots = signal<string[]>([]);
+  private readonly _slots = signal<string[]>([]);
 
   // Slots already booked (rendered red + struck through + disabled).
   @Input() set bookedSlots(value: string[]) {
     this._booked.set(new Set(value || []));
   }
-  private _booked = signal<Set<string>>(new Set());
+  private readonly _booked = signal<Set<string>>(new Set());
 
   @Input() disabled = false;
   @Input() emptyText = 'Select a doctor and date to see available slots';

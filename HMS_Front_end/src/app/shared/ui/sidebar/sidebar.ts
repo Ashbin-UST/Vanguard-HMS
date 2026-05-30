@@ -7,7 +7,6 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { AuthService } from '../../../core/services/auth.service';
 import { NodeService } from '../../../core/services/node.service';
 import { SidebarNode } from '../../../core/models/node.model';
@@ -32,9 +31,8 @@ import { SidebarNode } from '../../../core/models/node.model';
   styleUrl: './sidebar.css',
 })
 export class SidebarComponent implements OnInit {
-  private authService = inject(AuthService);
-  private nodeService = inject(NodeService);
-  private sanitizer = inject(DomSanitizer);
+  private readonly authService = inject(AuthService);
+  private readonly nodeService = inject(NodeService);
 
   title = 'HMS';
   subtitle = 'Hospital Management';
@@ -58,7 +56,7 @@ export class SidebarComponent implements OnInit {
   ];
 
   // Backend-provided nodes (everything except the guaranteed defaults).
-  private backendNodes = signal<SidebarNode[]>([]);
+  private readonly backendNodes = signal<SidebarNode[]>([]);
 
   // Final rendered list: defaults first, then backend nodes, de-duplicated.
   menuItems = computed<SidebarNode[]>(() => {
@@ -131,8 +129,8 @@ export class SidebarComponent implements OnInit {
 
   // --- Icons --------------------------------------------------------------
 
-  // Cache so we don't re-sanitize identical markup on every change detection.
-  private iconCache = new Map<string, SafeHtml>();
+  // Cache so we don't recreate identical markup on every change detection.
+  private readonly iconCache = new Map<string, string>();
 
   // Inline 24x24 stroke icons keyed by the node's `icon` field (with aliases).
   private readonly icons: Record<string, string> = {
@@ -142,7 +140,8 @@ export class SidebarComponent implements OnInit {
       '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
     users:
       '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
-    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+    user:
+      '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
     'user-plus':
       '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>',
     'check-circle':
@@ -158,18 +157,22 @@ export class SidebarComponent implements OnInit {
   private readonly fallbackIcon =
     '<circle cx="12" cy="12" r="9"/>';
 
-  iconFor(node: SidebarNode): SafeHtml {
+  iconFor(node: SidebarNode): string {
     const key = (node.icon || '').toLowerCase();
-    if (this.iconCache.has(key)) {
-      return this.iconCache.get(key) as SafeHtml;
+
+    const cached = this.iconCache.get(key);
+    if (cached) {
+      return cached;
     }
+
     const inner = this.icons[key] || this.fallbackIcon;
+
     const svg =
       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ` +
       `stroke-width="2" stroke-linecap="round" stroke-linejoin="round">` +
       `${inner}</svg>`;
-    const safe = this.sanitizer.bypassSecurityTrustHtml(svg);
-    this.iconCache.set(key, safe);
-    return safe;
+
+    this.iconCache.set(key, svg);
+    return svg;
   }
 }

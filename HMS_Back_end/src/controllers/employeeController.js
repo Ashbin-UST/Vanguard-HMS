@@ -118,7 +118,7 @@ exports.getDoctors = async (req, res) => {
 };
 
 // Submit a profile change request (requires admin approval)
-exports.requestProfileUpdate = async (req, res) => {
+exports.profileUpdate = async (req, res) => {
 
     try {
         const employee = await Employee.findOne({
@@ -148,10 +148,7 @@ exports.requestProfileUpdate = async (req, res) => {
 
             if (isDifferent) {
                 requestedChanges[field] = {
-                    old:
-                        Array.isArray(oldValue) || oldValue === undefined
-                            ? oldValue
-                            : oldValue,
+                    old: oldValue,
                     new: newValue
                 };
             }
@@ -160,6 +157,35 @@ exports.requestProfileUpdate = async (req, res) => {
         if (Object.keys(requestedChanges).length === 0) {
             return res.status(400).json({
                 message: "No valid changes were requested"
+            });
+        }
+
+        // OWNER and ADMIN directly update their profile, no wait for approval
+        const privilegedRoles = new Set(["OWNER", "ADMIN"]);
+        const isPrivileged = (req.user.roles || []).some((role) =>
+            privilegedRoles.has(role)
+        );
+
+        if (isPrivileged) {
+            Object.keys(requestedChanges).forEach((field) => {
+                employee[field] = requestedChanges[field].new;
+            });
+
+            await employee.save();
+
+            // Record audit
+            const actor = await resolveActor(req.user);
+            await recordAudit({
+                actor,
+                action: "PROFILE_UPDATED",
+                targetType: "EMPLOYEE",
+                targetId: employee.employeeCode,
+                message: `${employee.name} (${employee.employeeCode}) updated their profile`
+            });
+
+            return res.status(200).json({
+                message: "Your profile has been updated successfully",
+                employee: buildEmployeeProfile(employee)
             });
         }
 

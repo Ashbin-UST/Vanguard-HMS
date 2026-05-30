@@ -30,9 +30,9 @@ type Tab = 'registrations' | 'profileChanges';
   styleUrl: './approvals.css',
 })
 export class ApprovalsComponent implements OnInit {
-  private adminService = inject(AdminService);
-  private toast = inject(ToastService);
-  private confirmModal = inject(ConfirmModalService);
+  private readonly adminService = inject(AdminService);
+  private readonly toast = inject(ToastService);
+  private readonly confirmModal = inject(ConfirmModalService);
 
   tab = signal<Tab>('registrations');
 

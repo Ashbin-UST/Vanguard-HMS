@@ -14,6 +14,7 @@ import {
   passwordMatchValidator,
   notSameAs,
 } from '../../../core/validators/app-validators';
+import { PasswordInputComponent } from '../../../shared/ui/password-input/password-input';
 
 /**
  * Reusable change-password screen.
@@ -28,16 +29,16 @@ import {
 @Component({
   selector: 'app-change-password',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, PasswordInputComponent],
   templateUrl: './change-password.html',
   styleUrl: './change-password.css',
 })
 export class ChangePasswordComponent implements OnInit {
-  private fb = inject(FormBuilder);
-  private authService = inject(AuthService);
-  private router = inject(Router);
-  private toast = inject(ToastService);
-  private cdr = inject(ChangeDetectorRef);
+  private readonly fb = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly toast = inject(ToastService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   changeForm: FormGroup;
   loading = false;

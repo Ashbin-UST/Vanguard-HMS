@@ -38,12 +38,12 @@ type DoctorTab = 'today' | 'upcoming' | 'completed';
   styleUrl: './appointments-list.css',
 })
 export class AppointmentsListComponent implements OnInit {
-  private appointmentService = inject(AppointmentService);
-  private authService = inject(AuthService);
-  private toast = inject(ToastService);
-  private confirmModal = inject(ConfirmModalService);
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
+  private readonly appointmentService = inject(AppointmentService);
+  private readonly authService = inject(AuthService);
+  private readonly toast = inject(ToastService);
+  private readonly confirmModal = inject(ConfirmModalService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   loading = signal(true);
   appointments = signal<Appointment[]>([]);

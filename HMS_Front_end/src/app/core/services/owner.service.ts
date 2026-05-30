@@ -15,7 +15,7 @@ export interface AdminsResponse {
   providedIn: 'root',
 })
 export class OwnerService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/owner`;
 
   createAdmin(data: CreateEmployeePayload): Observable<ApiMessage> {

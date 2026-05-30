@@ -519,9 +519,9 @@ exports.deleteEmployee = async (req, res) => {
 // Get audit logs (recent activity)
 exports.getAuditLogs = async (req, res) => {
   try {
-    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
     const limit = Math.min(
-      Math.max(parseInt(req.query.limit, 10) || 20, 1),
+      Math.max(Number.parseInt(req.query.limit, 10) || 20, 1),
       100,
     );
     const skip = (page - 1) * limit;
@@ -687,7 +687,7 @@ exports.rejectProfileChange = async (req, res) => {
       });
     }
 
-    if (request.status !== "PENDING") {
+    if (String(request.status) !== "PENDING") {
       return res.status(400).json({
         message: "This request has already been reviewed",
       });

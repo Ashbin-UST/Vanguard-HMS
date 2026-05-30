@@ -17,7 +17,8 @@ const auditActions = [
     "APPOINTMENT_COMPLETED",
     "PROFILE_CHANGE_REQUESTED",
     "PROFILE_CHANGE_APPROVED",
-    "PROFILE_CHANGE_REJECTED"
+    "PROFILE_CHANGE_REJECTED",
+    "PROFILE_UPDATED"
 ];
 
 const auditLogSchema = new mongoose.Schema(

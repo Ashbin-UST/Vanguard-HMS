@@ -46,12 +46,12 @@ import {
 export class PatientDetailComponent
   implements OnInit, CanComponentDeactivate
 {
-  private fb = inject(FormBuilder);
-  private patientService = inject(PatientService);
-  private toast = inject(ToastService);
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private formDraft = inject(FormDraftService);
+  private readonly fb = inject(FormBuilder);
+  private readonly patientService = inject(PatientService);
+  private readonly toast = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly formDraft = inject(FormDraftService);
 
   patient = signal<Patient | null>(null);
   loading = signal(true);
