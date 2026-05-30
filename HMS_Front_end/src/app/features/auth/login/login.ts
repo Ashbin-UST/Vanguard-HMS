@@ -9,21 +9,22 @@ import {
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { PasswordInputComponent } from '../../../shared/ui/password-input/password-input';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, PasswordInputComponent],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
 export class LoginComponent {
-  private fb = inject(FormBuilder);
-  private authService = inject(AuthService);
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
-  private toast = inject(ToastService);
-  private cdr = inject(ChangeDetectorRef);
+  private readonly fb = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly toast = inject(ToastService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   loginForm: FormGroup;
   loading = false;

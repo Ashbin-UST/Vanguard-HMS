@@ -22,10 +22,10 @@ import { EmployeeListItem } from '../../../core/models/employee.model';
   styleUrl: './admins.css',
 })
 export class AdminsComponent implements OnInit {
-  private ownerService = inject(OwnerService);
-  private toast = inject(ToastService);
-  private confirmModal = inject(ConfirmModalService);
-  private router = inject(Router);
+  private readonly ownerService = inject(OwnerService);
+  private readonly toast = inject(ToastService);
+  private readonly confirmModal = inject(ConfirmModalService);
+  private readonly router = inject(Router);
 
   admins = signal<EmployeeListItem[]>([]);
   loading = signal(true);

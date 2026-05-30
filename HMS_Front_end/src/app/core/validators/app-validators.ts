@@ -45,8 +45,16 @@ function toDateOnly(value: unknown): Date | null {
   if (!value) {
     return null;
   }
-  const d = value instanceof Date ? new Date(value) : new Date(String(value));
-  if (isNaN(d.getTime())) {
+  let d: Date;
+  if (value instanceof Date) {
+    d = new Date(value);
+  } else if (typeof value === 'string' || typeof value === 'number') {
+    d = new Date(value);
+  } else {
+    // Anything else (objects, etc.) can't be a meaningful date.
+    return null;
+  }
+  if (Number.isNaN(d.getTime())) {
     return null;
   }
   d.setHours(0, 0, 0, 0);
@@ -237,7 +245,7 @@ export const nonNegative: ValidatorFn = (
     return null;
   }
   const num = Number(control.value);
-  if (isNaN(num)) {
+  if (Number.isNaN(num)) {
     return { number: true };
   }
   return num < 0 ? { negative: true } : null;

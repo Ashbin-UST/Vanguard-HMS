@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -6,7 +6,7 @@ import {
   Validators,
   ReactiveFormsModule,
 } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { AuthService } from '../../../core/services/auth.service';
 import { EmployeeService } from '../../../core/services/employee.service';
@@ -35,24 +35,26 @@ const DRAFT_KEY = 'draft:profile';
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    RouterLink,
     DashboardLayoutComponent,
   ],
   templateUrl: './profile.html',
   styleUrl: './profile.css',
 })
 export class ProfileComponent implements OnInit, CanComponentDeactivate {
-  private fb = inject(FormBuilder);
-  private authService = inject(AuthService);
-  private employeeService = inject(EmployeeService);
-  private toast = inject(ToastService);
-  private formDraft = inject(FormDraftService);
-  private router = inject(Router);
+  private readonly fb = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
+  private readonly employeeService = inject(EmployeeService);
+  private readonly toast = inject(ToastService);
+  private readonly formDraft = inject(FormDraftService);
+  private readonly router = inject(Router);
 
   profile = signal<EmployeeProfile | null>(null);
   loading = signal(true);
   saving = signal(false);
   submittedOk = false;
+
+  // OWNER and ADMIN update their profile directly; staff go through approval.
+  isPrivileged = computed(() => this.authService.isSuperUser());
 
   profileForm: FormGroup;
   attempted = false;
@@ -132,16 +134,30 @@ export class ProfileComponent implements OnInit, CanComponentDeactivate {
     };
 
     this.saving.set(true);
-    this.employeeService.requestProfileUpdate(payload).subscribe({
+    this.employeeService.profileUpdate(payload).subscribe({
       next: (res) => {
         this.saving.set(false);
         this.submittedOk = true;
         this.formDraft.clear(DRAFT_KEY);
         this.toast.success(
           res.message ||
-            'Profile change request submitted for admin approval.',
+            (this.isPrivileged()
+              ? 'Profile updated successfully.'
+              : 'Profile change request submitted for admin approval.'),
         );
         this.profileForm.markAsPristine();
+
+        // For owner/admin the change is applied immediately — refresh the
+        // displayed profile (and cached user) so the card shows new values.
+        if (this.isPrivileged()) {
+          this.employeeService.getProfile().subscribe({
+            next: (r) => this.profile.set(r.profile),
+          });
+          this.authService.refreshCurrentUser().subscribe({
+            next: () => {},
+            error: () => {},
+          });
+        }
       },
       error: (err) => {
         this.saving.set(false);

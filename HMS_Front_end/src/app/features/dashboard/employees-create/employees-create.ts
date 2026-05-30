@@ -11,6 +11,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { AdminService } from '../../../core/services/admin.service';
 import { OwnerService } from '../../../core/services/owner.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { FormDraftService } from '../../../core/services/form-draft.service';
 import { CanComponentDeactivate } from '../../../core/guards/unsaved-changes.guard';
@@ -49,14 +50,15 @@ import {
 export class CreateEmployeeComponent
   implements OnInit, CanComponentDeactivate
 {
-  private fb = inject(FormBuilder);
-  private adminService = inject(AdminService);
-  private ownerService = inject(OwnerService);
-  private toast = inject(ToastService);
-  private cdr = inject(ChangeDetectorRef);
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private formDraft = inject(FormDraftService);
+  private readonly fb = inject(FormBuilder);
+  private readonly adminService = inject(AdminService);
+  private readonly ownerService = inject(OwnerService);
+  private readonly authService = inject(AuthService);
+  private readonly toast = inject(ToastService);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly formDraft = inject(FormDraftService);
 
   mode: 'staff' | 'admin' = 'staff';
   form: FormGroup;
@@ -103,6 +105,11 @@ export class CreateEmployeeComponent
       // For admin creation, designation is fixed.
       this.designations = ['ADMIN'];
       this.form.patchValue({ designation: 'ADMIN', department: 'Administration' });
+    } else if (this.authService.getDesignation() === 'OWNER') {
+      // In the normal employee form, the owner may also create an ADMIN.
+      // Selecting ADMIN routes the submit to the create-admin endpoint
+      // (the create-employee endpoint rejects ADMIN/OWNER designations).
+      this.designations = [...STAFF_DESIGNATIONS, 'ADMIN'];
     }
 
     // Restore draft
@@ -142,6 +149,12 @@ export class CreateEmployeeComponent
     this.isDoctor = d === 'DOCTOR';
     this.showMedical = MEDICAL_DESIGNATIONS.includes(d);
     this.showSpecialization = SPECIALIZATION_DESIGNATIONS.includes(d);
+
+    // When the owner picks ADMIN in the staff form, admins always belong to
+    // the Administration department — set it automatically.
+    if (d === 'ADMIN') {
+      this.form.patchValue({ department: 'Administration' });
+    }
 
     const med = this.form.get('medicalRegistrationNumber');
     const spec = this.form.get('specialization');
@@ -202,10 +215,18 @@ export class CreateEmployeeComponent
     }
 
     this.loading = true;
-    const call =
-      this.mode === 'admin'
-        ? this.ownerService.createAdmin(payload)
-        : this.adminService.createEmployee(payload);
+    // Route to the admin-creation endpoint whenever the target designation is
+    // ADMIN — either the dedicated admin form (mode==='admin') or the owner
+    // picking ADMIN in the normal employee form. The create-employee endpoint
+    // rejects ADMIN/OWNER, so this must go to create-admin instead.
+    const creatingAdmin = raw.designation === 'ADMIN';
+    if (creatingAdmin) {
+      // create-admin derives the admin designation/department server-side.
+      payload.department = payload.department || 'Administration';
+    }
+    const call = creatingAdmin
+      ? this.ownerService.createAdmin(payload)
+      : this.adminService.createEmployee(payload);
 
     call.subscribe({
       next: (res) => {
@@ -215,10 +236,10 @@ export class CreateEmployeeComponent
         this.formDraft.clear(this.draftKey);
         this.toast.success(
           res.message ||
-            `${this.mode === 'admin' ? 'Admin' : 'Employee'} created. Credentials sent via email.`,
+            `${creatingAdmin ? 'Admin' : 'Employee'} created. Credentials sent via email.`,
         );
         this.router.navigate([
-          this.mode === 'admin' ? '/dashboard/admins' : '/dashboard/employees',
+          creatingAdmin ? '/dashboard/admins' : '/dashboard/employees',
         ]);
       },
       error: (err) => {

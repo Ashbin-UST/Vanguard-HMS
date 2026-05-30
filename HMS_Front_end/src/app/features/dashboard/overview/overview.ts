@@ -33,11 +33,11 @@ import { todayIsoDate } from '../../../core/validators/app-validators';
   styleUrl: './overview.css',
 })
 export class OverviewComponent implements OnInit {
-  private authService = inject(AuthService);
-  private adminService = inject(AdminService);
-  private ownerService = inject(OwnerService);
-  private appointmentService = inject(AppointmentService);
-  private patientService = inject(PatientService);
+  private readonly authService = inject(AuthService);
+  private readonly adminService = inject(AdminService);
+  private readonly ownerService = inject(OwnerService);
+  private readonly appointmentService = inject(AppointmentService);
+  private readonly patientService = inject(PatientService);
 
   // Stats
   activeEmployees = signal<number | null>(null);
@@ -94,8 +94,8 @@ export class OverviewComponent implements OnInit {
     const adminsForOwner =
       this.designation === 'OWNER'
         ? this.ownerService
-            .getAdmins()
-            .pipe(catchError(() => of({ totalAdmins: 0, admins: [] } as any)))
+          .getAdmins()
+          .pipe(catchError(() => of({ totalAdmins: 0, admins: [] } as any)))
         : of({ totalAdmins: 0, admins: [] } as any);
 
     forkJoin({
@@ -177,8 +177,9 @@ export class OverviewComponent implements OnInit {
 
   // Short action label for the activity feed.
   actionLabel(action: string): string {
-    return action.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) =>
-      c.toUpperCase(),
-    );
+    return action
+      .replaceAll('_', ' ')
+      .toLowerCase()
+      .replace(/\b\w/g, (letter) => letter.toUpperCase());
   }
 }

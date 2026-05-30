@@ -18,7 +18,7 @@ import { Injectable } from '@angular/core';
 })
 export class FormDraftService {
   // draftKey -> sanitized form value snapshot
-  private drafts = new Map<string, Record<string, any>>();
+  private readonly drafts = new Map<string, Record<string, any>>();
 
   // Field-name fragments that must never be persisted.
   private static readonly SENSITIVE_FRAGMENTS = [
@@ -97,7 +97,7 @@ export class FormDraftService {
     try {
       return structuredClone(value);
     } catch {
-      return JSON.parse(JSON.stringify(value));
+      return structuredClone(value);
     }
   }
 }

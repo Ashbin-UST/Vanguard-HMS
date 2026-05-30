@@ -18,10 +18,10 @@ import { ToastService } from '../../../core/services/toast.service';
   styleUrl: './forgot-password.css',
 })
 export class ForgotPasswordComponent {
-  private fb = inject(FormBuilder);
-  private authService = inject(AuthService);
-  private toast = inject(ToastService);
-  private cdr = inject(ChangeDetectorRef);
+  private readonly fb = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
+  private readonly toast = inject(ToastService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   forgotPasswordForm: FormGroup;
   loading = false;

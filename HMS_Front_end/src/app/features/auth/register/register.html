@@ -99,7 +99,7 @@
             }
           </div>
 
-          <!-- Medical Registration No (medical designations) -->
+          <!-- Medical Registration Number (medical designations) -->
           @if (showMedicalFields) {
             <div class="form-group">
               <label class="form-label">Medical Registration No *</label>
@@ -138,8 +138,9 @@
           <!-- Password -->
           <div class="form-group">
             <label class="form-label">Password *</label>
-            <input type="password" formControlName="password" class="form-input"
-                   placeholder="Min 8 characters" />
+            <app-password-input formControlName="password"
+              placeholder="Min 8 characters"
+              autocomplete="new-password"></app-password-input>
             <!-- Live (before submit): required + min length -->
             @if (registerForm.get('password')?.touched) {
               @if (registerForm.get('password')?.hasError('required')) {
