@@ -5,14 +5,14 @@
       <div class="toolbar-filters">
         <input type="text" class="form-input toolbar-search" placeholder="Search by name, UHID, phone, or email..."
           (input)="onSearchInput($any($event.target).value)" />
-        <select class="form-select toolbar-filter" (change)="onStatusChange($any($event.target).value)"
+        <select class="form-select toolbar-filter" aria-label="toolbar-filter" (change)="onStatusChange($any($event.target).value)"
           [disabled]="searching()">
           <option value="">All Statuses</option>
           @for (s of statuses; track s) {
           <option [value]="s">{{ s }}</option>
           }
         </select>
-        <select class="form-select toolbar-filter" (change)="onGenderChange($any($event.target).value)"
+        <select class="form-select toolbar-filter" aria-label="toolbar-filter" (change)="onGenderChange($any($event.target).value)"
           [disabled]="searching()">
           <option value="">All Genders</option>
           @for (g of genders; track g) {
@@ -53,7 +53,7 @@
             <td>{{ p.email }}</td>
             <td>{{ p.gender }}</td>
             <td>
-              <span class="status status--{{ p.status?.toLowerCase() }}">
+              <span class="status status--{{ p.status.toLowerCase() }}">
                 {{ p.status }}
               </span>
             </td>

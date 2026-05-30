@@ -198,6 +198,34 @@ export const timeSlotValidator: ValidatorFn = (
   return TIME_SLOT_PATTERN.test(value) ? null : { timeSlot: true };
 };
 
+// Converts an "HH:mm" string to minutes since midnight, or null if invalid.
+function timeToMinutes(value: unknown): number | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const m = /^(\d{2}):(\d{2})$/.exec(value.trim());
+  if (!m) {
+    return null;
+  }
+  return Number(m[1]) * 60 + Number(m[2]);
+}
+
+/**
+ * Availability-slot time-order validator (apply at the slot FormGroup level).
+ * Ensures startTime is strictly before endTime. Error on the group:
+ * { slotTimeOrder: true }
+ */
+export const slotTimeOrder: ValidatorFn = (
+  group: AbstractControl,
+): ValidationErrors | null => {
+  const start = timeToMinutes(group.get('startTime')?.value);
+  const end = timeToMinutes(group.get('endTime')?.value);
+  if (start === null || end === null) {
+    return null;
+  }
+  return start < end ? null : { slotTimeOrder: true };
+};
+
 /**
  * Cross-field password match validator (apply at the FormGroup level).
  * Reads `passwordKey` and `confirmKey` controls. Error on the group:
@@ -245,7 +273,7 @@ export const nonNegative: ValidatorFn = (
     return null;
   }
   const num = Number(control.value);
-  if (Number.isNaN(num)) {
+  if (isNaN(num)) {
     return { number: true };
   }
   return num < 0 ? { negative: true } : null;

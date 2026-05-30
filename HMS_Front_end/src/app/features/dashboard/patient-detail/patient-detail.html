@@ -11,7 +11,7 @@
               <h3 class="card-title">{{ p.name }}</h3>
               <p class="card-sub">
                 {{ p.UHID }} ·
-                <span class="status status--{{ p.status?.toLowerCase() }}">
+                <span class="status status--{{ p.status.toLowerCase() }}">
                   {{ p.status }}
                 </span>
               </p>
@@ -44,19 +44,19 @@
             <div class="detail-grid">
               <div class="detail">
                 <span class="detail-label">House Name</span>
-                <span class="detail-value">{{ p.address?.houseName }}</span>
+                <span class="detail-value">{{ p.address.houseName }}</span>
               </div>
               <div class="detail">
                 <span class="detail-label">House Number</span>
-                <span class="detail-value">{{ p.address?.houseNumber }}</span>
+                <span class="detail-value">{{ p.address.houseNumber }}</span>
               </div>
               <div class="detail">
                 <span class="detail-label">City</span>
-                <span class="detail-value">{{ p.address?.city }}</span>
+                <span class="detail-value">{{ p.address.city }}</span>
               </div>
               <div class="detail">
                 <span class="detail-label">Post Code</span>
-                <span class="detail-value">{{ p.address?.postCode }}</span>
+                <span class="detail-value">{{ p.address.postCode }}</span>
               </div>
             </div>
 
@@ -64,15 +64,15 @@
             <div class="detail-grid">
               <div class="detail">
                 <span class="detail-label">Name</span>
-                <span class="detail-value">{{ p.emergencyContact?.contactName }}</span>
+                <span class="detail-value">{{ p.emergencyContact.contactName }}</span>
               </div>
               <div class="detail">
                 <span class="detail-label">Relationship</span>
-                <span class="detail-value">{{ p.emergencyContact?.relationship }}</span>
+                <span class="detail-value">{{ p.emergencyContact.relationship }}</span>
               </div>
               <div class="detail">
                 <span class="detail-label">Contact Number</span>
-                <span class="detail-value">{{ p.emergencyContact?.contactNumber }}</span>
+                <span class="detail-value">{{ p.emergencyContact.contactNumber }}</span>
               </div>
             </div>
           </div>
@@ -94,14 +94,14 @@
             <div class="form-grid">
               <div class="form-group">
                 <label class="form-label">Full Name *</label>
-                <input type="text" formControlName="name" class="form-input" />
+                <input type="text" formControlName="name" class="form-input" aria-label="full-name" />
                 @if (form.get('name')?.touched && form.get('name')?.invalid) {
                   <p class="form-error">Name is required</p>
                 }
               </div>
               <div class="form-group">
                 <label class="form-label">Email *</label>
-                <input type="email" formControlName="email" class="form-input" />
+                <input type="email" formControlName="email" class="form-input" aria-label="email" />
                 @if (form.get('email')?.touched) {
                   @if (form.get('email')?.hasError('required')) {
                     <p class="form-error">Email is required</p>
@@ -113,7 +113,7 @@
               </div>
               <div class="form-group">
                 <label class="form-label">Phone *</label>
-                <input type="tel" formControlName="phone" class="form-input" />
+                <input type="tel" formControlName="phone" class="form-input" aria-label="phone" />
                 @if (form.get('phone')?.touched) {
                   @if (form.get('phone')?.hasError('required')) {
                     <p class="form-error">Phone is required</p>
@@ -127,7 +127,7 @@
               </div>
               <div class="form-group">
                 <label class="form-label">Gender *</label>
-                <select formControlName="gender" class="form-select">
+                <select formControlName="gender" class="form-select" aria-label="gender">
                   @for (g of genders; track g) {
                     <option [value]="g">{{ g }}</option>
                   }
@@ -139,6 +139,7 @@
                   type="date"
                   formControlName="dob"
                   class="form-input"
+                  aria-label="dob"
                   [attr.max]="todayIso"
                 />
                 @if (form.get('dob')?.touched) {
@@ -152,7 +153,7 @@
               </div>
               <div class="form-group">
                 <label class="form-label">Status *</label>
-                <select formControlName="status" class="form-select">
+                <select formControlName="status" class="form-select" aria-label="status">
                   @for (s of statuses; track s) {
                     <option [value]="s">{{ s }}</option>
                   }
@@ -164,28 +165,28 @@
             <div class="form-grid" formGroupName="address">
               <div class="form-group">
                 <label class="form-label">House Name *</label>
-                <input type="text" formControlName="houseName" class="form-input" />
+                <input type="text" formControlName="houseName" class="form-input" aria-label="house-name" />
                 @if (addressCtrl('houseName')?.touched && addressCtrl('houseName')?.invalid) {
                   <p class="form-error">House name is required</p>
                 }
               </div>
               <div class="form-group">
                 <label class="form-label">House Number *</label>
-                <input type="text" formControlName="houseNumber" class="form-input" />
+                <input type="text" formControlName="houseNumber" class="form-input" aria-label="house-number" />
                 @if (addressCtrl('houseNumber')?.touched && addressCtrl('houseNumber')?.invalid) {
                   <p class="form-error">House number is required</p>
                 }
               </div>
               <div class="form-group">
                 <label class="form-label">City *</label>
-                <input type="text" formControlName="city" class="form-input" />
+                <input type="text" formControlName="city" class="form-input" aria-label="city" />
                 @if (addressCtrl('city')?.touched && addressCtrl('city')?.invalid) {
                   <p class="form-error">City is required</p>
                 }
               </div>
               <div class="form-group">
                 <label class="form-label">Post Code *</label>
-                <input type="text" formControlName="postCode" class="form-input" />
+                <input type="text" formControlName="postCode" class="form-input" aria-label="post-code" />
                 @if (addressCtrl('postCode')?.touched && addressCtrl('postCode')?.invalid) {
                   <p class="form-error">Post code is required</p>
                 }
@@ -196,21 +197,21 @@
             <div class="form-grid" formGroupName="emergencyContact">
               <div class="form-group">
                 <label class="form-label">Contact Name *</label>
-                <input type="text" formControlName="contactName" class="form-input" />
+                <input type="text" formControlName="contactName" class="form-input" aria-label="contact-name" />
                 @if (emergencyCtrl('contactName')?.touched && emergencyCtrl('contactName')?.invalid) {
                   <p class="form-error">Contact name is required</p>
                 }
               </div>
               <div class="form-group">
                 <label class="form-label">Relationship *</label>
-                <input type="text" formControlName="relationship" class="form-input" />
+                <input type="text" formControlName="relationship" class="form-input" aria-label="relationship" />
                 @if (emergencyCtrl('relationship')?.touched && emergencyCtrl('relationship')?.invalid) {
                   <p class="form-error">Relationship is required</p>
                 }
               </div>
               <div class="form-group">
                 <label class="form-label">Contact Number *</label>
-                <input type="tel" formControlName="contactNumber" class="form-input" />
+                <input type="tel" formControlName="contactNumber" class="form-input" aria-label="contact-number" />
                 @if (emergencyCtrl('contactNumber')?.touched) {
                   @if (emergencyCtrl('contactNumber')?.hasError('required')) {
                     <p class="form-error">Contact number is required</p>

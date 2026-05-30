@@ -52,7 +52,7 @@
 
           <div class="form-group">
             <label class="form-label">Gender *</label>
-            <select formControlName="gender" class="form-select">
+            <select formControlName="gender" class="form-select" aria-label="gender">
               <option value="">Select gender</option>
               @for (g of genders; track g) {
                 <option [value]="g">{{ g }}</option>
@@ -69,6 +69,7 @@
               type="date"
               formControlName="dob"
               class="form-input"
+              aria-label="dob"
               [attr.max]="todayIso"
             />
             @if (form.get('dob')?.touched) {

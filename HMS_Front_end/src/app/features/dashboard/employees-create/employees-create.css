@@ -70,8 +70,13 @@
 }
 
 .slot-row .form-select {
+  flex: 0 0 9.5rem;
+  min-width: 9.5rem;
+}
+
+.slot-row .form-input {
   flex: 1;
-  min-width: 120px;
+  min-width: 0;
 }
 
 .slot-sep {
@@ -103,4 +108,8 @@
   .form-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+.slot-error {
+  margin: -0.25rem 0 0.625rem;
 }

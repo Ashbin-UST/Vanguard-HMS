@@ -28,6 +28,7 @@
           #searchInput
           type="text"
           class="ss-search-input"
+          aria-label="ss-search-input"
           [placeholder]="searchPlaceholder"
           [value]="searchTerm()"
           (input)="onSearchInput($event)"
@@ -36,7 +37,7 @@
         />
       </div>
 
-      <ul class="ss-options" role="listbox">
+      <ul class="ss-options" role="listbox" aria-label="Available options">
         @for (option of filteredOptions(); track trackByValue($index, option); let i = $index) {
           <li
             class="ss-option"

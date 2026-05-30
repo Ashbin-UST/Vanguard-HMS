@@ -1,9 +1,11 @@
 import { ChangeDetectorRef, Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
+  AbstractControl,
   FormBuilder,
   FormGroup,
   ReactiveFormsModule,
+  ValidationErrors,
   Validators,
 } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -88,9 +90,29 @@ export class AppointmentBookComponent
     timeSlot: ['', Validators.required],
   });
 
+  // Rejects an appointment date earlier than the selected doctor's joining
+  // date. Bound as an arrow fn so it can read doctorJoinIso(). Error:
+  // { beforeJoining: true }
+  private beforeJoiningValidator = (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value;
+    const joinIso = this.doctorJoinIso();
+    if (!value || !joinIso) {
+      return null;
+    }
+    // yyyy-mm-dd strings compare correctly lexicographically.
+    return String(value) < joinIso ? { beforeJoining: true } : null;
+  };
+
   todayIso = todayIsoDate();
   loading = false;
   submittedOk = false;
+
+  // Date-picker minimum: today, raised to the doctor's joining date when later.
+  minDate = signal(this.todayIso);
+  // The selected doctor's joining date as yyyy-mm-dd (null if none/unset).
+  private doctorJoinIso = signal<string | null>(null);
+  // Friendly joining date for the error message (e.g. "Jun 25, 2026").
+  doctorJoinDisplay = signal('');
 
   // Searchable options + display fields
   patients = signal<Patient[]>([]);
@@ -106,7 +128,7 @@ export class AppointmentBookComponent
   patientOptions = signal<any[]>([]);
   doctorOptions = signal<any[]>([]);
 
-  private readonly patientSearch$ = new Subject<string>();
+  private patientSearch$ = new Subject<string>();
 
   ngOnInit(): void {
     // Pre-load top doctors and a small patient page so the dropdowns aren't
@@ -122,6 +144,10 @@ export class AppointmentBookComponent
             sublabel: d.specialization || d.department || '',
           })),
         );
+        // If a doctor was already selected (e.g. restored draft), resolve its
+        // joining date now that the list is available.
+        this.updateDoctorJoining();
+        this.cdr.markForCheck();
       },
       error: () => this.toast.error('Failed to load doctors.'),
     });
@@ -146,10 +172,16 @@ export class AppointmentBookComponent
       });
     });
 
+    // Attach the joining-date validator to the date control.
+    this.form
+      .get('appointmentDate')!
+      .addValidators(this.beforeJoiningValidator);
+
     // Recompute slots whenever the doctor or date changes.
-    this.form.get('doctorEmployeeId')!.valueChanges.subscribe(() =>
-      this.refreshSlots(),
-    );
+    this.form.get('doctorEmployeeId')!.valueChanges.subscribe(() => {
+      this.updateDoctorJoining();
+      this.refreshSlots();
+    });
     this.form.get('appointmentDate')!.valueChanges.subscribe(() =>
       this.refreshSlots(),
     );
@@ -178,6 +210,43 @@ export class AppointmentBookComponent
   }
 
   onPatientSearch = (term: string) => this.patientSearch$.next(term);
+
+  // Updates the joining-date state (min date, display text, validity) for the
+  // currently selected doctor.
+  private updateDoctorJoining(): void {
+    const doctorId = this.form.get('doctorEmployeeId')!.value;
+    const doctor = this.doctors().find((d) => d.employeeCode === doctorId);
+    const joiningRaw = doctor?.joiningDate;
+
+    if (!joiningRaw) {
+      this.doctorJoinIso.set(null);
+      this.doctorJoinDisplay.set('');
+      this.minDate.set(this.todayIso);
+    } else {
+      const joinDate = new Date(joiningRaw);
+      const joinIso = this.toIso(joinDate);
+      this.doctorJoinIso.set(joinIso);
+      this.doctorJoinDisplay.set(
+        joinDate.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+        }),
+      );
+      // The picker minimum is the later of today and the joining date.
+      this.minDate.set(joinIso > this.todayIso ? joinIso : this.todayIso);
+    }
+
+    // Re-validate the date against the new doctor's joining date.
+    this.form.get('appointmentDate')!.updateValueAndValidity();
+  }
+
+  // Formats a Date as yyyy-mm-dd in local time.
+  private toIso(d: Date): string {
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${d.getFullYear()}-${month}-${day}`;
+  }
 
   private refreshSlots(): void {
     const doctorId = this.form.get('doctorEmployeeId')!.value;

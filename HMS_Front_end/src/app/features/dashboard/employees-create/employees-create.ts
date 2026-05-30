@@ -27,6 +27,7 @@ import {
   phoneValidator,
   notBlank,
   nonNegative,
+  slotTimeOrder,
 } from '../../../core/validators/app-validators';
 
 /**
@@ -132,11 +133,14 @@ export class CreateEmployeeComponent
 
   addSlot(): void {
     this.availabilitySlots.push(
-      this.fb.group({
-        day: ['MONDAY', Validators.required],
-        startTime: ['09:00', Validators.required],
-        endTime: ['17:00', Validators.required],
-      }),
+      this.fb.group(
+        {
+          day: ['MONDAY', Validators.required],
+          startTime: ['09:00', Validators.required],
+          endTime: ['17:00', Validators.required],
+        },
+        { validators: slotTimeOrder },
+      ),
     );
   }
 

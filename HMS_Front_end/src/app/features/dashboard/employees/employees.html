@@ -12,6 +12,7 @@
         />
         <select
           class="form-select toolbar-filter"
+          aria-label="toolbar-filter"
           [value]="designationFilter() || 'ALL'"
           (change)="onFilter($any($event.target).value)"
         >
@@ -56,7 +57,7 @@
                   <span class="badge">{{ item.employee.designation }}</span>
                 </td>
                 <td>
-                  <span class="status status--{{ item.status?.toLowerCase() }}">
+                  <span class="status status--{{ item.status.toLowerCase() }}">
                     {{ item.status }}
                   </span>
                 </td>

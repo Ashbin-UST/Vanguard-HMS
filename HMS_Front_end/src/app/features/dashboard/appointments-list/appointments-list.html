@@ -39,6 +39,7 @@
         <div class="toolbar-filters">
           <select
             class="form-select toolbar-filter"
+            aria-label = "toolbar-filter"
             [value]="statusFilter()"
             (change)="onStatusChange($any($event.target).value)"
           >
@@ -50,6 +51,7 @@
           <input
             type="date"
             class="form-input toolbar-filter"
+            aria-label="toolbar-filter"
             [value]="dateFilter()"
             (change)="onDateChange($any($event.target).value)"
           />
@@ -94,7 +96,7 @@
                 <td>{{ a.appointmentDate | date: 'mediumDate' }}</td>
                 <td>{{ a.timeSlot }}</td>
                 <td>
-                  <span class="status status--{{ a.status?.toLowerCase() }}">
+                  <span class="status status--{{ a.status.toLowerCase() }}">
                     {{ a.status }}
                   </span>
                 </td>

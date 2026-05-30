@@ -25,6 +25,7 @@ import {
   passwordComplexity,
   passwordMatchValidator,
   nonNegative,
+  slotTimeOrder,
 } from '../../../core/validators/app-validators';
 import { PasswordInputComponent } from '../../../shared/ui/password-input/password-input';
 
@@ -108,11 +109,14 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
 
   addSlot(): void {
     this.availabilitySlots.push(
-      this.fb.group({
-        day: ['MONDAY', Validators.required],
-        startTime: ['09:00', Validators.required],
-        endTime: ['17:00', Validators.required],
-      }),
+      this.fb.group(
+        {
+          day: ['MONDAY', Validators.required],
+          startTime: ['09:00', Validators.required],
+          endTime: ['17:00', Validators.required],
+        },
+        { validators: slotTimeOrder },
+      ),
     );
   }
 

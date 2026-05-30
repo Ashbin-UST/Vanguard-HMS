@@ -12,8 +12,8 @@
         <div class="form-grid">
           <!-- Patient: searchable -->
           <div class="form-group">
-            <label class="form-label">Patient *</label>
-            <app-searchable-select
+            <label class="form-label" for="appointment-book-patient-1">Patient *</label>
+            <app-searchable-select controlId="appointment-book-patient-1"
               formControlName="patientId"
               [options]="patientOptions()"
               valueKey="value"
@@ -30,8 +30,8 @@
 
           <!-- Doctor: searchable -->
           <div class="form-group">
-            <label class="form-label">Doctor *</label>
-            <app-searchable-select
+            <label class="form-label" for="appointment-book-doctor-2">Doctor *</label>
+            <app-searchable-select controlId="appointment-book-doctor-2"
               formControlName="doctorEmployeeId"
               [options]="doctorOptions()"
               valueKey="value"
@@ -45,14 +45,14 @@
             }
           </div>
 
-          <!-- Date: no past dates -->
+          <!-- Date: no past dates, and not before the doctor has joined -->
           <div class="form-group">
-            <label class="form-label">Appointment Date *</label>
-            <input
+            <label class="form-label" for="appointment-book-appointment-date-3">Appointment Date *</label>
+            <input id="appointment-book-appointment-date-3"
               type="date"
               formControlName="appointmentDate"
               class="form-input"
-              [attr.min]="todayIso"
+              [attr.min]="minDate()"
             />
             @if (form.get('appointmentDate')?.touched) {
               @if (form.get('appointmentDate')?.hasError('required')) {
@@ -61,13 +61,18 @@
               @if (form.get('appointmentDate')?.hasError('pastDate')) {
                 <p class="form-error">Appointments cannot be booked for past dates</p>
               }
+              @if (form.get('appointmentDate')?.hasError('beforeJoining')) {
+                <p class="form-error">
+                  Doctor has not joined yet. Earliest date is {{ doctorJoinDisplay() }}
+                </p>
+              }
             }
           </div>
 
           <!-- Fee summary -->
           @if (selectedDoctor) {
             <div class="form-group">
-              <label class="form-label">Consultation Fee</label>
+              <span class="form-label">Consultation Fee</span>
               <div class="fee-pill">
                 @if (selectedDoctor.consultationFee != null) {
                   ₹ {{ selectedDoctor.consultationFee }}
@@ -82,7 +87,7 @@
         <!-- Slots -->
         <div class="slots-block">
           <div class="slots-header">
-            <label class="form-label">Time Slot *</label>
+            <span class="form-label">Time Slot *</span>
             @if (loadingSlots()) {
               <span class="muted">Checking availability…</span>
             }

@@ -31,6 +31,7 @@
             <input
               type="text"
               class="form-input"
+              aria-label="modal-input-label"
               [placeholder]="modalService.modalState().config.inputPlaceholder || ''"
               [value]="inputValue()"
               (input)="inputValue.set($any($event.target).value)"
