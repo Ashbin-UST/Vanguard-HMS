@@ -158,7 +158,7 @@ exports.changePassword = async (req, res) => {
 
 // Forgot Password
 exports.forgotPassword = async (req, res) => {
-    
+
     try {
         const { email } = req.body;
 
@@ -190,6 +190,18 @@ exports.forgotPassword = async (req, res) => {
 
         await user.save();
 
+        // DEV ONLY: print the raw reset link so you can test the reset-password
+        // page in the browser without relying on the email. The raw token is
+        // never stored (only its hash), so this is the only place to capture it.
+        // Remove or guard out before deploying to production.
+        if (process.env.NODE_ENV !== "production") {
+            console.log(
+                "\n[DEV] Reset link for " + user.email + ":\n" +
+                (process.env.FRONTEND_URL || "http://localhost:4200") +
+                "/reset-password?token=" + resetPasswordToken + "\n"
+            );
+        }
+
         // Send email with reset token
         try {
             await sendEmail({
@@ -205,7 +217,7 @@ exports.forgotPassword = async (req, res) => {
                   </p>
         
                   <p>
-                    <a href="http://localhost:4200/reset-password?token=${resetPasswordToken}">
+                    <a href="${process.env.FRONTEND_URL || "http://localhost:4200"}/reset-password?token=${resetPasswordToken}">
                       Reset Password
                     </a>
                   </p>

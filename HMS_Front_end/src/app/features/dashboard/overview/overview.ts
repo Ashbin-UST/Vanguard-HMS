@@ -5,6 +5,7 @@ import { forkJoin, of, catchError } from 'rxjs';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { AuthService } from '../../../core/services/auth.service';
 import { AdminService } from '../../../core/services/admin.service';
+import { OwnerService } from '../../../core/services/owner.service';
 import { AppointmentService } from '../../../core/services/appointment.service';
 import { PatientService } from '../../../core/services/patient.service';
 import { AuditLog } from '../../../core/models/audit.model';
@@ -16,8 +17,8 @@ import { todayIsoDate } from '../../../core/validators/app-validators';
  *
  * Renders a different set of cards based on the logged-in user's designation:
  *   - OWNER / ADMIN: active employee count, pending requests count,
- *     patient count, today's appointments count, recent activity feed.
- *   - RECEPTIONIST: patient count, today's appointments count,
+ *     patient count, booked appointments count, recent activity feed.
+ *   - RECEPTIONIST: patient count, booked appointments count,
  *     quick links to create patient / book appointment.
  *   - DOCTOR: today's / upcoming appointment counts, quick link to "My
  *     Appointments". No patient/admin metrics — doctors don't see those.
@@ -34,6 +35,7 @@ import { todayIsoDate } from '../../../core/validators/app-validators';
 export class OverviewComponent implements OnInit {
   private authService = inject(AuthService);
   private adminService = inject(AdminService);
+  private ownerService = inject(OwnerService);
   private appointmentService = inject(AppointmentService);
   private patientService = inject(PatientService);
 
@@ -84,10 +86,23 @@ export class OverviewComponent implements OnInit {
   private loadAdminOverview(): void {
     this.loadingAudit.set(true);
 
+    // The Employees page shows STAFF for admins, and STAFF + admins for the
+    // owner. Mirror that here so the "Active Employees" count matches the list
+    // exactly (and isn't undercounted when only an admin exists). Admins are
+    // only fetched for the owner; for a non-owner this resolves to an empty
+    // list so nothing is double-counted.
+    const adminsForOwner =
+      this.designation === 'OWNER'
+        ? this.ownerService
+            .getAdmins()
+            .pipe(catchError(() => of({ totalAdmins: 0, admins: [] } as any)))
+        : of({ totalAdmins: 0, admins: [] } as any);
+
     forkJoin({
       employees: this.adminService
         .getEmployees()
         .pipe(catchError(() => of({ totalEmployees: 0, employees: [] }))),
+      admins: adminsForOwner,
       pending: this.adminService
         .getPendingEmployees()
         .pipe(catchError(() => of({ totalEmployees: 0, employees: [] }))),
@@ -104,7 +119,9 @@ export class OverviewComponent implements OnInit {
         .getAuditLogs(1, 15)
         .pipe(catchError(() => of({ logs: [] } as any))),
     }).subscribe((res) => {
-      this.activeEmployees.set(res.employees.totalEmployees || 0);
+      this.activeEmployees.set(
+        (res.employees.totalEmployees || 0) + (res.admins.totalAdmins || 0),
+      );
       this.pendingApprovals.set(
         (res.pending.totalEmployees || 0) + (res.pendingChanges.total || 0),
       );
