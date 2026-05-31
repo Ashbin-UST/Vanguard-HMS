@@ -12,6 +12,7 @@ const patientRoutes = require("./routes/patientRoutes");
 const appointmentRoutes = require("./routes/appointmentRoutes");
 const employeeRoutes = require("./routes/employeeRoutes");
 const nodeRoutes = require("./routes/nodeRoutes");
+const mongoose = require("mongoose");
 
 const app = express();
 
@@ -31,6 +32,14 @@ app.use(morgan("dev"));
 
 // Read JSON data sent from frontend/Postman
 app.use(express.json());
+
+app.get("/api/db-status", (req, res) => {
+  res.json({
+    readyState: mongoose.connection.readyState,
+    host: mongoose.connection.host,
+    dbName: mongoose.connection.name,
+  });
+});
 
 // Routes
 app.use("/api/auth", authRoutes);
