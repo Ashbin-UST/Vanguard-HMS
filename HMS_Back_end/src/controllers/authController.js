@@ -478,7 +478,7 @@ exports.selfRegister = async (req, res) => {
                         </p>
 
                         <p>
-                            <a href="http://localhost:4200/dashboard">
+                            <a href="${process.env.FRONTEND_URL || "http://localhost:4200"}/login">
                                 Open Admin Dashboard
                             </a>
                         </p>

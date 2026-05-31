@@ -83,7 +83,7 @@ exports.createPatient = async (req, res) => {
                   </p>
 
                   <p>
-                    <a href="http://localhost:4200">
+                    <a href="${process.env.FRONTEND_URL || "http://localhost:4200"}/login">
                       Patient Login
                     </a>
                   </p>

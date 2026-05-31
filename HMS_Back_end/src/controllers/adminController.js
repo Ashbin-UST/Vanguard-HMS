@@ -99,7 +99,7 @@ exports.createEmployee = async (req, res) => {
           </p>
 
           <p>
-            <a href="http://localhost:4200">
+            <a href="${process.env.FRONTEND_URL || "http://localhost:4200"}/login">
               Login to HMS
             </a>
           </p>
@@ -269,7 +269,7 @@ exports.approveEmployee = async (req, res) => {
           </p>
 
           <p>
-            <a href="http://localhost:4200">
+            <a href="${process.env.FRONTEND_URL || "http://localhost:4200"}/login">
               Login to HMS
             </a>
           </p>

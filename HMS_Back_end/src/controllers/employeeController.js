@@ -232,7 +232,7 @@ exports.profileUpdate = async (req, res) => {
                             Please review the request from the admin dashboard.
                         </p>
                         <p>
-                            <a href="http://localhost:4200/dashboard">
+                            <a href="${process.env.FRONTEND_URL || "http://localhost:4200"}/login">
                                 Open Admin Dashboard
                             </a>
                         </p>
