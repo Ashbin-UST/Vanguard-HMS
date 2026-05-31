@@ -87,11 +87,13 @@ exports.login = async (req, res) => {
         });
     }
     catch (err) {
-        console.log("Login error: ", err);
-        res.status(500).json({
-            message: "Server error during login"
-        });
-    }
+    console.error("Login error:", err);
+
+    res.status(500).json({
+        message: err.message,
+        name: err.name
+    });
+}
 }
 
 // Change password
