@@ -82,7 +82,7 @@ const createAdmin = async (req, res) => {
 
                 <p> Please login using the link below and change your password immediately. </p>
 
-                <p> <a href="http://localhost:4200"> Login to HMS </a> </p>
+                <p> <a href="${process.env.FRONTEND_URL || "http://localhost:4200"}/login"> Login to HMS </a> </p>
 
                 <p> Regards, <br /> HMS Team </p>
             `,
