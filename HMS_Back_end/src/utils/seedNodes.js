@@ -100,7 +100,6 @@ const seedNodes = async () => {
     } finally {
         await mongoose.disconnect();
         console.log("MongoDB disconnected");
-        process.exit(0);
     }
 };
 
