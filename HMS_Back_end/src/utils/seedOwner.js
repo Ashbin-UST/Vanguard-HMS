@@ -40,36 +40,36 @@ const seedOwner = async () => {
 
     const counterExists = await Counter.findOne({ name: "employees" });
 
-    if (!counterExists) {
+    if (counterExists) {
+      console.log("Skipped counter");
+    } else {
       await Counter.create({
         name: "employees",
         seq: 1,
       });
       console.log("Created counter");
-    } else {
-      console.log("Skipped counter");
     }
 
     const employeeExists = await Employee.findOne({
       employeeCode: OWNER_EMPLOYEE.employeeCode,
     });
 
-    if (!employeeExists) {
+    if (employeeExists) {
+      console.log("Skipped owner employee");
+    } else {
       await Employee.create(OWNER_EMPLOYEE);
       console.log("Created owner employee");
-    } else {
-      console.log("Skipped owner employee");
     }
 
     const userExists = await User.findOne({
       username: OWNER_USER.username,
     });
 
-    if (!userExists) {
+    if (userExists) {
+      console.log("Skipped owner user");
+    } else {
       await User.create(OWNER_USER);
       console.log("Created owner user");
-    } else {
-      console.log("Skipped owner user");
     }
 
     console.log("Seeding complete");

@@ -156,7 +156,7 @@ exports.searchPatients = async (req, res) => {
         }
 
         // Escape regex special characters for safe matching
-        const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+        const escaped = query.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
         const regex = new RegExp(escaped, "i");
 
         const patients = await Patient.find({

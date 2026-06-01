@@ -72,8 +72,7 @@ const DAY_MAP: Record<number, WeekDay> = {
   styleUrl: './appointment-book.css',
 })
 export class AppointmentBookComponent
-  implements OnInit, CanComponentDeactivate
-{
+  implements OnInit, CanComponentDeactivate {
   private readonly fb = inject(FormBuilder);
   private readonly patientService = inject(PatientService);
   private readonly employeeService = inject(EmployeeService);
@@ -93,7 +92,7 @@ export class AppointmentBookComponent
   // Rejects an appointment date earlier than the selected doctor's joining
   // date. Bound as an arrow fn so it can read doctorJoinIso(). Error:
   // { beforeJoining: true }
-  private beforeJoiningValidator = (control: AbstractControl): ValidationErrors | null => {
+  private readonly beforeJoiningValidator = (control: AbstractControl): ValidationErrors | null => {
     const value = control.value;
     const joinIso = this.doctorJoinIso();
     if (!value || !joinIso) {
@@ -110,7 +109,7 @@ export class AppointmentBookComponent
   // Date-picker minimum: today, raised to the doctor's joining date when later.
   minDate = signal(this.todayIso);
   // The selected doctor's joining date as yyyy-mm-dd (null if none/unset).
-  private doctorJoinIso = signal<string | null>(null);
+  private readonly doctorJoinIso = signal<string | null>(null);
   // Friendly joining date for the error message (e.g. "Jun 25, 2026").
   doctorJoinDisplay = signal('');
 
@@ -128,7 +127,7 @@ export class AppointmentBookComponent
   patientOptions = signal<any[]>([]);
   doctorOptions = signal<any[]>([]);
 
-  private patientSearch$ = new Subject<string>();
+  private readonly patientSearch$ = new Subject<string>();
 
   ngOnInit(): void {
     // Pre-load top doctors and a small patient page so the dropdowns aren't
@@ -218,13 +217,10 @@ export class AppointmentBookComponent
     const doctor = this.doctors().find((d) => d.employeeCode === doctorId);
     const joiningRaw = doctor?.joiningDate;
 
-    if (!joiningRaw) {
-      this.doctorJoinIso.set(null);
-      this.doctorJoinDisplay.set('');
-      this.minDate.set(this.todayIso);
-    } else {
+    if (joiningRaw) {
       const joinDate = new Date(joiningRaw);
       const joinIso = this.toIso(joinDate);
+
       this.doctorJoinIso.set(joinIso);
       this.doctorJoinDisplay.set(
         joinDate.toLocaleDateString('en-US', {
@@ -233,8 +229,21 @@ export class AppointmentBookComponent
           day: 'numeric',
         }),
       );
-      // The picker minimum is the later of today and the joining date.
-      this.minDate.set(joinIso > this.todayIso ? joinIso : this.todayIso);
+
+      this.minDate.set(
+        this.toIso(
+          new Date(
+            Math.max(
+              new Date(joinIso).getTime(),
+              new Date(this.todayIso).getTime(),
+            ),
+          ),
+        ),
+      );
+    } else {
+      this.doctorJoinIso.set(null);
+      this.doctorJoinDisplay.set('');
+      this.minDate.set(this.todayIso);
     }
 
     // Re-validate the date against the new doctor's joining date.

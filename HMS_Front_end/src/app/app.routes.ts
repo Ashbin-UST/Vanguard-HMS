@@ -1,4 +1,4 @@
-import { Routes } from '@angular/router';
+import { Routes, CanActivateFn, Router } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { designationGuard } from './core/guards/role.guard';
 import { mustChangePasswordGuard } from './core/guards/must-change-password.guard';
@@ -204,7 +204,6 @@ export const routes: Routes = [
 
 // --- Local OWNER-only guard (defined here to keep all routing in one file) ---
 import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from './core/services/auth.service';
 
 function ownerOnlyGuard(): CanActivateFn {
