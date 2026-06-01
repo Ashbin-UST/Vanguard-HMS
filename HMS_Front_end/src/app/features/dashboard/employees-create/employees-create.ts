@@ -17,8 +17,10 @@ import { FormDraftService } from '../../../core/services/form-draft.service';
 import { CanComponentDeactivate } from '../../../core/guards/unsaved-changes.guard';
 import {
   Designation,
+  Department,
   STAFF_DESIGNATIONS,
   DEPARTMENTS,
+  DEPARTMENT_DESIGNATIONS,
   WEEK_DAYS,
   MEDICAL_DESIGNATIONS,
   SPECIALIZATION_DESIGNATIONS,
@@ -69,6 +71,7 @@ export class CreateEmployeeComponent
   departments = DEPARTMENTS;
   weekDays = WEEK_DAYS;
   designations: Designation[] = [...STAFF_DESIGNATIONS];
+  isOwner = false;
   isDoctor = false;
   showMedical = false;
   showSpecialization = false;
@@ -102,15 +105,12 @@ export class CreateEmployeeComponent
     this.mode =
       (this.route.snapshot.data['mode'] as 'staff' | 'admin') || 'staff';
 
+    this.isOwner = this.authService.getDesignation() === 'OWNER';
+
     if (this.mode === 'admin') {
       // For admin creation, designation is fixed.
       this.designations = ['ADMIN'];
       this.form.patchValue({ designation: 'ADMIN', department: 'Administration' });
-    } else if (this.authService.getDesignation() === 'OWNER') {
-      // In the normal employee form, the owner may also create an ADMIN.
-      // Selecting ADMIN routes the submit to the create-admin endpoint
-      // (the create-employee endpoint rejects ADMIN/OWNER designations).
-      this.designations = [...STAFF_DESIGNATIONS, 'ADMIN'];
     }
 
     // Restore draft
@@ -121,6 +121,11 @@ export class CreateEmployeeComponent
         : [];
       slots.forEach(() => this.addSlot());
       this.form.patchValue(draft);
+      // Rebuild the designation list for the restored department, then refresh
+      // the conditional (medical/fee) fields for the restored designation.
+      if (this.mode !== 'admin') {
+        this.refreshDesignationsForDepartment(false);
+      }
       this.onDesignationChange();
     }
 
@@ -148,17 +153,60 @@ export class CreateEmployeeComponent
     this.availabilitySlots.removeAt(i);
   }
 
+  // Called when the Department dropdown changes. Narrows the Designation list
+  // to the ones valid for that department and auto-fills a sensible default.
+  onDepartmentChange(): void {
+    this.refreshDesignationsForDepartment(true);
+    this.onDesignationChange();
+  }
+
+  /**
+   * Rebuilds the Designation options for the currently selected department.
+   *
+   * - Administration's ADMIN option is only offered when an OWNER is creating
+   *   (admins can't create admins).
+   * - When `autoFill` is true, the designation is set to the first valid option
+   *   if the current value isn't valid for the chosen department. The control
+   *   stays editable; for clinical departments (OPD/IPD) the user can still
+   *   switch between Doctor and Nurse.
+   */
+  private refreshDesignationsForDepartment(autoFill: boolean): void {
+    const dept = this.form.get('department')?.value as Department | '';
+
+    if (!dept) {
+      this.designations = [...STAFF_DESIGNATIONS];
+      return;
+    }
+
+    let allowed: Designation[] = [
+      ...(DEPARTMENT_DESIGNATIONS[dept] || STAFF_DESIGNATIONS),
+    ];
+
+    // Only an owner may create an ADMIN; drop it otherwise.
+    if (!this.isOwner) {
+      allowed = allowed.filter((d) => d !== 'ADMIN');
+    }
+
+    // Fallback so the dropdown is never empty (e.g. admin picks Administration).
+    if (allowed.length === 0) {
+      allowed = [...STAFF_DESIGNATIONS];
+    }
+
+    this.designations = allowed;
+
+    if (autoFill) {
+      const current = this.form.get('designation')?.value as Designation;
+      if (!current || !allowed.includes(current)) {
+        this.form.patchValue({ designation: allowed[0] });
+      }
+    }
+  }
+
   onDesignationChange(): void {
     const d = this.form.get('designation')?.value as Designation;
     this.isDoctor = d === 'DOCTOR';
     this.showMedical = MEDICAL_DESIGNATIONS.includes(d);
     this.showSpecialization = SPECIALIZATION_DESIGNATIONS.includes(d);
-
-    // When the owner picks ADMIN in the staff form, admins always belong to
-    // the Administration department — set it automatically.
-    if (d === 'ADMIN') {
-      this.form.patchValue({ department: 'Administration' });
-    }
 
     const med = this.form.get('medicalRegistrationNumber');
     const spec = this.form.get('specialization');

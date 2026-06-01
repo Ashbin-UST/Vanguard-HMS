@@ -600,7 +600,7 @@ exports.approveProfileChange = async (req, res) => {
       });
     }
 
-    if (request.status !== "PENDING") {
+    if (String(request.status) !== "PENDING") {
       return res.status(400).json({
         message: "This request has already been reviewed",
       });

@@ -12,7 +12,7 @@
         />
         <select
           class="form-select toolbar-filter"
-          aria-label="toolbar-filter"
+          aria-label="Filter by designation"
           [value]="designationFilter() || 'ALL'"
           (change)="onFilter($any($event.target).value)"
         >
@@ -65,7 +65,7 @@
                   @if (item.lastLoginAt) {
                     {{ item.lastLoginAt | date: 'short' }}
                   } @else {
-                    <span class="muted">Never</span>
+                    <span class="muted">N/A</span>
                   }
                 </td>
               </tr>
