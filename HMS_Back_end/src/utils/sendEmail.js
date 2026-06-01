@@ -7,6 +7,14 @@ const sendEmail = async ({ to, subject, html }) => {
         rejectUnauthorized: false
     });
 
+    // Support both:
+    // to: "user@gmail.com"
+    // to: ["user1@gmail.com", "user2@gmail.com"]
+
+    const recipients = Array.isArray(to)
+        ? to.map((email) => ({ email }))
+        : [{ email: to }];
+
     await axios.post(
         "https://api.brevo.com/v3/smtp/email",
 
@@ -15,11 +23,7 @@ const sendEmail = async ({ to, subject, html }) => {
                 email: process.env.EMAIL_USER,
             },
 
-            to: [
-                {
-                    email: to,
-                },
-            ],
+            to: recipients,
 
             subject,
 

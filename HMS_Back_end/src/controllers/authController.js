@@ -87,13 +87,13 @@ exports.login = async (req, res) => {
         });
     }
     catch (err) {
-    console.error("Login error:", err);
+        console.error("Login error:", err);
 
-    res.status(500).json({
-        message: err.message,
-        name: err.name
-    });
-}
+        res.status(500).json({
+            message: err.message,
+            name: err.name
+        });
+    }
 }
 
 // Change password
@@ -281,20 +281,20 @@ exports.resetPassword = async (req, res) => {
             }
         });
 
-        if (!user){
+        if (!user) {
             return res.status(400).json({
                 message: "Invalid or expired token"
             });
         }
 
-        if (String(user.status) !== "ACTIVE"){
+        if (String(user.status) !== "ACTIVE") {
             return res.status(400).json({
                 message: "Invalid or expired token"
             })
         }
 
         const isSamePassword = Boolean(await bcrypt.compare(newPassword, user.passwordHash));
-        if (isSamePassword){
+        if (isSamePassword) {
             return res.status(400).json({
                 message: "New password cannot be the same as current password"
             });
@@ -432,12 +432,18 @@ exports.selfRegister = async (req, res) => {
         try {
             // Find all active admin users
             const admins = await User.find({
-                roles: "ADMIN",
+                roles: {
+                    $in: ["ADMIN", "OWNER"]
+                },
                 status: "ACTIVE"
             });
 
+            console.log("Admins found:", admins);
+
             // Extract admin emails
             const adminEmails = admins.map((admin) => admin.email);
+
+            console.log("Admin emails:", adminEmails);
 
             // Send email to all admins
             if (adminEmails.length) {
@@ -491,6 +497,8 @@ exports.selfRegister = async (req, res) => {
                     `
                 });
             }
+            console.log("Admin notification email sent");
+            
         } catch (emailError) {
             console.error("Admin notification email error:", emailError);
         }

@@ -12,6 +12,7 @@ const updateEmployeeData = require("../utils/updateEmployeeData");
 const validateUniqueEmployeeFields = require("../utils/validateUniqueEmployeeFields");
 const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
+const deleteEmployeeAccount = require("../utils/deleteEmployeeAccount");
 
 const restrictedDesignations = new Set(["OWNER", "ADMIN"]);
 
@@ -313,17 +314,15 @@ exports.approveEmployee = async (req, res) => {
 // Reject pending employee request
 exports.rejectEmployee = async (req, res) => {
   try {
-    // Get employeecode
     const employeeCode = req.params.employeeCode;
 
-    // Find user in db
     const user = await User.findOne({
       employeeCode,
     });
 
     if (!user) {
       return res.status(404).json({
-        message: "User not found!!",
+        message: "User not found",
       });
     }
 
@@ -334,29 +333,24 @@ exports.rejectEmployee = async (req, res) => {
       });
     }
 
-    //Ensure current status as pending
+    // Ensure current status is pending
     if (String(user.status) !== "PENDING") {
       return res.status(400).json({
         message: "Account status is not pending",
       });
     }
 
-    user.status = "REJECTED";
-
-    await user.save();
-
-    // Send email AFTER rejection
+    // Send rejection email BEFORE deletion
     try {
       await sendEmail({
         to: user.email,
-
         subject: "HMS Employee Account Registration Rejected",
-
         html: `
           <h2>HMS Registration Request Rejected</h2>
 
           <p>
-            Your registration has been rejected. Please contact the administrator/support team for more details.
+            Your registration has been rejected.
+            Please contact the administrator/support team for more details.
           </p>
 
           <p>
@@ -372,23 +366,24 @@ exports.rejectEmployee = async (req, res) => {
 
     // Record audit
     const actor = await resolveActor(req.user);
+
     await recordAudit({
       actor,
       action: "EMPLOYEE_REJECTED",
       targetType: "EMPLOYEE",
-      targetId: user.employeeCode,
-      message: `Employee registration ${user.employeeCode} (${user.username}) was rejected`
+      targetId: employeeCode,
+      message: `Employee registration ${employeeCode} (${user.username}) was rejected`,
     });
 
-    res.status(200).json({
+    // DELETE USER + EMPLOYEE
+    await deleteEmployeeAccount(employeeCode);
+
+    return res.status(200).json({
       message: "Employee registration request rejected successfully",
-      user: {
-        username: user.username,
-        email: user.email,
-      },
     });
   } catch (err) {
-    console.error("Error during rejection: ", err);
+    console.error("Error during rejection:", err);
+
     return res.status(500).json({
       message: "Server error during rejection",
     });
@@ -452,7 +447,6 @@ exports.updateEmployee = async (req, res) => {
 
 // Delete employee
 exports.deleteEmployee = async (req, res) => {
-  const session = await mongoose.startSession();
 
   try {
     const employeeCode = req.params.employeeCode;
@@ -475,26 +469,6 @@ exports.deleteEmployee = async (req, res) => {
       });
     }
 
-    // Delete employee
-    await Employee.deleteOne(
-      {
-        employeeCode,
-      },
-      {
-        session,
-      },
-    );
-
-    // Delete user
-    await User.deleteOne(
-      {
-        employeeCode,
-      },
-      {
-        session,
-      },
-    );
-
     // Record audit
     const actor = await resolveActor(req.user);
     await recordAudit({
@@ -504,6 +478,9 @@ exports.deleteEmployee = async (req, res) => {
       targetId: employeeCode,
       message: `Employee ${employee.name} (${employeeCode}) was deleted`
     });
+
+    // DELETE USER + EMPLOYEE
+    await deleteEmployeeAccount(employeeCode);
 
     return res.status(200).json({
       message: "Employee deleted successfully",
