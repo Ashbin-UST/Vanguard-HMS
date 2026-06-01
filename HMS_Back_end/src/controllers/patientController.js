@@ -131,9 +131,9 @@ exports.createPatient = async (req, res) => {
 exports.getPatients = async (req, res) => {
 
     try {
-        const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+        const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
         const limit = Math.min(
-            Math.max(parseInt(req.query.limit, 10) || 10, 1),
+            Math.max(Number.parseInt(req.query.limit, 10) || 10, 1),
             100
         );
         const skip = (page - 1) * limit;
@@ -190,7 +190,7 @@ exports.searchPatients = async (req, res) => {
         }
 
         // Escape regex special characters for safe matching
-        const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
         const regex = new RegExp(escaped, "i");
 
         const patients = await Patient.find({

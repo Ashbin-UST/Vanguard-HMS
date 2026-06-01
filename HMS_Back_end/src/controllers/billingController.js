@@ -59,7 +59,7 @@ exports.getAllBills = async (req, res) => {
             .populate('patientId', 'name email UHID')
             .populate('appointmentId', 'appointmentDate doctorEmployeeId')
             .skip(skip)
-            .limit(parseInt(limit))
+            .limit(Number.parseInt(limit))
             .sort({ createdAt: -1 });
 
         const total = await Bill.countDocuments(filter);
@@ -67,8 +67,8 @@ exports.getAllBills = async (req, res) => {
         res.status(200).json({
             message: "Bills retrieved successfully",
             total,
-            page: parseInt(page),
-            limit: parseInt(limit),
+            page: Number.parseInt(page),
+            limit: Number.parseInt(limit),
             bills
         });
     } catch (err) {
@@ -169,7 +169,7 @@ exports.getPatientBills = async (req, res) => {
 
         const bills = await Bill.find({ patientId })
             .skip(skip)
-            .limit(parseInt(limit))
+            .limit(Number.parseInt(limit))
             .sort({ createdAt: -1 });
 
         const total = await Bill.countDocuments({ patientId });
@@ -177,8 +177,8 @@ exports.getPatientBills = async (req, res) => {
         res.status(200).json({
             message: "Patient bills retrieved successfully",
             total,
-            page: parseInt(page),
-            limit: parseInt(limit),
+            page: Number.parseInt(page),
+            limit: Number.parseInt(limit),
             bills
         });
     } catch (err) {
@@ -250,7 +250,7 @@ exports.getAllPayments = async (req, res) => {
         const payments = await Payment.find(filter)
             .populate('billId', 'billId total')
             .skip(skip)
-            .limit(parseInt(limit))
+            .limit(Number.parseInt(limit))
             .sort({ paidAt: -1 });
 
         const total = await Payment.countDocuments(filter);
@@ -258,8 +258,8 @@ exports.getAllPayments = async (req, res) => {
         res.status(200).json({
             message: "Payments retrieved successfully",
             total,
-            page: parseInt(page),
-            limit: parseInt(limit),
+            page: Number.parseInt(page),
+            limit: Number.parseInt(limit),
             payments
         });
     } catch (err) {

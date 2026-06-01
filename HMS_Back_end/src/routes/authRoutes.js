@@ -31,6 +31,19 @@ const medicalFields = new Set(["DOCTOR", "NURSE", "LAB_TECH", "PHARMACIST"]);
 
 const specializationFields = new Set(["DOCTOR", "LAB_TECH"]);
 
+// Valid staff designations for each department. Must stay in sync with the
+// frontend DEPARTMENT_DESIGNATIONS map. Self-registration never allows
+// ADMIN/OWNER, so Administration has no self-registerable designation.
+const departmentDesignations = {
+  OPD: ["DOCTOR", "NURSE"],
+  IPD: ["DOCTOR", "NURSE"],
+  Lab: ["LAB_TECH"],
+  Pharmacy: ["PHARMACIST"],
+  Reception: ["RECEPTIONIST"],
+  Billing: ["CASHIER"],
+  Administration: [],
+};
+
 const selfRegisterValidation = [
   body("username").notEmpty().withMessage("Username is required"),
 
@@ -62,7 +75,19 @@ const selfRegisterValidation = [
 
   body("designation")
     .isIn([...allowedDesignationTypes])
-    .withMessage("Valid designation is required"),
+    .withMessage("Valid designation is required")
+    .bail()
+    .custom((designation, { req }) => {
+      const dept = req.body.department;
+      const valid = departmentDesignations[dept];
+      // If the department is unknown, the department validator already failed.
+      if (valid && !valid.includes(designation)) {
+        throw new Error(
+          `Designation ${designation} is not valid for the ${dept} department`,
+        );
+      }
+      return true;
+    }),
 
   body("joiningDate")
     .isISO8601()

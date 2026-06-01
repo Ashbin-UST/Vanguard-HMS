@@ -3,7 +3,7 @@ require("dotenv").config();
 const app = require("../app");
 const connectDB = require("../config/db");
 
-module.exports = async (req, res) => {
+async function handler(req, res) {
   try {
     await connectDB();
     return app(req, res);
@@ -14,4 +14,6 @@ module.exports = async (req, res) => {
       message: "Database connection failed"
     });
   }
-};
+}
+
+module.exports = handler;
