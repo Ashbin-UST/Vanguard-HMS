@@ -1,13 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const { body, param } = require("express-validator");
+const { body } = require("express-validator");
 const validate = require("../middlewares/validate");
 const auth = require("../middlewares/authMiddleware");
-const authorizeRoles = require("../middlewares/authorizeRolesMiddleware");
-const controller = require("../controllers/adminController");
+const controller = require("../controllers/authController");
 
-// All routes require authentication and admin authorization
-router.use(auth, authorizeRoles("OWNER", "ADMIN"));
+// Phone: optional country code (+ 1 to 3 digits) followed by exactly 10 digits
+const PHONE_REGEX = /^(\+\d{1,3} )?\d{10}$/;
 
 const allowedDesignationTypes = new Set([
   "DOCTOR",
@@ -32,18 +31,43 @@ const medicalFields = new Set(["DOCTOR", "NURSE", "LAB_TECH", "PHARMACIST"]);
 
 const specializationFields = new Set(["DOCTOR", "LAB_TECH"]);
 
-const employeeCreationValidation = [
+// Valid staff designations for each department. Must stay in sync with the
+// frontend DEPARTMENT_DESIGNATIONS map. Self-registration never allows
+// ADMIN/OWNER, so Administration has no self-registerable designation.
+const departmentDesignations = {
+  OPD: ["DOCTOR", "NURSE"],
+  IPD: ["DOCTOR", "NURSE"],
+  Lab: ["LAB_TECH"],
+  Pharmacy: ["PHARMACIST"],
+  Reception: ["RECEPTIONIST"],
+  Billing: ["CASHIER"],
+  Administration: [],
+};
+
+const selfRegisterValidation = [
   body("username").notEmpty().withMessage("Username is required"),
 
   body("name").notEmpty().withMessage("Name is required"),
 
   body("phone")
-    .matches(/^(\+\d{1,3} )?\d{10}$/)
+    .matches(PHONE_REGEX)
     .withMessage(
       "Phone must be 10 digits, optionally prefixed with a country code and a space (e.g. +91 1234567890 or 1234567890)",
     ),
 
   body("email").isEmail().withMessage("Valid email is required"),
+
+  body("password")
+    .isLength({ min: 8 })
+    .withMessage("Password must be at least 8 characters long")
+    .matches(/[A-Z]/)
+    .withMessage("Password must contain at least one uppercase letter")
+    .matches(/[a-z]/)
+    .withMessage("Password must contain at least one lowercase letter")
+    .matches(/\d/)
+    .withMessage("Password must contain at least one number")
+    .matches(/[^A-Za-z0-9]/)
+    .withMessage("Password must contain at least one special character"),
 
   body("department")
     .isIn([...allowedDepartmentTypes])
@@ -51,9 +75,24 @@ const employeeCreationValidation = [
 
   body("designation")
     .isIn([...allowedDesignationTypes])
-    .withMessage("Valid designation is required"),
+    .withMessage("Valid designation is required")
+    .bail()
+    .custom((designation, { req }) => {
+      const dept = req.body.department;
+      const valid = departmentDesignations[dept];
+      // If the department is unknown, the department validator already failed.
+      if (valid && !valid.includes(designation)) {
+        throw new Error(
+          `Designation ${designation} is not valid for the ${dept} department`,
+        );
+      }
+      return true;
+    }),
 
-  body("joiningDate").notEmpty().withMessage("Joining date is required"),
+  body("joiningDate")
+    .isISO8601()
+    .toDate()
+    .withMessage("Valid joining date is required"),
 
   body("qualification")
     .isArray({ min: 1 })
@@ -95,71 +134,107 @@ const employeeCreationValidation = [
     }),
 ];
 
-const employeeCodeValidation = [
-  param("employeeCode").notEmpty().withMessage("Employee Code is required"),
+const loginValidation = [
+  body("email").isEmail().withMessage("Valid email is required"),
+
+  body("password").notEmpty().withMessage("Password is required"),
 ];
+
+const changePasswordValidation = [
+  body("currentPassword")
+    .notEmpty()
+    .withMessage("Current password is required"),
+
+  body("newPassword")
+    .isLength({ min: 8 })
+    .withMessage("Password must be at least 8 characters long")
+    .matches(/[A-Z]/)
+    .withMessage("Password must contain at least one uppercase letter")
+    .matches(/[a-z]/)
+    .withMessage("Password must contain at least one lowercase letter")
+    .matches(/\d/)
+    .withMessage("Password must contain at least one number")
+    .matches(/[^A-Za-z0-9]/)
+    .withMessage("Password must contain at least one special character"),
+
+  body("confirmPassword")
+    .notEmpty()
+    .withMessage("Confirm password is required"),
+
+  body("confirmPassword").custom((value, { req }) => {
+    if (value !== req.body.newPassword) {
+      throw new Error("Passwords do not match");
+    }
+
+    return true;
+  }),
+];
+
+const forgotPasswordValidation = [
+  body("email").isEmail().withMessage("Valid email is required"),
+];
+
+const resetPasswordValidation = [
+  body("resetToken").notEmpty().withMessage("Reset token is required"),
+
+  body("newPassword")
+    .isLength({ min: 8 })
+    .withMessage("Password must be at least 8 characters long")
+    .matches(/[A-Z]/)
+    .withMessage("Password must contain at least one uppercase letter")
+    .matches(/[a-z]/)
+    .withMessage("Password must contain at least one lowercase letter")
+    .matches(/\d/)
+    .withMessage("Password must contain at least one number")
+    .matches(/[^A-Za-z0-9]/)
+    .withMessage("Password must contain at least one special character"),
+
+  body("confirmPassword")
+    .notEmpty()
+    .withMessage("Confirm password is required"),
+
+  body("confirmPassword").custom((value, { req }) => {
+    if (value !== req.body.newPassword) {
+      throw new Error("Passwords do not match");
+    }
+
+    return true;
+  }),
+];
+
+router.post("/login", loginValidation, validate, controller.login);
 
 router.post(
-  "/create-employee",
-  employeeCreationValidation,
+  "/self-register",
+  selfRegisterValidation,
   validate,
-  controller.createEmployee,
-);
-
-router.get("/employees", controller.getEmployees);
-
-router.get("/pending-employees", controller.getPendingEmployees);
-
-router.put(
-  "/approve-employee/:employeeCode",
-  employeeCodeValidation,
-  validate,
-  controller.approveEmployee,
+  controller.selfRegister,
 );
 
 router.put(
-  "/reject-employee/:employeeCode",
-  employeeCodeValidation,
+  "/change-password",
+  auth,
+  changePasswordValidation,
   validate,
-  controller.rejectEmployee,
+  controller.changePassword,
 );
 
-router.put(
-  "/update-employee/:employeeCode",
-  employeeCodeValidation,
+router.post(
+  "/forgot-password",
+  forgotPasswordValidation,
   validate,
-  controller.updateEmployee,
+  controller.forgotPassword,
 );
 
-router.delete(
-  "/delete-employee/:employeeCode",
-  employeeCodeValidation,
+router.post(
+  "/reset-password",
+  resetPasswordValidation,
   validate,
-  controller.deleteEmployee,
+  controller.resetPassword,
 );
 
-// Audit logs (recent activity)
-router.get("/audit-logs", controller.getAuditLogs);
+router.post("/logout", auth, controller.logout);
 
-// Profile change requests
-router.get("/profile-change-requests", controller.getProfileChangeRequests);
-
-const requestIdValidation = [
-  param("requestId").notEmpty().withMessage("Request ID is required"),
-];
-
-router.put(
-  "/approve-profile-change/:requestId",
-  requestIdValidation,
-  validate,
-  controller.approveProfileChange,
-);
-
-router.put(
-  "/reject-profile-change/:requestId",
-  requestIdValidation,
-  validate,
-  controller.rejectProfileChange,
-);
+router.get("/me", auth, controller.me);
 
 module.exports = router;

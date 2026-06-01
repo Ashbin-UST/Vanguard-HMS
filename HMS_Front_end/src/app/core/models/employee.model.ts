@@ -123,3 +123,25 @@ export const SPECIALIZATION_DESIGNATIONS: Designation[] = [
   'DOCTOR',
   'LAB_TECH',
 ];
+
+/**
+ * Which staff designations are valid for each department.
+ *
+ * - Single-designation departments (Reception, Lab, Pharmacy, Billing) map to
+ *   exactly one designation, which the create/register forms auto-fill.
+ * - Clinical departments (OPD, IPD) allow DOCTOR or NURSE — the form narrows
+ *   the dropdown to these and lets the user pick.
+ * - Administration maps to ADMIN, but only an OWNER may actually create an
+ *   admin; the forms handle that conditionally.
+ *
+ * OWNER is never a selectable designation here.
+ */
+export const DEPARTMENT_DESIGNATIONS: Record<Department, Designation[]> = {
+  Reception: ['RECEPTIONIST'],
+  Lab: ['LAB_TECH'],
+  Pharmacy: ['PHARMACIST'],
+  Billing: ['CASHIER'],
+  Administration: ['ADMIN'],
+  OPD: ['DOCTOR', 'NURSE'],
+  IPD: ['DOCTOR', 'NURSE'],
+};

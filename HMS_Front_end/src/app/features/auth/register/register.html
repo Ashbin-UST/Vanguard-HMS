@@ -54,7 +54,7 @@
           <!-- Department -->
           <div class="form-group">
             <label class="form-label" for="register-department-5">Department *</label>
-            <select id="register-department-5" formControlName="department" class="form-select">
+            <select id="register-department-5" formControlName="department" (change)="onDepartmentChange()" class="form-select">
               <option value="">Select Department</option>
               @for (dept of departments; track dept) {
               <option [value]="dept">{{ dept }}</option>

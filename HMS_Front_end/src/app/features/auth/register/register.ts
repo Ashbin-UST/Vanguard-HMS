@@ -14,10 +14,12 @@ import { FormDraftService } from '../../../core/services/form-draft.service';
 import {
   STAFF_DESIGNATIONS,
   DEPARTMENTS,
+  DEPARTMENT_DESIGNATIONS,
   WEEK_DAYS,
   MEDICAL_DESIGNATIONS,
   SPECIALIZATION_DESIGNATIONS,
   Designation,
+  Department,
 } from '../../../core/models/employee.model';
 import { CanComponentDeactivate } from '../../../core/guards/unsaved-changes.guard';
 import {
@@ -52,7 +54,7 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
   // Gates password validation messages until the submit button is clicked.
   attempted = false;
 
-  designations = STAFF_DESIGNATIONS;
+  designations: Designation[] = [...STAFF_DESIGNATIONS];
   departments = DEPARTMENTS;
   weekDays = WEEK_DAYS;
 
@@ -92,6 +94,9 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
         : [];
       slots.forEach(() => this.addSlot());
       this.registerForm.patchValue(draft);
+      // Rebuild the designation list for the restored department, then refresh
+      // the conditional (medical/fee) fields for the restored designation.
+      this.refreshDesignationsForDepartment(false);
       this.onDesignationChange();
     }
 
@@ -122,6 +127,48 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
 
   removeSlot(index: number): void {
     this.availabilitySlots.removeAt(index);
+  }
+
+  // Called when the Department dropdown changes. Narrows the Designation list
+  // to the ones valid for that department and auto-fills a sensible default.
+  onDepartmentChange(): void {
+    this.refreshDesignationsForDepartment(true);
+    this.onDesignationChange();
+  }
+
+  /**
+   * Rebuilds the Designation options for the currently selected department.
+   * Self-registration can never be ADMIN/OWNER, so ADMIN is always excluded
+   * (the Administration department therefore falls back to all staff roles).
+   * When `autoFill` is true and the current designation isn't valid for the
+   * chosen department, it's set to the first valid option (still editable).
+   */
+  private refreshDesignationsForDepartment(autoFill: boolean): void {
+    const dept = this.registerForm.get('department')?.value as Department | '';
+
+    if (!dept) {
+      this.designations = [...STAFF_DESIGNATIONS];
+      return;
+    }
+
+    // Exclude ADMIN — never self-registerable.
+    let allowed: Designation[] = [
+      ...(DEPARTMENT_DESIGNATIONS[dept] || STAFF_DESIGNATIONS),
+    ].filter((d) => d !== 'ADMIN');
+
+    // Fallback so the dropdown is never empty (e.g. Administration).
+    if (allowed.length === 0) {
+      allowed = [...STAFF_DESIGNATIONS];
+    }
+
+    this.designations = allowed;
+
+    if (autoFill) {
+      const current = this.registerForm.get('designation')?.value as Designation;
+      if (!current || !allowed.includes(current)) {
+        this.registerForm.patchValue({ designation: allowed[0] });
+      }
+    }
   }
 
   onDesignationChange(): void {
