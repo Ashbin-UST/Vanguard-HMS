@@ -4,14 +4,14 @@ const { spawn } = require("node:child_process");
 
 const scripts = [
   "src/utils/seedNodes.js",
-  "src/utils/seedOwner.js",
+  "src/utils/seedOwner.js"
 ];
 
 const runScript = (script) =>
   new Promise((resolve, reject) => {
     const child = spawn("node", [script], {
       stdio: "inherit",
-      shell: true,
+      shell: true
     });
 
     child.on("close", (code) => {
@@ -23,8 +23,15 @@ const runScript = (script) =>
     });
   });
 
-for (const script of scripts) {
-  await runScript(script);
-}
+(async () => {
+  try {
+    for (const script of scripts) {
+      await runScript(script);
+    }
 
-console.log("All seeders completed");
+    console.log("All seeders completed");
+  } catch (err) {
+    console.error(err);
+    process.exit(1);
+  }
+})();
