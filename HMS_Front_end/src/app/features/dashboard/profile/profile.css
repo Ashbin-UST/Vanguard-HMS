@@ -77,14 +77,29 @@
 
 .form-actions {
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
   gap: 0.75rem;
   margin-top: 1.25rem;
+}
+
+/* Make each action button span the row when stacked on mobile. */
+.form-actions .btn {
+  width: 100%;
 }
 
 @media (min-width: 768px) {
   .form-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* On wider screens, place the buttons side by side, right-aligned. */
+  .form-actions {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+
+  .form-actions .btn {
+    width: auto;
   }
 }
 

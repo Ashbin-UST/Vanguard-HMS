@@ -180,6 +180,6 @@ export class OverviewComponent implements OnInit {
     return action
       .replaceAll('_', ' ')
       .toLowerCase()
-      .replace(/\b\w/g, (letter) => letter.toUpperCase());
+      .replaceAll(/\b\w/g, (letter) => letter.toUpperCase());
   }
 }

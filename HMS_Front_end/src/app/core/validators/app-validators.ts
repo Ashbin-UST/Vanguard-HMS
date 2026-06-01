@@ -273,7 +273,7 @@ export const nonNegative: ValidatorFn = (
     return null;
   }
   const num = Number(control.value);
-  if (isNaN(num)) {
+  if (Number.isNaN(num)) {
     return { number: true };
   }
   return num < 0 ? { negative: true } : null;
