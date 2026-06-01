@@ -15,7 +15,6 @@ export interface EmergencyContact {
 }
 
 export interface Patient {
-  _id?: string;
   UHID: string;
   name: string;
   phone: string;

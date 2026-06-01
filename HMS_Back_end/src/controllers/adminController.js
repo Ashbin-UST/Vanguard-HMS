@@ -1,10 +1,10 @@
 const bcrypt = require("bcryptjs");
-const mongoose = require("mongoose");
 const User = require("../models/Users");
 const Employee = require("../models/Employees");
 const AuditLog = require("../models/AuditLogs");
 const ProfileChangeRequest = require("../models/ProfileChangeRequests");
 const sendEmail = require("../utils/sendEmail");
+const emailTemplates = require("../utils/emailTemplates");
 const generateTemporaryPassword = require("../utils/generateTemporaryPassword");
 const buildEmployeeData = require("../utils/buildEmployeeData");
 const buildEmployeeResponse = require("../utils/buildEmployeeResponse");
@@ -13,8 +13,7 @@ const validateUniqueEmployeeFields = require("../utils/validateUniqueEmployeeFie
 const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
 const deleteEmployeeAccount = require("../utils/deleteEmployeeAccount");
-
-const restrictedDesignations = new Set(["OWNER", "ADMIN"]);
+const { RESTRICTED_ROLES_SET } = require("../config/constants");
 
 // Employee Account Creation
 exports.createEmployee = async (req, res) => {
@@ -26,7 +25,7 @@ exports.createEmployee = async (req, res) => {
 
   try {
     // Prevent admin from creating ADMIN or OWNER accounts
-    if (restrictedDesignations.has(designation)) {
+    if (RESTRICTED_ROLES_SET.has(designation)) {
       return res.status(403).json({
         message: "Invalid designation. Cannot create admin or owner accounts.",
       });
@@ -75,42 +74,7 @@ exports.createEmployee = async (req, res) => {
     try {
       await sendEmail({
         to: user.email,
-
-        subject: "HMS Employee Account Created",
-
-        html: `
-          <h2>Welcome to HMS</h2>
-
-          <p>
-            Your employee account has been created successfully.
-          </p>
-
-          <p>
-            <strong>Username:</strong>
-            ${username}
-          </p>
-
-          <p>
-            <strong>Temporary Password:</strong>
-            ${temporaryPassword}
-          </p>
-
-          <p>
-            Please login using the link below and change your password immediately.
-          </p>
-
-          <p>
-            <a href="${process.env.FRONTEND_URL || "http://localhost:4200"}/login">
-              Login to HMS
-            </a>
-          </p>
-
-          <p>
-            Regards,
-            <br />
-            HMS Team
-          </p>
-        `,
+        ...emailTemplates.employeeCredentials({ username, temporaryPassword }),
       });
     } catch (emailError) {
       console.error("Email sending error:", emailError);
@@ -236,7 +200,7 @@ exports.approveEmployee = async (req, res) => {
     }
 
     // Ensure role is staff
-    if (user.roles.some((role) => restrictedDesignations.has(role))) {
+    if (user.roles.some((role) => RESTRICTED_ROLES_SET.has(role))) {
       return res.status(403).json({
         message: "Only STAFF accounts can be approved",
       });
@@ -259,28 +223,7 @@ exports.approveEmployee = async (req, res) => {
     try {
       await sendEmail({
         to: user.email,
-
-        subject: "HMS Employee Account Approved",
-
-        html: `
-          <h2>Welcome to HMS</h2>
-
-          <p>
-            Your employee account has been approved. You can login to HMS.
-          </p>
-
-          <p>
-            <a href="${process.env.FRONTEND_URL || "http://localhost:4200"}/login">
-              Login to HMS
-            </a>
-          </p>
-
-          <p>
-            Regards,
-            <br />
-            HMS Team
-          </p>
-        `,
+        ...emailTemplates.accountApproved(),
       });
     } catch (emailError) {
       console.error("Email sending error:", emailError);
@@ -327,7 +270,7 @@ exports.rejectEmployee = async (req, res) => {
     }
 
     // Ensure role is staff
-    if (user.roles.some((role) => restrictedDesignations.has(role))) {
+    if (user.roles.some((role) => RESTRICTED_ROLES_SET.has(role))) {
       return res.status(403).json({
         message: "Only STAFF accounts can be rejected",
       });
@@ -344,21 +287,7 @@ exports.rejectEmployee = async (req, res) => {
     try {
       await sendEmail({
         to: user.email,
-        subject: "HMS Employee Account Registration Rejected",
-        html: `
-          <h2>HMS Registration Request Rejected</h2>
-
-          <p>
-            Your registration has been rejected.
-            Please contact the administrator/support team for more details.
-          </p>
-
-          <p>
-            Regards,
-            <br />
-            HMS Team
-          </p>
-        `,
+        ...emailTemplates.accountRejected(),
       });
     } catch (emailError) {
       console.error("Email sending error:", emailError);
@@ -407,7 +336,7 @@ exports.updateEmployee = async (req, res) => {
     }
 
     // Prevent updating OWNER or ADMIN
-    if (restrictedDesignations.has(employee.designation)) {
+    if (RESTRICTED_ROLES_SET.has(employee.designation)) {
       return res.status(403).json({
         message: "Cannot update OWNER or ADMIN accounts",
       });
@@ -463,7 +392,7 @@ exports.deleteEmployee = async (req, res) => {
     }
 
     // Prevent deleting OWNER or ADMIN
-    if (restrictedDesignations.has(employee.designation)) {
+    if (RESTRICTED_ROLES_SET.has(employee.designation)) {
       return res.status(403).json({
         message: "Cannot delete OWNER or ADMIN accounts",
       });
@@ -609,18 +538,7 @@ exports.approveProfileChange = async (req, res) => {
     try {
       await sendEmail({
         to: employee.email,
-        subject: "Profile Change Request Approved",
-        html: `
-          <h2>Profile Change Approved</h2>
-          <p>
-            Your requested profile changes have been approved and applied.
-          </p>
-          <p>
-            Regards,
-            <br />
-            HMS Team
-          </p>
-        `,
+        ...emailTemplates.profileChangeApproved(),
       });
     } catch (emailError) {
       console.error("Email sending error:", emailError);
@@ -679,19 +597,7 @@ exports.rejectProfileChange = async (req, res) => {
     try {
       await sendEmail({
         to: request.email,
-        subject: "Profile Change Request Rejected",
-        html: `
-          <h2>Profile Change Rejected</h2>
-          <p>
-            Your requested profile changes have been rejected.
-            Please contact the administrator for more details.
-          </p>
-          <p>
-            Regards,
-            <br />
-            HMS Team
-          </p>
-        `,
+        ...emailTemplates.profileChangeRejected(),
       });
     } catch (emailError) {
       console.error("Email sending error:", emailError);

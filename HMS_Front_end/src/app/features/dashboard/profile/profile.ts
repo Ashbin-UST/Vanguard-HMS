@@ -74,10 +74,10 @@ export class ProfileComponent implements OnInit, CanComponentDeactivate {
       this.applyToForm(cached);
     }
 
-    this.employeeService.getProfile().subscribe({
+    this.employeeService.getMe().subscribe({
       next: (res) => {
-        this.profile.set(res.profile);
-        this.applyToForm(res.profile);
+        this.profile.set(res.user.profile);
+        this.applyToForm(res.user.profile);
         this.loading.set(false);
       },
       error: () => {
@@ -150,8 +150,8 @@ export class ProfileComponent implements OnInit, CanComponentDeactivate {
         // For owner/admin the change is applied immediately — refresh the
         // displayed profile (and cached user) so the card shows new values.
         if (this.isPrivileged()) {
-          this.employeeService.getProfile().subscribe({
-            next: (r) => this.profile.set(r.profile),
+          this.employeeService.getMe().subscribe({
+            next: (r) => this.profile.set(r.user.profile),
           });
           this.authService.refreshCurrentUser().subscribe({
             next: () => {},

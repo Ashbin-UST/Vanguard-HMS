@@ -33,7 +33,6 @@ export interface AppointmentDoctorRef {
 }
 
 export interface Appointment {
-  _id?: string;
   appointmentId: string;
   patientId: string;
   doctorEmployeeId: string;
@@ -48,7 +47,6 @@ export interface Appointment {
 
 // A doctor option for the booking dropdown (GET /employees/doctors).
 export interface DoctorOption {
-  _id?: string;
   employeeCode: string;
   name: string;
   specialization?: string;

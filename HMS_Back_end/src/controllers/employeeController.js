@@ -3,40 +3,13 @@ const Employee = require("../models/Employees");
 const ProfileChangeRequest = require("../models/ProfileChangeRequests");
 const buildEmployeeProfile = require("../utils/buildEmployeeProfile");
 const sendEmail = require("../utils/sendEmail");
+const emailTemplates = require("../utils/emailTemplates");
 const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
+const { RESTRICTED_ROLES_SET } = require("../config/constants");
 
 // Fields an employee is allowed to self-update (via approval flow)
 const SELF_EDITABLE_FIELDS = ["phone", "qualification"];
-
-// Get current logged in user's profile
-exports.getProfile = async (req, res) => {
-
-    try {
-        const employee = await Employee.findOne({
-            employeeCode: req.user.employeeCode
-        }).select("-__v");
-
-        if (!employee) {
-            return res.status(404).json({
-                message: "Employee not found!!"
-            });
-        }
-
-        const profile = buildEmployeeProfile(employee);
-
-        res.status(200).json({
-            message: "Profile retrieved successfully",
-            profile
-        });
-    }
-    catch (err) {
-        console.error("Error during profile retrieval: ", err);
-        res.status(500).json({
-            message: "Server error during profile retrieval"
-        });
-    }
-};
 
 // Get current authenticated user + profile (used after a page refresh)
 exports.getMe = async (req, res) => {
@@ -67,7 +40,7 @@ exports.getMe = async (req, res) => {
         return res.status(200).json({
             message: "User retrieved successfully",
             user: {
-                id: user._id,
+                employeeCode: user.employeeCode,
                 username: user.username,
                 email: user.email,
                 roles: user.roles,
@@ -161,9 +134,8 @@ exports.profileUpdate = async (req, res) => {
         }
 
         // OWNER and ADMIN directly update their profile, no wait for approval
-        const privilegedRoles = new Set(["OWNER", "ADMIN"]);
         const isPrivileged = (req.user.roles || []).some((role) =>
-            privilegedRoles.has(role)
+            RESTRICTED_ROLES_SET.has(role)
         );
 
         if (isPrivileged) {
@@ -212,7 +184,7 @@ exports.profileUpdate = async (req, res) => {
         // Notify admins
         try {
             const admins = await User.find({
-                roles: "ADMIN",
+                roles: { $in: ["ADMIN", "OWNER"] },
                 status: "ACTIVE"
             }).select("email");
 
@@ -221,27 +193,10 @@ exports.profileUpdate = async (req, res) => {
             if (adminEmails.length) {
                 await sendEmail({
                     to: adminEmails,
-                    subject: "Employee Profile Change Request",
-                    html: `
-                        <h2>Profile Change Request</h2>
-                        <p>
-                            ${employee.name} (${employee.employeeCode})
-                            has requested changes to their profile and is awaiting approval.
-                        </p>
-                        <p>
-                            Please review the request from the admin dashboard.
-                        </p>
-                        <p>
-                            <a href="${process.env.FRONTEND_URL || "http://localhost:4200"}/login">
-                                Open Admin Dashboard
-                            </a>
-                        </p>
-                        <p>
-                            Regards,
-                            <br />
-                            HMS System
-                        </p>
-                    `
+                    ...emailTemplates.profileChangeRequest({
+                        name: employee.name,
+                        employeeCode: employee.employeeCode
+                    })
                 });
             }
         } catch (emailError) {

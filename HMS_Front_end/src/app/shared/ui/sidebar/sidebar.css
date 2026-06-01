@@ -1,3 +1,7 @@
+:host {
+  display: block;
+}
+
 .sidebar {
   width: 260px;
   height: 100vh;
@@ -8,7 +12,14 @@
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 40;
+  z-index: 50;
+  transform: translateX(-100%);
+  transition: transform 0.2s ease;
+}
+
+/* Visible when the host is marked open. */
+:host(.open) .sidebar {
+  transform: translateX(0);
 }
 
 .sidebar-header {

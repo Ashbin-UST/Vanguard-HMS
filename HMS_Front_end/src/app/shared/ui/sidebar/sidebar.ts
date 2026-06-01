@@ -1,7 +1,9 @@
 import {
   Component,
   computed,
+  EventEmitter,
   inject,
+  Output,
   OnInit,
   signal,
 } from '@angular/core';
@@ -33,6 +35,10 @@ import { SidebarNode } from '../../../core/models/node.model';
 export class SidebarComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly nodeService = inject(NodeService);
+
+  // Emitted when a navigation link is activated, so a responsive parent can
+  // collapse the sidebar overlay on mobile.
+  @Output() navigate = new EventEmitter<void>();
 
   title = 'HMS';
   subtitle = 'Hospital Management';
@@ -101,6 +107,11 @@ export class SidebarComponent implements OnInit {
 
   toggleUserMenu(): void {
     this.userMenuOpen.update((v) => !v);
+  }
+
+  // Called when a nav link is tapped; lets the parent close the mobile overlay.
+  onNavigate(): void {
+    this.navigate.emit();
   }
 
   closeUserMenu(): void {

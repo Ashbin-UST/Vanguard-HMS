@@ -32,12 +32,6 @@ router.get(
     controller.getMe
 );
 
-// Logged-in employee's profile
-router.get(
-    "/profile",
-    controller.getProfile
-);
-
 // Active doctors list (for appointment booking dropdown)
 router.get(
     "/doctors",

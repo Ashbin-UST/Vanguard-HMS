@@ -4,13 +4,12 @@ const crypto = require("node:crypto");
 const User = require("../models/Users");
 const Employee = require("../models/Employees");
 const sendEmail = require("../utils/sendEmail");
+const emailTemplates = require("../utils/emailTemplates");
 const buildEmployeeProfile = require("../utils/buildEmployeeProfile");
 const buildEmployeeData = require("../utils/buildEmployeeData");
 const validateUniqueEmployeeFields = require("../utils/validateUniqueEmployeeFields");
+const { RESTRICTED_ROLES_SET } = require("../config/constants");
 require("dotenv").config();
-
-// Self-registration restricted designations
-const restrictedSelfRegisterDesignations = new Set(["ADMIN", "OWNER"]);
 
 // Login
 exports.login = async (req, res) => {
@@ -76,7 +75,7 @@ exports.login = async (req, res) => {
             message: "Login successful",
             token,
             user: {
-                id: user._id,
+                employeeCode: user.employeeCode,
                 username: user.username,
                 email: user.email,
                 roles: user.roles,
@@ -87,13 +86,13 @@ exports.login = async (req, res) => {
         });
     }
     catch (err) {
-        console.error("Login error:", err);
+    console.error("Login error:", err);
 
-        res.status(500).json({
-            message: err.message,
-            name: err.name
-        });
-    }
+    res.status(500).json({
+        message: err.message,
+        name: err.name
+    });
+}
 }
 
 // Change password
@@ -199,7 +198,7 @@ exports.forgotPassword = async (req, res) => {
         if (process.env.NODE_ENV !== "production") {
             console.log(
                 "\n[DEV] Reset link for " + user.email + ":\n" +
-                (process.env.FRONTEND_URL || "http://localhost:4200") +
+                emailTemplates.frontendUrl() +
                 "/reset-password?token=" + resetPasswordToken + "\n"
             );
         }
@@ -208,32 +207,7 @@ exports.forgotPassword = async (req, res) => {
         try {
             await sendEmail({
                 to: user.email,
-
-                subject: "HMS Password Reset Request",
-
-                html: `
-                  <h2>HMS Password Reset</h2>
-        
-                  <p>
-                    Use the link below to reset your password.
-                  </p>
-        
-                  <p>
-                    <a href="${process.env.FRONTEND_URL || "http://localhost:4200"}/reset-password?token=${resetPasswordToken}">
-                      Reset Password
-                    </a>
-                  </p>
-
-                  <p>This reset link expires in 15 minutes.</p>
-
-                  <p>If you did not request this, ignore this email.</p>
-        
-                  <p>
-                    Regards,
-                    <br />
-                    HMS Team
-                  </p>
-                `,
+                ...emailTemplates.passwordReset({ resetToken: resetPasswordToken })
             });
         } catch (emailError) {
             console.error("Email sending error:", emailError);
@@ -281,20 +255,20 @@ exports.resetPassword = async (req, res) => {
             }
         });
 
-        if (!user) {
+        if (!user){
             return res.status(400).json({
                 message: "Invalid or expired token"
             });
         }
 
-        if (String(user.status) !== "ACTIVE") {
+        if (String(user.status) !== "ACTIVE"){
             return res.status(400).json({
                 message: "Invalid or expired token"
             })
         }
 
         const isSamePassword = Boolean(await bcrypt.compare(newPassword, user.passwordHash));
-        if (isSamePassword) {
+        if (isSamePassword){
             return res.status(400).json({
                 message: "New password cannot be the same as current password"
             });
@@ -326,7 +300,7 @@ exports.resetPassword = async (req, res) => {
 // Logout
 exports.logout = (req, res) => {
     res.status(200).json({
-        message: "User has been logged out successfuly"
+        message: "User has been logged out successfully"
     });
 }
 
@@ -361,7 +335,7 @@ exports.me = async (req, res) => {
         return res.status(200).json({
             message: "User retrieved successfully",
             user: {
-                id: user._id,
+                employeeCode: user.employeeCode,
                 username: user.username,
                 email: user.email,
                 roles: user.roles,
@@ -386,7 +360,7 @@ exports.selfRegister = async (req, res) => {
 
     try {
         // Prevent self-registration as ADMIN or OWNER
-        if (restrictedSelfRegisterDesignations.has(designation)) {
+        if (RESTRICTED_ROLES_SET.has(designation)) {
             return res.status(403).json({
                 message:
                     "Invalid designation. Cannot create admin or owner accounts."
@@ -430,75 +404,27 @@ exports.selfRegister = async (req, res) => {
 
         // Send approval request email to admin(s)
         try {
-            // Find all active admin users
+            // Find all active admin/owner users
             const admins = await User.find({
-                roles: {
-                    $in: ["ADMIN", "OWNER"]
-                },
+                roles: { $in: ["ADMIN", "OWNER"] },
                 status: "ACTIVE"
             });
 
-            console.log("Admins found:", admins);
-
             // Extract admin emails
             const adminEmails = admins.map((admin) => admin.email);
-
-            console.log("Admin emails:", adminEmails);
 
             // Send email to all admins
             if (adminEmails.length) {
                 await sendEmail({
                     to: adminEmails,
-
-                    subject: "New Employee Registration Request",
-
-                    html: `
-                        <h2>New Employee Registration Request</h2>
-
-                        <p>
-                            A new employee has submitted a registration request and is awaiting approval.
-                        </p>
-
-                        <p>
-                            <strong>Name:</strong>
-                            ${employee.name}
-                        </p>
-
-                        <p>
-                            <strong>Employee Code:</strong>
-                            ${employee.employeeCode}
-                        </p>
-
-                        <p>
-                            <strong>Department:</strong>
-                            ${employee.department}
-                        </p>
-
-                        <p>
-                            <strong>Designation:</strong>
-                            ${employee.designation}
-                        </p>
-
-                        <p>
-                            Please review the request from the admin dashboard.
-                        </p>
-
-                        <p>
-                            <a href="${process.env.FRONTEND_URL || "http://localhost:4200"}/login">
-                                Open Admin Dashboard
-                            </a>
-                        </p>
-
-                        <p>
-                            Regards,
-                            <br />
-                            HMS System
-                        </p>
-                    `
+                    ...emailTemplates.registrationRequest({
+                        name: employee.name,
+                        employeeCode: employee.employeeCode,
+                        department: employee.department,
+                        designation: employee.designation
+                    })
                 });
             }
-            console.log("Admin notification email sent");
-            
         } catch (emailError) {
             console.error("Admin notification email error:", emailError);
         }
