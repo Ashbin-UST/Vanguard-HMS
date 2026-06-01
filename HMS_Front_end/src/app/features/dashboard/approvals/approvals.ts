@@ -175,7 +175,7 @@ export class ApprovalsComponent implements OnInit {
   formatField(field: string): string {
     return field
       .replaceAll(/([A-Z])/g, ' $1')
-      .replaceAll(/^./, (c) => c.toUpperCase());
+      .replaceAll(/^./g, (c) => c.toUpperCase());
   }
 
   async approveChange(req: ProfileChangeRequest): Promise<void> {
