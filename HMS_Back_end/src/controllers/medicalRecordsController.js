@@ -62,7 +62,7 @@ exports.getAllRecords = async (req, res) => {
             .populate('doctorEmployeeId', 'name specialization')
             .populate('appointmentId', 'appointmentDate timeSlot')
             .skip(skip)
-            .limit(parseInt(limit))
+            .limit(Number.parseInt(limit))
             .sort({ created_at: -1 });
 
         const total = await MedicalRecords.countDocuments(filter);
@@ -70,8 +70,8 @@ exports.getAllRecords = async (req, res) => {
         res.status(200).json({
             message: "Medical records retrieved successfully",
             total,
-            page: parseInt(page),
-            limit: parseInt(limit),
+            page: Number.parseInt(page),
+            limit: Number.parseInt(limit),
             records
         });
     } catch (err) {
@@ -175,7 +175,7 @@ exports.getPatientRecords = async (req, res) => {
             .populate('doctorEmployeeId', 'name specialization')
             .populate('appointmentId', 'appointmentDate')
             .skip(skip)
-            .limit(parseInt(limit))
+            .limit(Number.parseInt(limit))
             .sort({ created_at: -1 });
 
         const total = await MedicalRecords.countDocuments({ patientId });
@@ -183,8 +183,8 @@ exports.getPatientRecords = async (req, res) => {
         res.status(200).json({
             message: "Patient medical records retrieved successfully",
             total,
-            page: parseInt(page),
-            limit: parseInt(limit),
+            page: Number.parseInt(page),
+            limit: Number.parseInt(limit),
             records
         });
     } catch (err) {
