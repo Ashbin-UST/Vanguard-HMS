@@ -20,6 +20,7 @@
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: true }"
         class="sidebar-link"
+        (click)="onNavigate()"
       >
         <span class="sidebar-link-icon" [innerHTML]="iconFor(item)"></span>
         <span class="sidebar-link-label">{{ item.name }}</span>

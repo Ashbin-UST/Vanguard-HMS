@@ -5,6 +5,7 @@ const Appointment = require("../models/Appointments");
 const checkAppointmentValidity = require("../utils/checkAppointmentValidity");
 const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
+const emailTemplates = require("../utils/emailTemplates");
 
 // Active (non-cancelled) appointment statuses
 const ACTIVE_STATUSES = ["BOOKED", "COMPLETED"];
@@ -105,42 +106,12 @@ exports.createAppointment = async (req, res) => {
         try {
             await sendEmail({
                 to: validAppointment.patient.email,
-
-                subject: "Appointment Scheduled",
-
-                html: `
-          <h2>Welcome to HMS</h2>
-
-          <p>
-            Your appointment has been created successfully.
-          </p>
-
-          <p>
-            <strong>Patient Name:</strong>
-            ${validAppointment.patient.name}
-          </p>
-
-          <p>
-            <strong>Doctor Name:</strong>
-            ${validAppointment.doctor.name}
-          </p>
-
-          <p>
-            <strong>Appointment Date:</strong>
-            ${appointmentDate}
-          </p>
-
-          <p>
-            <strong>Time Slot:</strong>
-            ${timeSlot}
-          </p>
-
-          <p>
-            Regards,
-            <br />
-            HMS Team
-          </p>
-        `,
+                ...emailTemplates.appointmentScheduled({
+                    patientName: validAppointment.patient.name,
+                    doctorName: validAppointment.doctor.name,
+                    appointmentDate,
+                    timeSlot
+                })
             });
         } catch (emailError) {
             console.error("Email sending error:", emailError);

@@ -4,83 +4,43 @@ const { body } = require("express-validator");
 const validate = require("../middlewares/validate");
 const auth = require("../middlewares/authMiddleware");
 const controller = require("../controllers/authController");
+const {
+  STAFF_DESIGNATIONS,
+  DEPARTMENTS,
+  MEDICAL_DESIGNATIONS_SET,
+  SPECIALIZATION_DESIGNATIONS_SET,
+  DEPARTMENT_DESIGNATIONS,
+} = require("../config/constants");
 
 // Phone: optional country code (+ 1 to 3 digits) followed by exactly 10 digits
 const PHONE_REGEX = /^(\+\d{1,3} )?\d{10}$/;
 
-const allowedDesignationTypes = new Set([
-  "DOCTOR",
-  "RECEPTIONIST",
-  "CASHIER",
-  "NURSE",
-  "LAB_TECH",
-  "PHARMACIST",
-]);
-
-const allowedDepartmentTypes = new Set([
-  "OPD",
-  "IPD",
-  "Lab",
-  "Pharmacy",
-  "Administration",
-  "Reception",
-  "Billing",
-]);
-
-const medicalFields = new Set(["DOCTOR", "NURSE", "LAB_TECH", "PHARMACIST"]);
-
-const specializationFields = new Set(["DOCTOR", "LAB_TECH"]);
-
-// Valid staff designations for each department. Must stay in sync with the
-// frontend DEPARTMENT_DESIGNATIONS map. Self-registration never allows
-// ADMIN/OWNER, so Administration has no self-registerable designation.
-const departmentDesignations = {
-  OPD: ["DOCTOR", "NURSE"],
-  IPD: ["DOCTOR", "NURSE"],
-  Lab: ["LAB_TECH"],
-  Pharmacy: ["PHARMACIST"],
-  Reception: ["RECEPTIONIST"],
-  Billing: ["CASHIER"],
-  Administration: [],
-};
-
 const selfRegisterValidation = [
   body("username").notEmpty().withMessage("Username is required"),
-
   body("name").notEmpty().withMessage("Name is required"),
-
   body("phone")
     .matches(PHONE_REGEX)
     .withMessage(
       "Phone must be 10 digits, optionally prefixed with a country code and a space (e.g. +91 1234567890 or 1234567890)",
     ),
-
   body("email").isEmail().withMessage("Valid email is required"),
-
   body("password")
     .isLength({ min: 8 })
     .withMessage("Password must be at least 8 characters long")
-    .matches(/[A-Z]/)
-    .withMessage("Password must contain at least one uppercase letter")
-    .matches(/[a-z]/)
-    .withMessage("Password must contain at least one lowercase letter")
-    .matches(/\d/)
-    .withMessage("Password must contain at least one number")
-    .matches(/[^A-Za-z0-9]/)
-    .withMessage("Password must contain at least one special character"),
-
+    .matches(/[A-Z]/).withMessage("Password must contain at least one uppercase letter")
+    .matches(/[a-z]/).withMessage("Password must contain at least one lowercase letter")
+    .matches(/\d/).withMessage("Password must contain at least one number")
+    .matches(/[^A-Za-z0-9]/).withMessage("Password must contain at least one special character"),
   body("department")
-    .isIn([...allowedDepartmentTypes])
+    .isIn(DEPARTMENTS)
     .withMessage("Valid department is required"),
-
   body("designation")
-    .isIn([...allowedDesignationTypes])
+    .isIn(STAFF_DESIGNATIONS)
     .withMessage("Valid designation is required")
     .bail()
     .custom((designation, { req }) => {
       const dept = req.body.department;
-      const valid = departmentDesignations[dept];
-      // If the department is unknown, the department validator already failed.
+      const valid = DEPARTMENT_DESIGNATIONS[dept];
       if (valid && !valid.includes(designation)) {
         throw new Error(
           `Designation ${designation} is not valid for the ${dept} department`,
@@ -88,35 +48,20 @@ const selfRegisterValidation = [
       }
       return true;
     }),
-
-  body("joiningDate")
-    .isISO8601()
-    .toDate()
-    .withMessage("Valid joining date is required"),
-
-  body("qualification")
-    .isArray({ min: 1 })
-    .withMessage("At least one qualification is required"),
-
+  body("joiningDate").isISO8601().toDate().withMessage("Valid joining date is required"),
+  body("qualification").isArray({ min: 1 }).withMessage("At least one qualification is required"),
   body("medicalRegistrationNumber")
-    .if((value, { req }) => medicalFields.has(req.body.designation))
-    .notEmpty()
-    .withMessage("Medical registration number is required"),
-
+    .if((value, { req }) => MEDICAL_DESIGNATIONS_SET.has(req.body.designation))
+    .notEmpty().withMessage("Medical registration number is required"),
   body("specialization")
-    .if((value, { req }) => specializationFields.has(req.body.designation))
-    .notEmpty()
-    .withMessage("Specialization is required"),
-
+    .if((value, { req }) => SPECIALIZATION_DESIGNATIONS_SET.has(req.body.designation))
+    .notEmpty().withMessage("Specialization is required"),
   body("consultationFee")
     .if(body("designation").equals("DOCTOR"))
-    .notEmpty()
-    .withMessage("Consultation fee is required for doctor"),
-
+    .notEmpty().withMessage("Consultation fee is required for doctor"),
   body("availabilitySlots")
     .if(body("designation").equals("DOCTOR"))
-    .isArray({ min: 1 })
-    .withMessage("Availability slots are required for doctor")
+    .isArray({ min: 1 }).withMessage("Availability slots are required for doctor")
     .bail()
     .custom((slots) => {
       const toMinutes = (t) => {

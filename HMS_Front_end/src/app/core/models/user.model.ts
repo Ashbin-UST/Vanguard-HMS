@@ -1,6 +1,7 @@
 import { EmployeeProfile, Designation, UserRole } from './employee.model';
+
 export interface User {
-  id: string;
+  employeeCode: string;
   username: string;
   email: string;
   roles: UserRole[];

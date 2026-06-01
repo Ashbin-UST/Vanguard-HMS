@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const Employee = require("../models/Employees");
 const User = require("../models/Users");
 const sendEmail = require("../utils/sendEmail");
+const emailTemplates = require("../utils/emailTemplates");
 const generateTemporaryPassword = require("../utils/generateTemporaryPassword");
 const buildEmployeeData = require("../utils/buildEmployeeData");
 const buildEmployeeProfile = require("../utils/buildEmployeeProfile");
@@ -62,30 +63,7 @@ const createAdmin = async (req, res) => {
     try {
       await sendEmail({
         to: user.email,
-
-        subject: "HMS Admin Account Created",
-
-        html: `
-                <h2>Welcome to HMS</h2>
-
-                <p>Your admin account has been created successfully.</p>
-
-                <p>
-                    <strong>Username:</strong>
-                    ${username}
-                </p>
-
-                <p>
-                    <strong>Temporary Password:</strong>
-                    ${temporaryPassword}
-                </p>
-
-                <p> Please login using the link below and change your password immediately. </p>
-
-                <p> <a href="${process.env.FRONTEND_URL || "http://localhost:4200"}/login"> Login to HMS </a> </p>
-
-                <p> Regards, <br /> HMS Team </p>
-            `,
+        ...emailTemplates.adminCredentials({ username, temporaryPassword }),
       });
     } catch (emailError) {
       console.error("Email sending error:", emailError);

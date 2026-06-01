@@ -2,15 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { EmployeeProfile } from '../models/employee.model';
 import { MeResponse } from '../models/user.model';
 import { DoctorsResponse } from '../models/appointment.model';
-
-// GET /employees/profile response.
-export interface ProfileResponse {
-  message: string;
-  profile: EmployeeProfile;
-}
 
 // PUT /employees/update-profile response.
 export interface ProfileUpdateRequestResponse {
@@ -35,14 +28,10 @@ export class EmployeeService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/employees`;
 
-  // Current authenticated user + profile (used after a refresh).
+  // Current authenticated user + profile (used after a refresh, and as the
+  // single source of truth for the logged-in user's own profile).
   getMe(): Observable<MeResponse> {
     return this.http.get<MeResponse>(`${this.apiUrl}/me`);
-  }
-
-  // Logged-in employee's profile.
-  getProfile(): Observable<ProfileResponse> {
-    return this.http.get<ProfileResponse>(`${this.apiUrl}/profile`);
   }
 
   // Active doctors for the appointment booking dropdown.

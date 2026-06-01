@@ -4,6 +4,7 @@ const sendEmail = require("../utils/sendEmail");
 const generateTemporaryPassword = require("../utils/generateTemporaryPassword");
 const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
+const emailTemplates = require("../utils/emailTemplates");
 
 // Fields a patient record exposes (passwordHash is always excluded)
 const PATIENT_PROJECTION = "-passwordHash -__v";
@@ -58,42 +59,7 @@ exports.createPatient = async (req, res) => {
         try {
             await sendEmail({
                 to: patient.email,
-
-                subject: "HMS Patient Account Created",
-
-                html: `
-                  <h2>Welcome to HMS</h2>
-
-                  <p>
-                    Your patient account has been created successfully.
-                  </p>
-
-                  <p>
-                    <strong>email:</strong>
-                    ${email}
-                  </p>
-
-                  <p>
-                    <strong>Temporary Password:</strong>
-                    ${temporaryPassword}
-                  </p>
-
-                  <p>
-                    Please login using the link below and change your password immediately.
-                  </p>
-
-                  <p>
-                    <a href="${process.env.FRONTEND_URL || "http://localhost:4200"}/login">
-                      Patient Login
-                    </a>
-                  </p>
-
-                  <p>
-                    Regards,
-                    <br />
-                    HMS Team
-                  </p>
-                `,
+                ...emailTemplates.patientCredentials({ email, temporaryPassword }),
             });
         } catch (emailError) {
             console.error("Email sending error:", emailError);

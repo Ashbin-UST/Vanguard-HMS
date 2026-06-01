@@ -5,45 +5,16 @@ const validate = require("../middlewares/validate");
 const auth = require("../middlewares/authMiddleware");
 const authorizeRoles = require("../middlewares/authorizeRolesMiddleware");
 const controller = require("../controllers/adminController");
+const {
+  STAFF_DESIGNATIONS,
+  DEPARTMENTS,
+  MEDICAL_DESIGNATIONS_SET,
+  SPECIALIZATION_DESIGNATIONS_SET,
+  DEPARTMENT_DESIGNATIONS,
+} = require("../config/constants");
 
 // All routes require authentication and admin authorization
 router.use(auth, authorizeRoles("OWNER", "ADMIN"));
-
-const allowedDesignationTypes = new Set([
-  "DOCTOR",
-  "RECEPTIONIST",
-  "CASHIER",
-  "NURSE",
-  "LAB_TECH",
-  "PHARMACIST",
-]);
-
-const allowedDepartmentTypes = new Set([
-  "OPD",
-  "IPD",
-  "Lab",
-  "Pharmacy",
-  "Administration",
-  "Reception",
-  "Billing",
-]);
-
-const medicalFields = new Set(["DOCTOR", "NURSE", "LAB_TECH", "PHARMACIST"]);
-
-const specializationFields = new Set(["DOCTOR", "LAB_TECH"]);
-
-// Valid staff designations for each department. Must stay in sync with the
-// frontend DEPARTMENT_DESIGNATIONS map. ADMIN/OWNER are intentionally excluded
-// here (admins cannot be created through this route).
-const departmentDesignations = {
-  OPD: ["DOCTOR", "NURSE"],
-  IPD: ["DOCTOR", "NURSE"],
-  Lab: ["LAB_TECH"],
-  Pharmacy: ["PHARMACIST"],
-  Reception: ["RECEPTIONIST"],
-  Billing: ["CASHIER"],
-  Administration: [],
-};
 
 const employeeCreationValidation = [
   body("username").notEmpty().withMessage("Username is required"),
@@ -59,16 +30,16 @@ const employeeCreationValidation = [
   body("email").isEmail().withMessage("Valid email is required"),
 
   body("department")
-    .isIn([...allowedDepartmentTypes])
+    .isIn(DEPARTMENTS)
     .withMessage("Valid department is required"),
 
   body("designation")
-    .isIn([...allowedDesignationTypes])
+    .isIn(STAFF_DESIGNATIONS)
     .withMessage("Valid designation is required")
     .bail()
     .custom((designation, { req }) => {
       const dept = req.body.department;
-      const valid = departmentDesignations[dept];
+      const valid = DEPARTMENT_DESIGNATIONS[dept];
       // If the department is unknown, the department validator already failed.
       if (valid && !valid.includes(designation)) {
         throw new Error(
@@ -85,12 +56,12 @@ const employeeCreationValidation = [
     .withMessage("At least one qualification is required"),
 
   body("medicalRegistrationNumber")
-    .if((value, { req }) => medicalFields.has(req.body.designation))
+    .if((value, { req }) => MEDICAL_DESIGNATIONS_SET.has(req.body.designation))
     .notEmpty()
     .withMessage("Medical registration number is required"),
 
   body("specialization")
-    .if((value, { req }) => specializationFields.has(req.body.designation))
+    .if((value, { req }) => SPECIALIZATION_DESIGNATIONS_SET.has(req.body.designation))
     .notEmpty()
     .withMessage("Specialization is required"),
 
