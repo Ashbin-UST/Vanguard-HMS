@@ -15,5 +15,5 @@ import { CommonModule } from '@angular/common';
   styles: ['.muted { color: #94a3b8; }'],
 })
 export class LastLoginCellComponent {
-  @Input() timestamp: string | null = null;
+  @Input() timestamp: string | null | undefined = null;
 }
