@@ -270,11 +270,18 @@ exports.getBookedSlots = async (req, res) => {
         end.setHours(23, 59, 59, 999);
 
         // Only BOOKED appointments occupy a slot; CANCELED frees it
-        const appointments = await Appointment.find({
+        const bookedSlotsFilter = {
             doctorEmployeeId,
             appointmentDate: { $gte: start, $lte: end },
             status: "BOOKED"
-        }).select("timeSlot -_id");
+        };
+
+        const { excludeAppointmentId } = req.query;
+        if (excludeAppointmentId) {
+            bookedSlotsFilter.appointmentId = { $ne: excludeAppointmentId };
+        }
+
+        const appointments = await Appointment.find(bookedSlotsFilter).select("timeSlot -_id");
 
         const bookedSlots = appointments.map((a) => a.timeSlot);
 
@@ -341,6 +348,86 @@ exports.cancelAppointment = async (req, res) => {
         console.error("Error during appointment cancellation: ", err);
         return res.status(500).json({
             message: "Server error during appointment cancellation"
+        });
+    }
+};
+
+// Update a BOOKED appointment's scheduling fields (reception level)
+exports.updateAppointment = async (req, res) => {
+
+    try {
+        const { appointmentId } = req.params;
+        const {
+            patientId,
+            doctorEmployeeId,
+            appointmentDate,
+            timeSlot
+        } = req.body;
+
+        const appointment = await Appointment.findOne({ appointmentId });
+
+        if (!appointment) {
+            return res.status(404).json({ message: "Appointment not found" });
+        }
+
+        if (appointment.status !== "BOOKED") {
+            return res.status(400).json({
+                message: "Only BOOKED appointments can be edited"
+            });
+        }
+
+        const validAppointment = await checkAppointmentValidity({
+            patientId,
+            doctorId: doctorEmployeeId,
+            appointmentDate,
+            timeSlot,
+            excludeAppointmentId: appointmentId
+        });
+
+        if (!validAppointment.success) {
+            return res.status(validAppointment.status).json({
+                message: validAppointment.message
+            });
+        }
+
+        appointment.patientId = patientId;
+        appointment.doctorEmployeeId = doctorEmployeeId;
+        appointment.appointmentDate = appointmentDate;
+        appointment.timeSlot = timeSlot;
+        await appointment.save();
+
+        try {
+            await sendEmail({
+                to: validAppointment.patient.email,
+                ...emailTemplates.appointmentUpdated({
+                    patientName: validAppointment.patient.name,
+                    doctorName: validAppointment.doctor.name,
+                    appointmentDate,
+                    timeSlot
+                })
+            });
+        } catch (emailError) {
+            console.error("Email sending error:", emailError);
+        }
+
+        const actor = await resolveActor(req.user);
+        await recordAudit({
+            actor,
+            action: "APPOINTMENT_UPDATED",
+            targetType: "APPOINTMENT",
+            targetId: appointment.appointmentId,
+            message: `Appointment ${appointment.appointmentId} was updated`
+        });
+
+        return res.status(200).json({
+            message: "Appointment updated successfully",
+            appointment
+        });
+    }
+    catch (err) {
+        console.error("Error during appointment update: ", err);
+        return res.status(500).json({
+            message: "Server error during appointment update"
         });
     }
 };
