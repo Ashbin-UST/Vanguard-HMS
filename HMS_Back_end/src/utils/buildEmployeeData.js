@@ -1,9 +1,7 @@
 const sanitizeQualifications = require("./qualificationSanitizer");
+const { MEDICAL_DESIGNATIONS_SET, SPECIALIZATION_DESIGNATIONS_SET } = require("../config/constants");
 
-const medicalFields = new Set(["DOCTOR", "NURSE", "LAB_TECH", "PHARMACIST"]);
-
-const specializationFields = new Set(["DOCTOR", "LAB_TECH"]);
-
+// Build the employee document payload from request body, applying designation-specific fields
 const buildEmployeeData = (data) => {
   const {
     name,
@@ -19,7 +17,6 @@ const buildEmployeeData = (data) => {
     availabilitySlots,
   } = data;
 
-  // Base employee data
   const employeeData = {
     name,
     phone,
@@ -30,17 +27,17 @@ const buildEmployeeData = (data) => {
     qualification: sanitizeQualifications(qualification),
   };
 
-  // Add medical registration number
-  if (medicalFields.has(designation)) {
+  // Medical registration number is only stored for medical staff
+  if (MEDICAL_DESIGNATIONS_SET.has(designation)) {
     employeeData.medicalRegistrationNumber = medicalRegistrationNumber;
   }
 
-  // Add specialization
-  if (specializationFields.has(designation)) {
+  // Specialization is only stored for designations that carry one
+  if (SPECIALIZATION_DESIGNATIONS_SET.has(designation)) {
     employeeData.specialization = specialization;
   }
 
-  // Add doctor-only fields
+  // Consultation fee and availability slots are doctor-only fields
   if (designation === "DOCTOR") {
     employeeData.consultationFee = consultationFee;
     employeeData.availabilitySlots = availabilitySlots?.map((slot) => ({

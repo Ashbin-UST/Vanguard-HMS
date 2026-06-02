@@ -4,26 +4,18 @@ const Employee = require("../models/Employees");
 const sendEmail = require("./sendEmail");
 const generateTemporaryPassword = require("./generateTemporaryPassword");
 const buildEmployeeData = require("./buildEmployeeData");
-const validateUniqueEmployeeFields = require("./validateUniqueEmployeeFields");
+const validateUniqueEmployeeFields = require("../validators/validateUniqueEmployeeFields");
 const recordAudit = require("./recordAudit");
 const resolveActor = require("./resolveActor");
 
-/**
- * @param {object} req - Express request
- * @param {object} options
- * @param {string[]} options.roles - User roles to assign (e.g. ["STAFF"] or ["ADMIN"])
- * @param {Function} options.emailTemplate - Template fn called with { username, temporaryPassword }
- * @param {string} options.auditAction - Audit log action string
- * @param {Function} options.buildAuditMessage - Called with (employee) -> string
- * @returns {{ employee, user }} - Resolves with the created documents; throws on failure
- */
-
+// Creates an employee + user account together; throws on uniqueness violations or DB errors
 async function createAccountWithEmployee(
     req,
     { roles, emailTemplate, auditAction, buildAuditMessage }
 ) {
     const { username, email } = req.body;
 
+    // Reject if username, email, or medical reg number is already taken
     const uniquenessResult = await validateUniqueEmployeeFields(req.body);
     if (!uniquenessResult.success) {
         const err = new Error(uniquenessResult.message);
@@ -31,13 +23,16 @@ async function createAccountWithEmployee(
         throw err;
     }
 
+    // Generate a temporary password that the user must change on first login
     const temporaryPassword = generateTemporaryPassword();
     const passwordHash = await bcrypt.hash(temporaryPassword, 10);
     const employeeData = buildEmployeeData(req.body);
 
+    // Persist the employee record (pre-save hook assigns employeeCode)
     const employee = new Employee(employeeData);
     await employee.save();
 
+    // Create the linked user account with mustChangePassword set to true
     const user = new User({
         username,
         email,
@@ -53,6 +48,7 @@ async function createAccountWithEmployee(
     });
     await user.save();
 
+    // Email the temporary password; failure does not block account creation
     try {
         await sendEmail({
             to: user.email,
@@ -62,6 +58,7 @@ async function createAccountWithEmployee(
         console.error("Email sending error:", emailError);
     }
 
+    // Log the creation action
     const actor = await resolveActor(req.user);
     await recordAudit({
         actor,

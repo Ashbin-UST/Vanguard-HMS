@@ -128,7 +128,6 @@ export const WEEK_DAYS: WeekDay[] = [
 export const MEDICAL_DESIGNATIONS: Designation[] = [
   'DOCTOR',
   'NURSE',
-  'LAB_TECH',
   'PHARMACIST',
 ];
 

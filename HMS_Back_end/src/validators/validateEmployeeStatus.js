@@ -3,7 +3,7 @@ const User = require("../models/Users");
 
 const validateEmployeeStatus = async (employeeCode, expectedDesignation) => {
 
-    // Check employee existence
+    // Look up the employee record
     const employee = await Employee.findOne({
         employeeCode: employeeCode
     });
@@ -16,7 +16,7 @@ const validateEmployeeStatus = async (employeeCode, expectedDesignation) => {
         };
     }
 
-    // Check user existence
+    // Look up the linked user account
     const user = await User.findOne({
         employeeCode
     });
@@ -29,6 +29,7 @@ const validateEmployeeStatus = async (employeeCode, expectedDesignation) => {
         };
     }
 
+    // Confirm the employee holds the required designation
     if (employee.designation !== expectedDesignation){
         return {
             success: false,
@@ -37,6 +38,7 @@ const validateEmployeeStatus = async (employeeCode, expectedDesignation) => {
         };
     }
 
+    // Confirm the user account is active
     if (String(user.status) !== "ACTIVE") {
         return {
             success: false,
@@ -45,7 +47,6 @@ const validateEmployeeStatus = async (employeeCode, expectedDesignation) => {
         };
     }
 
-    // return success
     return {
         success: true,
         employee

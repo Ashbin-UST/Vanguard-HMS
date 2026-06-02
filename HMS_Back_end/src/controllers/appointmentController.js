@@ -2,16 +2,16 @@ const Employee = require("../models/Employees");
 const Patient = require("../models/Patients");
 const sendEmail = require("../utils/sendEmail");
 const Appointment = require("../models/Appointments");
-const checkAppointmentValidity = require("../utils/checkAppointmentValidity");
+const checkAppointmentValidity = require("../validators/checkAppointmentValidity");
 const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
 const emailTemplates = require("../utils/emailTemplates");
 const parsePagination = require("../utils/parsePagination");
 const enrichAppointments = require("../utils/enrichAppointments");
 
-// Active (non-cancelled) appointment statuses
 const ACTIVE_STATUSES = ["BOOKED", "COMPLETED"];
 
+// Shared pagination helper for appointment list endpoints
 const paginateAppointments = async (filter, reqQuery, res) => {
     const { page, limit, skip } = parsePagination(reqQuery);
 
@@ -22,6 +22,7 @@ const paginateAppointments = async (filter, reqQuery, res) => {
         filter.appointmentDate = { $gte: start, $lte: end };
     }
 
+    // Fetch page and total in parallel, then attach patient/doctor names
     const [appointments, total] = await Promise.all([
         Appointment.find(filter)
             .select("-__v")
@@ -44,7 +45,7 @@ const paginateAppointments = async (filter, reqQuery, res) => {
     });
 };
 
-// Create Appointment
+// Create a new appointment after validating patient, doctor, and time slot
 exports.createAppointment = async (req, res) => {
 
     try {
@@ -55,7 +56,7 @@ exports.createAppointment = async (req, res) => {
             timeSlot
         } = req.body;
 
-        // Appointment Validation
+        // Validate patient, doctor availability, and slot conflicts
         const validAppointment = await checkAppointmentValidity({
             patientId,
             doctorId: doctorEmployeeId,
@@ -77,7 +78,7 @@ exports.createAppointment = async (req, res) => {
             createdByEmployeeId: req.user.employeeCode
         });
 
-        // Send email AFTER successful appointment creation
+        // Notify patient by email; failure does not block the response
         try {
             await sendEmail({
                 to: validAppointment.patient.email,
@@ -92,7 +93,7 @@ exports.createAppointment = async (req, res) => {
             console.error("Email sending error:", emailError);
         }
 
-        // Record audit
+        // Log who created the appointment
         const actor = await resolveActor(req.user);
         await recordAudit({
             actor,
@@ -116,7 +117,7 @@ exports.createAppointment = async (req, res) => {
     }
 };
 
-// Get all appointments (paginated, filterable)
+// List all appointments with optional status/doctor/patient filters (paginated)
 exports.getAppointments = async (req, res) => {
     try {
         const filter = {};
@@ -143,7 +144,7 @@ exports.getAppointments = async (req, res) => {
     }
 };
 
-// Get appointments for the logged-in doctor
+// List appointments belonging to the authenticated doctor
 exports.getMyAppointments = async (req, res) => {
     try {
         const filter = { doctorEmployeeId: req.user.employeeCode };
@@ -162,7 +163,7 @@ exports.getMyAppointments = async (req, res) => {
     }
 };
 
-// Get a single appointment by appointmentId
+// Fetch a single appointment and attach enriched patient/doctor info
 exports.getAppointmentById = async (req, res) => {
 
     try {
@@ -195,7 +196,7 @@ exports.getAppointmentById = async (req, res) => {
     }
 };
 
-// Get booked slots for a doctor on a given date
+// Return the list of already-booked time slots for a doctor on a given date
 exports.getBookedSlots = async (req, res) => {
 
     try {
@@ -242,7 +243,7 @@ exports.getBookedSlots = async (req, res) => {
     }
 };
 
-// Cancel an appointment
+// Cancel an appointment and notify the patient by email
 exports.cancelAppointment = async (req, res) => {
 
     try {
@@ -271,7 +272,7 @@ exports.cancelAppointment = async (req, res) => {
         appointment.status = "CANCELED";
         await appointment.save();
 
-        // Send cancellation email
+        // Fetch patient and doctor in parallel to build the cancellation email
         try {
             const [patient, doctor] = await Promise.all([
                 Patient.findOne({ UHID: appointment.patientId }).select("name email"),
@@ -292,7 +293,7 @@ exports.cancelAppointment = async (req, res) => {
             console.error("Email sending error:", emailError);
         }
 
-        // Record audit
+        // Log who cancelled the appointment
         const actor = await resolveActor(req.user);
         await recordAudit({
             actor,
@@ -315,7 +316,7 @@ exports.cancelAppointment = async (req, res) => {
     }
 };
 
-// Update a BOOKED appointment's scheduling fields (reception level)
+// Update scheduling fields on a BOOKED appointment (reception level)
 exports.updateAppointment = async (req, res) => {
 
     try {
@@ -339,6 +340,7 @@ exports.updateAppointment = async (req, res) => {
             });
         }
 
+        // Re-validate with the current appointment excluded from duplicate checks
         const validAppointment = await checkAppointmentValidity({
             patientId,
             doctorId: doctorEmployeeId,
@@ -359,6 +361,7 @@ exports.updateAppointment = async (req, res) => {
         appointment.timeSlot = timeSlot;
         await appointment.save();
 
+        // Notify patient of the updated schedule; failure does not block the response
         try {
             await sendEmail({
                 to: validAppointment.patient.email,
@@ -373,6 +376,7 @@ exports.updateAppointment = async (req, res) => {
             console.error("Email sending error:", emailError);
         }
 
+        // Log who updated the appointment
         const actor = await resolveActor(req.user);
         await recordAudit({
             actor,
@@ -395,7 +399,7 @@ exports.updateAppointment = async (req, res) => {
     }
 };
 
-// Mark an appointment as completed (doctor only, own appointments)
+// Mark an appointment COMPLETED; only the assigned doctor may do this
 exports.completeAppointment = async (req, res) => {
 
     try {
@@ -409,7 +413,6 @@ exports.completeAppointment = async (req, res) => {
             });
         }
 
-        // A doctor may only complete their own appointments
         if (appointment.doctorEmployeeId !== req.user.employeeCode) {
             return res.status(403).json({
                 message: "You can only complete your own appointments"
@@ -428,11 +431,7 @@ exports.completeAppointment = async (req, res) => {
             });
         }
 
-        // An appointment may only be completed once its scheduled date and
-        // time have passed. We combine the appointment day with the slot's
-        // start time (timeSlot is "HH:mm-HH:mm") and reject completion if that
-        // moment is still in the future. This prevents premature completion,
-        // which would otherwise free the slot and allow double-booking.
+        // Reject completion if the scheduled start time has not yet passed
         const slotStart = (appointment.timeSlot || "").split("-")[0];
         const [slotHour, slotMinute] = slotStart.split(":").map(Number);
         const scheduledStart = new Date(appointment.appointmentDate);
@@ -449,7 +448,7 @@ exports.completeAppointment = async (req, res) => {
         appointment.status = "COMPLETED";
         await appointment.save();
 
-        // Record audit
+        // Log who completed the appointment
         const actor = await resolveActor(req.user);
         await recordAudit({
             actor,

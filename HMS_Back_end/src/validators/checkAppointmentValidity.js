@@ -2,7 +2,7 @@ const Appointment = require("../models/Appointments");
 const Patient = require("../models/Patients");
 const validateEmployeeStatus = require("./validateEmployeeStatus");
 
-// Returns the filter with an appointmentId exclusion added when editing.
+// Returns the filter with an appointmentId exclusion added when editing
 const withExclusion = (filter, excludeAppointmentId) => {
   if (!excludeAppointmentId) return filter;
   return { ...filter, appointmentId: { $ne: excludeAppointmentId } };
@@ -15,7 +15,7 @@ const checkAppointmentValidity = async ({
   timeSlot,
   excludeAppointmentId,
 }) => {
-  // Check for patient existence
+  // Verify the patient exists
   const patient = await Patient.findOne({
     UHID: patientId,
   });
@@ -36,7 +36,7 @@ const checkAppointmentValidity = async ({
 
   const doctor = validDoctor.employee;
 
-  // Reject past dates and past time slots on today's date.
+  // Reject past dates; normalize both sides to midnight for a clean day comparison
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
 
@@ -51,6 +51,7 @@ const checkAppointmentValidity = async ({
     };
   }
 
+  // For today's date, reject slots whose start time has already passed
   if (apptDay.getTime() === todayStart.getTime()) {
     const [slotStartHH, slotStartMM] = timeSlot
       .split("-")[0]
@@ -69,8 +70,7 @@ const checkAppointmentValidity = async ({
     }
   }
 
-  // Reject appointment dates before the doctor has joined. Compare on the
-  // calendar day only (an appointment ON the joining date is allowed).
+  // Reject dates before the doctor's joining date (same calendar day is allowed)
   if (doctor.joiningDate) {
     const apptDay = new Date(appointmentDate);
     apptDay.setHours(0, 0, 0, 0);
@@ -92,7 +92,7 @@ const checkAppointmentValidity = async ({
     }
   }
 
-  // Check for doctor availability
+  // Derive the day-of-week from the appointment date and match it against the doctor's schedule
   const appointmentDay = new Date(appointmentDate)
     .toLocaleDateString("en-US", {
       weekday: "long",
@@ -103,7 +103,6 @@ const checkAppointmentValidity = async ({
     (slot) => slot.day === appointmentDay,
   );
 
-  // Doctor unavailable on selected day
   if (!matchingSlot) {
     return {
       success: false,
@@ -114,12 +113,11 @@ const checkAppointmentValidity = async ({
 
   const [appointmentStartTime, appointmentEndTime] = timeSlot.split("-");
 
-  // Check appointment time slot
+  // Check that the requested time slot falls within the doctor's availability window
   const isValidTimeSlot =
     appointmentStartTime >= matchingSlot.startTime &&
     appointmentEndTime <= matchingSlot.endTime;
 
-  // Doctor unavailable for selected time slot
   if (!isValidTimeSlot) {
     return {
       success: false,
@@ -128,7 +126,7 @@ const checkAppointmentValidity = async ({
     };
   }
 
-  // Check patient duplicate (exclude the appointment being updated, if any)
+  // Ensure the patient does not already have a non-cancelled appointment at this slot
   const patientAppointment = await Appointment.findOne(
     withExclusion(
       { patientId, appointmentDate, timeSlot, status: { $ne: "CANCELED" } },
@@ -144,7 +142,7 @@ const checkAppointmentValidity = async ({
     };
   }
 
-  // Check doctor duplicate (exclude the appointment being updated, if any)
+  // Ensure the doctor does not already have a non-cancelled appointment at this slot
   const doctorAppointment = await Appointment.findOne(
     withExclusion(
       { doctorEmployeeId: doctorId, appointmentDate, timeSlot, status: { $ne: "CANCELED" } },

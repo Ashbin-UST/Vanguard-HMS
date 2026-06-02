@@ -1,5 +1,4 @@
-// All staff designations that can be created or self-registered.
-// OWNER and ADMIN are deliberately excluded (created through dedicated flows).
+// Staff designations that can be created or self-registered (OWNER and ADMIN excluded)
 const STAFF_DESIGNATIONS = [
   "DOCTOR",
   "RECEPTIONIST",
@@ -9,7 +8,7 @@ const STAFF_DESIGNATIONS = [
   "PHARMACIST",
 ];
 
-// All departments (matches the backend Employees schema enum).
+// All departments matching the Employees schema enum
 const DEPARTMENTS = [
   "OPD",
   "IPD",
@@ -20,22 +19,16 @@ const DEPARTMENTS = [
   "Billing",
 ];
 
-// Designations that require a medical registration number.
-const MEDICAL_DESIGNATIONS = ["DOCTOR", "NURSE", "LAB_TECH", "PHARMACIST"];
+// Designations that require a medical registration number
+const MEDICAL_DESIGNATIONS = ["DOCTOR", "NURSE", "PHARMACIST"];
 
-// Designations that carry a specialization.
+// Designations that carry a specialization field
 const SPECIALIZATION_DESIGNATIONS = ["DOCTOR", "LAB_TECH"];
 
-// Privileged roles: created through dedicated flows, updated without approval,
-// and never self-registerable.
+// Privileged roles created through dedicated flows; never self-registerable
 const RESTRICTED_ROLES = ["OWNER", "ADMIN"];
 
-/**
- * Valid staff designations for each department. Must stay in sync with the
- * frontend DEPARTMENT_DESIGNATIONS map. ADMIN/OWNER are intentionally excluded
- * (admins are not created through the staff/self-register flows), so
- * Administration has no staff-creatable designation here.
- */
+// Valid staff designations per department; must stay in sync with the frontend DEPARTMENT_DESIGNATIONS map
 const DEPARTMENT_DESIGNATIONS = {
   OPD: ["DOCTOR", "NURSE"],
   IPD: ["DOCTOR", "NURSE"],
@@ -46,7 +39,7 @@ const DEPARTMENT_DESIGNATIONS = {
   Administration: [],
 };
 
-// Set variants for O(1) membership checks.
+// Set variants for O(1) membership checks
 const STAFF_DESIGNATIONS_SET = new Set(STAFF_DESIGNATIONS);
 const DEPARTMENTS_SET = new Set(DEPARTMENTS);
 const MEDICAL_DESIGNATIONS_SET = new Set(MEDICAL_DESIGNATIONS);

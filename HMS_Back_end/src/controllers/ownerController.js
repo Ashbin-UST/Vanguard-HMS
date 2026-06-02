@@ -8,7 +8,7 @@ const resolveActor = require("../utils/resolveActor");
 const createAccountWithEmployee = require("../utils/createAccountWithEmployee");
 const deleteEmployeeAccount = require("../utils/deleteEmployeeAccount");
 
-// Create Admin
+// Create an ADMIN account with a temporary password
 const createAdmin = async (req, res) => {
   try {
     const { employee, user } = await createAccountWithEmployee(req, { // NOSONAR: false positive; function is async but Sonar loses type info across CommonJS require
@@ -44,7 +44,7 @@ const createAdmin = async (req, res) => {
   }
 };
 
-// Get all Admins
+// List all admin users with their linked employee records
 const getAdmins = async (req, res) => {
   try {
     const admins = await User.find({
@@ -73,12 +73,11 @@ const getAdmins = async (req, res) => {
   }
 };
 
-// Update Admin
+// Update mutable fields on an admin employee record
 const updateAdmin = async (req, res) => {
   try {
     const { employeeCode } = req.params;
 
-    // Find admin employee
     const employee = await Employee.findOne({
       employeeCode,
     });
@@ -91,10 +90,9 @@ const updateAdmin = async (req, res) => {
 
     updateEmployeeData(employee, req.body);
 
-    // Save employee
     await employee.save();
 
-    // Record audit
+    // Log the update
     const actor = await resolveActor(req.user);
     await recordAudit({
       actor,
@@ -121,7 +119,7 @@ const updateAdmin = async (req, res) => {
   }
 };
 
-// Delete Admin
+// Delete an admin account; the owner account cannot be deleted
 const deleteAdmin = async (req, res) => {
   try {
     const { employeeCode } = req.params;
@@ -136,14 +134,13 @@ const deleteAdmin = async (req, res) => {
       });
     }
 
-    // Prevent owner deletion
     if (employee.designation === "OWNER") {
       return res.status(403).json({
         message: "Owner account cannot be deleted",
       });
     }
 
-    // Record audit
+    // Log before deletion so the record still exists for the message
     const actor = await resolveActor(req.user);
     await recordAudit({
       actor,

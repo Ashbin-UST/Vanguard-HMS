@@ -1,18 +1,9 @@
-/**
- * Seed default sidebar nodes.
- *
- * Run manually:  node src/utils/seedNodes.js
- *
- * The frontend always renders "Overview" and "Profile" by itself, so they
- * are intentionally NOT seeded here. This script only inserts the
- * role-specific menu items. Re-running is safe: existing paths are skipped.
- */
 require("dotenv").config();
 const mongoose = require("mongoose");
 const Node = require("../models/Nodes");
 
+// Default sidebar menu items grouped by role; Overview and Profile are rendered by the frontend
 const DEFAULT_NODES = [
-    // --- Employee management (OWNER, ADMIN) ---
     {
         name: "Employees",
         path: "/dashboard/employees",
@@ -26,21 +17,11 @@ const DEFAULT_NODES = [
         allowedDesignations: ["OWNER", "ADMIN"]
     },
     {
-        name: "Create Employee",
-        path: "/dashboard/employees/create",
-        icon: "user-plus",
-        allowedDesignations: ["OWNER", "ADMIN"]
-    },
-
-    // --- Admin management (OWNER only) ---
-    {
         name: "Admins",
         path: "/dashboard/admins",
         icon: "shield",
         allowedDesignations: ["OWNER"]
     },
-
-    // --- Patients (OWNER, ADMIN, RECEPTIONIST) ---
     {
         name: "Patients",
         path: "/dashboard/patients",
@@ -48,28 +29,14 @@ const DEFAULT_NODES = [
         allowedDesignations: ["OWNER", "ADMIN", "RECEPTIONIST"]
     },
     {
-        name: "Add Patient",
-        path: "/dashboard/patients/create",
-        icon: "user-plus",
-        allowedDesignations: ["OWNER", "ADMIN", "RECEPTIONIST"]
-    },
-
-    // --- Appointments ---
-    // Reception level can view + book
-    {
         name: "Appointments",
         path: "/dashboard/appointments",
         icon: "calendar",
         allowedDesignations: ["OWNER", "ADMIN", "RECEPTIONIST", "DOCTOR"]
-    },
-    {
-        name: "Book Appointment",
-        path: "/dashboard/appointments/book",
-        icon: "calendar-plus",
-        allowedDesignations: ["OWNER", "ADMIN", "RECEPTIONIST"]
     }
 ];
 
+// Connect, insert missing nodes, then disconnect; safe to re-run (existing paths are skipped)
 const seedNodes = async () => {
     try {
         await mongoose.connect(process.env.MONGO_URI);
@@ -87,7 +54,7 @@ const seedNodes = async () => {
                 continue;
             }
 
-            // Use save() so the pre-save hook assigns nodeId
+            // Use save() instead of create() so the pre-save hook assigns nodeId
             const node = new Node(nodeData);
             await node.save();
             created += 1;

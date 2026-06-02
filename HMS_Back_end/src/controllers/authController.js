@@ -7,12 +7,12 @@ const sendEmail = require("../utils/sendEmail");
 const emailTemplates = require("../utils/emailTemplates");
 const buildEmployeeProfile = require("../utils/buildEmployeeProfile");
 const buildEmployeeData = require("../utils/buildEmployeeData");
-const validateUniqueEmployeeFields = require("../utils/validateUniqueEmployeeFields");
+const validateUniqueEmployeeFields = require("../validators/validateUniqueEmployeeFields");
 const getCurrentUser = require("../utils/getCurrentUser");
 const { RESTRICTED_ROLES_SET } = require("../config/constants");
 require("dotenv").config();
 
-// Login
+// Authenticate a user and return a JWT with their roles
 exports.login = async (req, res) => {
 
     try {
@@ -32,6 +32,7 @@ exports.login = async (req, res) => {
             });
         }
 
+        // Block login for non-ACTIVE accounts with a status-specific message
         const blockedStatuses = {
             PENDING: "Admin approval is pending",
             REJECTED: "Registration request is rejected",
@@ -49,6 +50,7 @@ exports.login = async (req, res) => {
         user.lastLoginAt = new Date();
         await user.save();
 
+        // Load the linked employee profile to include in the response
         const employee = await Employee.findOne({
             employeeCode: user.employeeCode
         }).select("-__v");
@@ -61,6 +63,7 @@ exports.login = async (req, res) => {
 
         const profile = buildEmployeeProfile(employee);
 
+        // Sign a JWT containing the employee code and roles
         const token = jwt.sign(
             {
                 employeeCode: user.employeeCode,
@@ -96,7 +99,7 @@ exports.login = async (req, res) => {
 }
 }
 
-// Change password
+// Allow an authenticated user to change their own password
 exports.changePassword = async (req, res) => {
 
     try {
@@ -138,6 +141,7 @@ exports.changePassword = async (req, res) => {
             })
         }
 
+        // Hash and persist the new password, clearing the forced-change flag
         const newPassHash = await bcrypt.hash(newPassword, 10);
 
         user.passwordHash = newPassHash;
@@ -158,7 +162,7 @@ exports.changePassword = async (req, res) => {
     }
 }
 
-// Forgot Password
+// Generate a short-lived reset token and email it to the user
 exports.forgotPassword = async (req, res) => {
 
     try {
@@ -178,6 +182,7 @@ exports.forgotPassword = async (req, res) => {
             });
         }
 
+        // Create a random token, store only its hash so the raw value cannot be recovered from the DB
         const resetPasswordToken = crypto.randomBytes(32).toString("hex");
         const resetPasswordTokenExpiry = new Date(Date.now() + 15 * 60 * 1000);
 
@@ -192,10 +197,7 @@ exports.forgotPassword = async (req, res) => {
 
         await user.save();
 
-        // DEV ONLY: print the raw reset link so you can test the reset-password
-        // page in the browser without relying on the email. The raw token is
-        // never stored (only its hash), so this is the only place to capture it.
-        // Remove or guard out before deploying to production.
+        // dev only: print reset link to console for manual testing without email
         if (process.env.NODE_ENV !== "production") {
             console.log(
                 "\n[DEV] Reset link for " + user.email + ":\n" +
@@ -204,7 +206,7 @@ exports.forgotPassword = async (req, res) => {
             );
         }
 
-        // Send email with reset token
+        // Send the raw token in the email; only the hash is stored server-side
         try {
             await sendEmail({
                 to: user.email,
@@ -227,7 +229,7 @@ exports.forgotPassword = async (req, res) => {
     }
 }
 
-// Reset password
+// Validate the reset token and set a new password
 exports.resetPassword = async (req, res) => {
 
     try {
@@ -243,6 +245,7 @@ exports.resetPassword = async (req, res) => {
             });
         }
 
+        // Hash the incoming token to look it up against the stored hash
         const hashedToken =
             crypto
                 .createHash("sha256")
@@ -275,6 +278,7 @@ exports.resetPassword = async (req, res) => {
             });
         }
 
+        // Hash the new password and clear the reset token fields
         const newHash = await bcrypt.hash(newPassword, 10);
 
         user.passwordHash = newHash;
@@ -298,14 +302,14 @@ exports.resetPassword = async (req, res) => {
     }
 }
 
-// Logout
+// Stateless logout — JWT invalidation is handled client-side
 exports.logout = (req, res) => {
     res.status(200).json({
         message: "User has been logged out successfully"
     });
 }
 
-// Get current authenticated user + profile (used after a page refresh)
+// Return the current user's account and profile (used on page refresh)
 exports.me = async (req, res) => {
     try {
         return await getCurrentUser(req.user.employeeCode, res);
@@ -318,13 +322,12 @@ exports.me = async (req, res) => {
     }
 }
 
-// Employee self registration
+// Submit a self-registration request; account starts in PENDING until admin approves
 exports.selfRegister = async (req, res) => {
 
     const { username, email, password, designation } = req.body;
 
     try {
-        // Prevent self-registration as ADMIN or OWNER
         if (RESTRICTED_ROLES_SET.has(designation)) {
             return res.status(403).json({
                 message:
@@ -340,17 +343,13 @@ exports.selfRegister = async (req, res) => {
             });
         }
 
-        // Hash password
         const passwordHash = await bcrypt.hash(password, 10);
 
-        // Build employee data
         const employeeData = buildEmployeeData(req.body);
 
-        // Create employee
         const employee = new Employee(employeeData);
         await employee.save();
 
-        // Create user
         const user = new User({
             username,
             email,
@@ -367,18 +366,15 @@ exports.selfRegister = async (req, res) => {
 
         await user.save();
 
-        // Send approval request email to admin(s)
+        // Notify all active admins and owners of the pending registration
         try {
-            // Find all active admin/owner users
             const admins = await User.find({
                 roles: { $in: ["ADMIN", "OWNER"] },
                 status: "ACTIVE"
             });
 
-            // Extract admin emails
             const adminEmails = admins.map((admin) => admin.email);
 
-            // Send email to all admins
             if (adminEmails.length) {
                 await sendEmail({
                     to: adminEmails,
