@@ -157,6 +157,7 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
     // Disable non-editable controls so their validators don't affect form validity
     this.form.get('username')?.disable();
     this.form.get('email')?.disable();
+    this.form.get('medicalRegistrationNumber')?.disable();
 
     this.adminService.getEmployee(this.editEmployeeCode).subscribe({
       next: (res) => {
