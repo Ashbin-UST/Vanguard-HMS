@@ -80,6 +80,20 @@ export interface CreateEmployeePayload {
   availabilitySlots?: AvailabilitySlot[];
 }
 
+// Payload to update an existing employee (admin / owner actors only).
+export interface UpdateEmployeePayload {
+  name?: string;
+  phone?: string;
+  department?: Department;
+  designation?: Designation;
+  joiningDate?: string;
+  qualification?: string[];
+  medicalRegistrationNumber?: string;
+  specialization?: string;
+  consultationFee?: number;
+  availabilitySlots?: AvailabilitySlot[];
+}
+
 export const DEPARTMENTS: Department[] = [
   'OPD',
   'IPD',

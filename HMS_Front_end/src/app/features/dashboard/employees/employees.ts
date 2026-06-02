@@ -130,6 +130,16 @@ export class EmployeesListComponent implements OnInit {
     this.selected.set(null);
   }
 
+  editEmployee(item: EmployeeListItem): void {
+    this.router.navigate(['/dashboard/employees', item.employee.employeeCode, 'edit']);
+  }
+
+  // Only staff designations can be edited via the update-employee endpoint.
+  // The backend rejects OWNER and ADMIN updates, so hide the button for those.
+  canEdit(item: EmployeeListItem): boolean {
+    return item.employee.designation !== 'OWNER' && item.employee.designation !== 'ADMIN';
+  }
+
   async deleteEmployee(item: EmployeeListItem): Promise<void> {
     const isAdmin = item.employee.designation === 'ADMIN';
     const result = await this.confirmModal.open({

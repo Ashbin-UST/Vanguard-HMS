@@ -28,6 +28,13 @@ router.post(
 
 router.get("/employees", controller.getEmployees);
 
+router.get(
+  "/employees/:employeeCode",
+  employeeCodeValidation,
+  validate,
+  controller.getEmployee,
+);
+
 router.get("/pending-employees", controller.getPendingEmployees);
 
 router.put(

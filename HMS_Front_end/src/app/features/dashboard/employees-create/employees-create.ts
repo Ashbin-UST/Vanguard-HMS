@@ -19,6 +19,9 @@ import { CanComponentDeactivate } from '../../../core/guards/unsaved-changes.gua
 import {
   Designation,
   Department,
+  EmployeeProfile,
+  CreateEmployeePayload,
+  UpdateEmployeePayload,
   STAFF_DESIGNATIONS,
   DEPARTMENTS,
   DEPARTMENT_DESIGNATIONS,
@@ -34,15 +37,16 @@ import {
 } from '../../../core/validators/app-validators';
 
 /**
- * Reusable create-employee form.
+ * Reusable employee form — handles create (staff / admin) and edit modes.
  *
- *   route data: { mode: 'staff' } — POST /admin/create-employee (any staff
- *     designation). OWNER and ADMIN can access.
- *   route data: { mode: 'admin' } — POST /owner/create-admin (ADMIN only).
- *     OWNER access only (enforced by route guard).
+ *   route data { mode: 'staff' } — POST /admin/create-employee
+ *   route data { mode: 'admin' } — POST /owner/create-admin  (OWNER only)
+ *   route data { mode: 'edit'  } — PUT  /admin/update-employee/:code
+ *     route param :code — employeeCode of the employee to edit
  *
- * No password input — backend generates and emails a temporary password. The
- * created user is then forced through the change-password gate on first login.
+ * No password field — the backend generates and emails a temporary password on
+ * creation. In edit mode username and email are shown read-only because they
+ * are not updatable via the employee-update endpoint.
  */
 @Component({
   selector: 'app-create-employee',
@@ -51,9 +55,7 @@ import {
   templateUrl: './employees-create.html',
   styleUrl: './employees-create.css',
 })
-export class CreateEmployeeComponent
-  implements OnInit, CanComponentDeactivate
-{
+export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
   private readonly fb = inject(FormBuilder);
   private readonly adminService = inject(AdminService);
   private readonly ownerService = inject(OwnerService);
@@ -64,9 +66,11 @@ export class CreateEmployeeComponent
   private readonly router = inject(Router);
   private readonly formDraft = inject(FormDraftService);
 
-  mode: 'staff' | 'admin' = 'staff';
+  mode: 'staff' | 'admin' | 'edit' = 'staff';
+  editEmployeeCode = '';
   form: FormGroup;
   loading = false;
+  initialLoading = false;
   submittedOk = false;
 
   departments = DEPARTMENTS;
@@ -102,19 +106,32 @@ export class CreateEmployeeComponent
     return `draft:create-${this.mode}`;
   }
 
+  get pageTitle(): string {
+    if (this.mode === 'edit') return 'Edit Employee';
+    return this.mode === 'admin' ? 'Create Admin' : 'Create Employee';
+  }
+
+  get cardTitle(): string {
+    if (this.mode === 'edit') return 'Edit Employee';
+    return this.mode === 'admin' ? 'New Administrator' : 'New Employee';
+  }
+
   ngOnInit(): void {
     this.mode =
-      (this.route.snapshot.data['mode'] as 'staff' | 'admin') || 'staff';
-
+      (this.route.snapshot.data['mode'] as 'staff' | 'admin' | 'edit') || 'staff';
     this.isOwner = this.authService.getDesignation() === 'OWNER';
 
+    if (this.mode === 'edit') {
+      this.editEmployeeCode = this.route.snapshot.paramMap.get('code') ?? '';
+      this.loadForEdit();
+      return;
+    }
+
     if (this.mode === 'admin') {
-      // For admin creation, designation is fixed.
       this.designations = ['ADMIN'];
       this.form.patchValue({ designation: 'ADMIN', department: 'Administration' });
     }
 
-    // Restore draft
     const draft = this.formDraft.get(this.draftKey);
     if (draft) {
       const slots = Array.isArray(draft['availabilitySlots'])
@@ -122,8 +139,6 @@ export class CreateEmployeeComponent
         : [];
       slots.forEach(() => this.addSlot());
       this.form.patchValue(draft);
-      // Rebuild the designation list for the restored department, then refresh
-      // the conditional (medical/fee) fields for the restored designation.
       if (this.mode !== 'admin') {
         this.refreshDesignationsForDepartment(false);
       }
@@ -135,6 +150,66 @@ export class CreateEmployeeComponent
         this.formDraft.save(this.draftKey, this.form.getRawValue());
       }
     });
+  }
+
+  private loadForEdit(): void {
+    this.initialLoading = true;
+    // Disable non-editable controls so their validators don't affect form validity
+    this.form.get('username')?.disable();
+    this.form.get('email')?.disable();
+
+    this.adminService.getEmployee(this.editEmployeeCode).subscribe({
+      next: (res) => {
+        this.populateEditForm(res.employee);
+        this.initialLoading = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.initialLoading = false;
+        this.toast.error('Failed to load employee data.');
+        this.router.navigate(['/dashboard/employees']);
+      },
+    });
+  }
+
+  private populateEditForm(emp: EmployeeProfile): void {
+    this.form.patchValue({
+      name: emp.name,
+      email: emp.email,
+      phone: emp.phone,
+      department: emp.department,
+      designation: emp.designation,
+      joiningDate: emp.joiningDate ? emp.joiningDate.substring(0, 10) : '',
+      qualification: (emp.qualification ?? []).join(', '),
+      medicalRegistrationNumber: emp.medicalRegistrationNumber ?? '',
+      specialization: emp.specialization ?? '',
+      consultationFee: emp.consultationFee ?? null,
+    });
+
+    this.refreshDesignationsForDepartment(false);
+    // Sets isDoctor/showMedical/showSpecialization, validators, and clears slots
+    this.onDesignationChange();
+
+    if (this.isDoctor) {
+      const slots = emp.availabilitySlots ?? [];
+      this.availabilitySlots.clear();
+      if (slots.length > 0) {
+        slots.forEach((slot) => {
+          this.availabilitySlots.push(
+            this.fb.group(
+              {
+                day: [slot.day, Validators.required],
+                startTime: [slot.startTime, Validators.required],
+                endTime: [slot.endTime, Validators.required],
+              },
+              { validators: slotTimeOrder },
+            ),
+          );
+        });
+      } else {
+        this.addSlot();
+      }
+    }
   }
 
   addSlot(): void {
@@ -154,8 +229,6 @@ export class CreateEmployeeComponent
     this.availabilitySlots.removeAt(i);
   }
 
-  // Called when the Department dropdown changes. Narrows the Designation list
-  // to the ones valid for that department and auto-fills a sensible default.
   onDepartmentChange(): void {
     this.refreshDesignationsForDepartment(true);
     this.onDesignationChange();
@@ -164,12 +237,9 @@ export class CreateEmployeeComponent
   /**
    * Rebuilds the Designation options for the currently selected department.
    *
-   * - Administration's ADMIN option is only offered when an OWNER is creating
-   *   (admins can't create admins).
+   * - Administration's ADMIN option is only offered when an OWNER is acting.
    * - When `autoFill` is true, the designation is set to the first valid option
-   *   if the current value isn't valid for the chosen department. The control
-   *   stays editable; for clinical departments (OPD/IPD) the user can still
-   *   switch between Doctor and Nurse.
+   *   if the current value isn't valid for the chosen department.
    */
   private refreshDesignationsForDepartment(autoFill: boolean): void {
     const dept = this.form.get('department')?.value as Department | '';
@@ -183,12 +253,10 @@ export class CreateEmployeeComponent
       ...(DEPARTMENT_DESIGNATIONS[dept] || STAFF_DESIGNATIONS),
     ];
 
-    // Only an owner may create an ADMIN; drop it otherwise.
     if (!this.isOwner) {
       allowed = allowed.filter((d) => d !== 'ADMIN');
     }
 
-    // Fallback so the dropdown is never empty (e.g. admin picks Administration).
     if (allowed.length === 0) {
       allowed = [...STAFF_DESIGNATIONS];
     }
@@ -235,6 +303,38 @@ export class CreateEmployeeComponent
     return this.form.dirty && !this.submittedOk;
   }
 
+  // Extracts and parses the fields that are common to both create and update
+  // payloads. Qualification is split from a comma-separated string; conditional
+  // fields (medical, specialization, doctor-only) are included only when the
+  // current designation requires them.
+  private buildCommonPayload(raw: Record<string, unknown>): UpdateEmployeePayload {
+    const payload: UpdateEmployeePayload = {
+      name: raw['name'] as string,
+      phone: raw['phone'] as string,
+      department: raw['department'] as Department,
+      designation: raw['designation'] as Designation,
+      joiningDate: raw['joiningDate'] as string,
+      qualification: String(raw['qualification'])
+        .split(',')
+        .map((q: string) => q.trim())
+        .filter((q: string) => q.length > 0),
+    };
+
+    if (this.showMedical && raw['medicalRegistrationNumber']) {
+      payload.medicalRegistrationNumber = raw['medicalRegistrationNumber'] as string;
+    }
+    if (this.showSpecialization && raw['specialization']) {
+      payload.specialization = raw['specialization'] as string;
+    }
+    if (this.isDoctor) {
+      payload.consultationFee = Number(raw['consultationFee']);
+      payload.availabilitySlots =
+        raw['availabilitySlots'] as UpdateEmployeePayload['availabilitySlots'];
+    }
+
+    return payload;
+  }
+
   onSubmit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -242,44 +342,48 @@ export class CreateEmployeeComponent
       return;
     }
 
-    const raw = this.form.getRawValue();
-    const payload: any = {
-      username: raw.username,
-      name: raw.name,
-      email: raw.email,
-      phone: raw.phone,
-      department: raw.department,
-      designation: raw.designation,
-      joiningDate: raw.joiningDate,
-      qualification: String(raw.qualification)
-        .split(',')
-        .map((q: string) => q.trim())
-        .filter((q: string) => q.length > 0),
-    };
-    if (this.showMedical && raw.medicalRegistrationNumber) {
-      payload.medicalRegistrationNumber = raw.medicalRegistrationNumber;
-    }
-    if (this.showSpecialization && raw.specialization) {
-      payload.specialization = raw.specialization;
-    }
-    if (this.isDoctor) {
-      payload.consultationFee = Number(raw.consultationFee);
-      payload.availabilitySlots = raw.availabilitySlots;
+    const raw = this.form.getRawValue() as Record<string, unknown>;
+    const commonPayload = this.buildCommonPayload(raw);
+
+    if (this.mode === 'edit') {
+      this.loading = true;
+      this.adminService.updateEmployee(this.editEmployeeCode, commonPayload).subscribe({
+        next: (res) => {
+          this.loading = false;
+          this.cdr.markForCheck();
+          this.submittedOk = true;
+          this.toast.success(res.message || 'Employee updated successfully.');
+          this.router.navigate(['/dashboard/employees']);
+        },
+        error: (err) => {
+          this.loading = false;
+          this.cdr.markForCheck();
+          this.toast.error(err.error?.message || 'Failed to update employee.');
+        },
+      });
+      return;
     }
 
+    const creatingAdmin = commonPayload.designation === 'ADMIN';
+    const createPayload: CreateEmployeePayload = {
+      username: raw['username'] as string,
+      email: raw['email'] as string,
+      name: commonPayload.name as string,
+      phone: commonPayload.phone as string,
+      department: creatingAdmin ? 'Administration' : commonPayload.department as Department,
+      designation: commonPayload.designation as Designation,
+      joiningDate: commonPayload.joiningDate as string,
+      qualification: commonPayload.qualification as string[],
+      medicalRegistrationNumber: commonPayload.medicalRegistrationNumber,
+      specialization: commonPayload.specialization,
+      consultationFee: commonPayload.consultationFee,
+      availabilitySlots: commonPayload.availabilitySlots,
+    };
+
     this.loading = true;
-    // Route to the admin-creation endpoint whenever the target designation is
-    // ADMIN — either the dedicated admin form (mode==='admin') or the owner
-    // picking ADMIN in the normal employee form. The create-employee endpoint
-    // rejects ADMIN/OWNER, so this must go to create-admin instead.
-    const creatingAdmin = raw.designation === 'ADMIN';
-    if (creatingAdmin) {
-      // create-admin derives the admin designation/department server-side.
-      payload.department = payload.department || 'Administration';
-    }
     const call = creatingAdmin
-      ? this.ownerService.createAdmin(payload)
-      : this.adminService.createEmployee(payload);
+      ? this.ownerService.createAdmin(createPayload)
+      : this.adminService.createEmployee(createPayload);
 
     call.subscribe({
       next: (res) => {
@@ -304,6 +408,10 @@ export class CreateEmployeeComponent
   }
 
   onCancel(): void {
+    if (this.mode === 'edit') {
+      this.router.navigate(['/dashboard/employees']);
+      return;
+    }
     this.router.navigate([
       this.mode === 'admin' ? '/dashboard/admins' : '/dashboard/employees',
     ]);
