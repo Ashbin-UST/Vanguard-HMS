@@ -29,6 +29,39 @@ const checkAppointmentValidity = async ({
 
   const doctor = validDoctor.employee;
 
+  // Reject past dates and past time slots on today's date.
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  const apptDay = new Date(appointmentDate);
+  apptDay.setHours(0, 0, 0, 0);
+
+  if (apptDay.getTime() < todayStart.getTime()) {
+    return {
+      success: false,
+      status: 409,
+      message: "Cannot book an appointment in the past.",
+    };
+  }
+
+  if (apptDay.getTime() === todayStart.getTime()) {
+    const [slotStartHH, slotStartMM] = timeSlot
+      .split("-")[0]
+      .split(":")
+      .map(Number);
+    const slotStartMinutes = slotStartHH * 60 + slotStartMM;
+    const now = new Date();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+    if (slotStartMinutes <= nowMinutes) {
+      return {
+        success: false,
+        status: 409,
+        message: "Cannot book an appointment for a time that has already passed.",
+      };
+    }
+  }
+
   // Reject appointment dates before the doctor has joined. Compare on the
   // calendar day only (an appointment ON the joining date is allowed).
   if (doctor.joiningDate) {
