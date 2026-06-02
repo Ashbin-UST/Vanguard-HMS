@@ -23,7 +23,7 @@ const runScript = (script) =>
     });
   });
 
-(async () => {
+(async () => { // NOSONAR - top-level await is unavailable in CommonJS modules
   try {
     for (const script of scripts) {
       await runScript(script);
