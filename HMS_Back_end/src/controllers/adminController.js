@@ -1,27 +1,45 @@
-const bcrypt = require("bcryptjs");
 const User = require("../models/Users");
 const Employee = require("../models/Employees");
 const AuditLog = require("../models/AuditLogs");
 const ProfileChangeRequest = require("../models/ProfileChangeRequests");
-const sendEmail = require("../utils/sendEmail");
 const emailTemplates = require("../utils/emailTemplates");
-const generateTemporaryPassword = require("../utils/generateTemporaryPassword");
-const buildEmployeeData = require("../utils/buildEmployeeData");
+const sendEmail = require("../utils/sendEmail");
 const buildEmployeeResponse = require("../utils/buildEmployeeResponse");
 const updateEmployeeData = require("../utils/updateEmployeeData");
-const validateUniqueEmployeeFields = require("../utils/validateUniqueEmployeeFields");
 const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
 const deleteEmployeeAccount = require("../utils/deleteEmployeeAccount");
+const createAccountWithEmployee = require("../utils/createAccountWithEmployee");
+const parsePagination = require("../utils/parsePagination");
 const { RESTRICTED_ROLES_SET } = require("../config/constants");
+
+const getEmployeesByStatus = async (status, res) => {
+  const users = await User.find({ roles: "STAFF", status }).select("-passwordHash");
+  const employeeCodes = users.map((user) => user.employeeCode);
+  const employees = await Employee.find({ employeeCode: { $in: employeeCodes } });
+  const formattedEmployees = buildEmployeeResponse(employees, users);
+  return res.status(200).json({
+    totalEmployees: formattedEmployees.length,
+    employees: formattedEmployees,
+  });
+};
+
+const findPendingRequest = async (requestId, res) => {
+  const request = await ProfileChangeRequest.findOne({ requestId });
+  if (!request) {
+    res.status(404).json({ message: "Profile change request not found" });
+    return null;
+  }
+  if (String(request.status) !== "PENDING") {
+    res.status(400).json({ message: "This request has already been reviewed" });
+    return null;
+  }
+  return request;
+};
 
 // Employee Account Creation
 exports.createEmployee = async (req, res) => {
-  let employee;
-  let user;
-  let temporaryPassword;
-
-  const { username, email, designation } = req.body;
+  const { designation } = req.body;
 
   try {
     // Prevent admin from creating ADMIN or OWNER accounts
@@ -31,63 +49,12 @@ exports.createEmployee = async (req, res) => {
       });
     }
 
-    const uniquenessResult = await validateUniqueEmployeeFields(req.body);
-
-    if (!uniquenessResult.success) {
-      return res.status(uniquenessResult.status).json({
-        message: uniquenessResult.message,
-      });
-    }
-
-    // Generate temporary password
-    temporaryPassword = generateTemporaryPassword();
-
-    // Hash password
-    const passwordHash = await bcrypt.hash(temporaryPassword, 10);
-
-    // Build employee data
-    const employeeData = buildEmployeeData(req.body);
-
-    // Create employee
-    employee = new Employee(employeeData);
-
-    await employee.save();
-
-    // Create user
-    user = new User({
-      username,
-      email,
-      passwordHash,
+    const { employee, user } = await createAccountWithEmployee(req, { // NOSONAR: false positive; function is async but Sonar loses type info across CommonJS require
       roles: ["STAFF"],
-      employeeCode: employee.employeeCode,
-      status: "ACTIVE",
-      mustChangePassword: true,
-      createdByAdmin: true,
-      approvedBy: req.user.employeeCode,
-      approvedAt: new Date(),
-      createdBy: req.user.employeeCode,
-    });
-
-    await user.save();
-
-    // Send email AFTER successful transaction
-    try {
-      await sendEmail({
-        to: user.email,
-        ...emailTemplates.employeeCredentials({ username, temporaryPassword }),
-      });
-    } catch (emailError) {
-      console.error("Email sending error:", emailError);
-    }
-
-    // Record audit
-    const actor = await resolveActor(req.user);
-    await recordAudit({
-      actor,
-      action: "EMPLOYEE_CREATED",
-      targetType: "EMPLOYEE",
-      targetId: employee.employeeCode,
-      message: `Employee ${employee.name} (${employee.employeeCode}) was created as ${employee.designation}`
+      emailTemplate: emailTemplates.employeeCredentials,
+      auditAction: "EMPLOYEE_CREATED",
+      buildAuditMessage: (emp) =>
+        `Employee ${emp.name} (${emp.employeeCode}) was created as ${emp.designation}`,
     });
 
     return res.status(201).json({
@@ -98,7 +65,6 @@ exports.createEmployee = async (req, res) => {
         email: user.email,
         roles: user.roles,
       },
-
       employee: {
         employeeCode: employee.employeeCode,
         name: employee.name,
@@ -107,6 +73,9 @@ exports.createEmployee = async (req, res) => {
       },
     });
   } catch (err) {
+    if (err.status) {
+      return res.status(err.status).json({ message: err.message });
+    }
     console.error("Employee creation error:", err);
     return res.status(500).json({
       message: "Server error during employee creation",
@@ -117,31 +86,9 @@ exports.createEmployee = async (req, res) => {
 // Get all active staff employees
 exports.getEmployees = async (req, res) => {
   try {
-    // Find all ACTIVE STAFF users
-    const users = await User.find({
-      roles: "STAFF",
-      status: "ACTIVE",
-    }).select("-passwordHash");
-
-    // Extract employee codes
-    const employeeCodes = users.map((user) => user.employeeCode);
-
-    // Find matching employees
-    const employees = await Employee.find({
-      employeeCode: {
-        $in: employeeCodes,
-      },
-    });
-
-    const formattedEmployees = buildEmployeeResponse(employees, users);
-
-    return res.status(200).json({
-      totalEmployees: formattedEmployees.length,
-      employees: formattedEmployees,
-    });
+    await getEmployeesByStatus("ACTIVE", res);
   } catch (err) {
     console.error("Get employees error:", err);
-
     return res.status(500).json({
       message: "Server error while fetching employees",
     });
@@ -151,31 +98,9 @@ exports.getEmployees = async (req, res) => {
 // Get employees having account status pending
 exports.getPendingEmployees = async (req, res) => {
   try {
-    // Find all STAFF users
-    const users = await User.find({
-      roles: "STAFF",
-      status: "PENDING",
-    }).select("-passwordHash");
-
-    // Extract employee codes
-    const employeeCodes = users.map((user) => user.employeeCode);
-
-    // Find matching employees
-    const employees = await Employee.find({
-      employeeCode: {
-        $in: employeeCodes,
-      },
-    });
-
-    const formattedEmployees = buildEmployeeResponse(employees, users);
-
-    return res.status(200).json({
-      totalEmployees: formattedEmployees.length,
-      employees: formattedEmployees,
-    });
+    await getEmployeesByStatus("PENDING", res);
   } catch (err) {
     console.error("Get employees error:", err);
-
     return res.status(500).json({
       message: "Server error while fetching employees",
     });
@@ -425,12 +350,7 @@ exports.deleteEmployee = async (req, res) => {
 // Get audit logs (recent activity)
 exports.getAuditLogs = async (req, res) => {
   try {
-    const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
-    const limit = Math.min(
-      Math.max(Number.parseInt(req.query.limit, 10) || 20, 1),
-      100,
-    );
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = parsePagination(req.query, 20);
 
     const filter = {};
 
@@ -498,19 +418,8 @@ exports.approveProfileChange = async (req, res) => {
   try {
     const { requestId } = req.params;
 
-    const request = await ProfileChangeRequest.findOne({ requestId });
-
-    if (!request) {
-      return res.status(404).json({
-        message: "Profile change request not found",
-      });
-    }
-
-    if (String(request.status) !== "PENDING") {
-      return res.status(400).json({
-        message: "This request has already been reviewed",
-      });
-    }
+    const request = await findPendingRequest(requestId, res);
+    if (!request) return;
 
     const employee = await Employee.findOne({
       employeeCode: request.employeeCode,
@@ -574,19 +483,8 @@ exports.rejectProfileChange = async (req, res) => {
   try {
     const { requestId } = req.params;
 
-    const request = await ProfileChangeRequest.findOne({ requestId });
-
-    if (!request) {
-      return res.status(404).json({
-        message: "Profile change request not found",
-      });
-    }
-
-    if (String(request.status) !== "PENDING") {
-      return res.status(400).json({
-        message: "This request has already been reviewed",
-      });
-    }
+    const request = await findPendingRequest(requestId, res);
+    if (!request) return;
 
     request.status = "REJECTED";
     request.reviewedBy = req.user.employeeCode;

@@ -31,13 +31,27 @@
   min-width: 160px;
 }
 
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.filter-label {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
 .loading-box,
 .empty-box {
   background-color: #ffffff;
   border-radius: 0.75rem;
   padding: 2rem;
   text-align: center;
-  color: #94a3b8;
+  color: #475569;
   border: 1px dashed #e2e8f0;
 }
 
@@ -98,12 +112,12 @@
 
 .status--active {
   background-color: #f0fdf4;
-  color: #16a34a;
+  color: #15803d;
 }
 
 .status--inactive {
   background-color: #f1f5f9;
-  color: #64748b;
+  color: #475569;
 }
 
 .pagination {

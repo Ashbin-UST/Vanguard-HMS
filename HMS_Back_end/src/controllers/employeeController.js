@@ -6,6 +6,7 @@ const sendEmail = require("../utils/sendEmail");
 const emailTemplates = require("../utils/emailTemplates");
 const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
+const getCurrentUser = require("../utils/getCurrentUser");
 const { RESTRICTED_ROLES_SET } = require("../config/constants");
 
 // Fields an employee is allowed to self-update (via approval flow)
@@ -13,42 +14,8 @@ const SELF_EDITABLE_FIELDS = ["phone", "qualification"];
 
 // Get current authenticated user + profile (used after a page refresh)
 exports.getMe = async (req, res) => {
-
     try {
-        const user = await User.findOne({
-            employeeCode: req.user.employeeCode
-        }).select("-passwordHash -resetPasswordTokenHash -resetPasswordTokenExpiry -__v");
-
-        if (!user) {
-            return res.status(404).json({
-                message: "User not found"
-            });
-        }
-
-        const employee = await Employee.findOne({
-            employeeCode: user.employeeCode
-        }).select("-__v");
-
-        if (!employee) {
-            return res.status(404).json({
-                message: "Employee profile not found"
-            });
-        }
-
-        const profile = buildEmployeeProfile(employee);
-
-        return res.status(200).json({
-            message: "User retrieved successfully",
-            user: {
-                employeeCode: user.employeeCode,
-                username: user.username,
-                email: user.email,
-                roles: user.roles,
-                mustChangePassword: user.mustChangePassword,
-                lastLoginAt: user.lastLoginAt,
-                profile
-            }
-        });
+        return await getCurrentUser(req.user.employeeCode, res);
     }
     catch (err) {
         console.error("Error during getMe: ", err);

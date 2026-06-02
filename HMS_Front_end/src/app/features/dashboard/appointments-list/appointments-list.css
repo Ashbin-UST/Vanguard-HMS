@@ -78,7 +78,7 @@
   border-radius: 0.75rem;
   padding: 2rem;
   text-align: center;
-  color: #94a3b8;
+  color: #475569;
   border: 1px dashed #e2e8f0;
 }
 
@@ -148,12 +148,12 @@
 
 .status--canceled {
   background-color: #fef2f2;
-  color: #dc2626;
+  color: #b91c1c;
 }
 
 .status--completed {
   background-color: #f0fdf4;
-  color: #16a34a;
+  color: #15803d;
 }
 
 .pagination {
@@ -187,7 +187,7 @@
 .btn-success-outline {
   background-color: #ffffff;
   border: 1px solid #bbf7d0;
-  color: #16a34a;
+  color: #15803d;
 }
 
 .btn-success-outline:hover {

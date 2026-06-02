@@ -1,5 +1,5 @@
 @if (modalService.modalState().isOpen) {
-  <div class="modal-backdrop" (click)="onBackdropClick($event)">
+  <div class="modal-backdrop" (click)="onBackdropClick($event)" (keydown.escape)="onCancel()">
     <div class="modal-box" [class]="'modal-box--' + modalService.modalState().config.type">
 
       <!-- Header -->
@@ -25,13 +25,13 @@
         <!-- Optional Input (for cancel reason, etc.) -->
         @if (modalService.modalState().config.showInput) {
           <div class="modal-input-group">
-            <label class="modal-input-label">
+            <label class="modal-input-label" for="modal-input">
               {{ modalService.modalState().config.inputLabel }}
             </label>
             <input
+              id="modal-input"
               type="text"
               class="form-input"
-              aria-label="modal-input-label"
               [placeholder]="modalService.modalState().config.inputPlaceholder || ''"
               [value]="inputValue()"
               (input)="inputValue.set($any($event.target).value)"

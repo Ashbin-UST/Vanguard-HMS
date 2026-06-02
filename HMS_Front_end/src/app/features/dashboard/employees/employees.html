@@ -10,16 +10,19 @@
           [value]="searchTerm()"
           (input)="onSearch($any($event.target).value)"
         />
-        <select
-          class="form-select toolbar-filter"
-          aria-label="Filter by designation"
-          [value]="designationFilter() || 'ALL'"
-          (change)="onFilter($any($event.target).value)"
-        >
-          @for (d of designations; track d) {
-            <option [value]="d">{{ d === 'ALL' ? 'All Designations' : d }}</option>
-          }
-        </select>
+        <div class="filter-group">
+          <label class="filter-label" for="emp-designation-filter">Designation</label>
+          <select
+            id="emp-designation-filter"
+            class="form-select toolbar-filter"
+            [value]="designationFilter() || 'ALL'"
+            (change)="onFilter($any($event.target).value)"
+          >
+            @for (d of designations; track d) {
+              <option [value]="d">{{ d === 'ALL' ? 'All Designations' : d }}</option>
+            }
+          </select>
+        </div>
       </div>
       <a routerLink="/dashboard/employees/create" class="btn btn-primary">
         + Add Employee
@@ -48,7 +51,7 @@
           </thead>
           <tbody>
             @for (item of rows(); track trackByCode($index, item)) {
-              <tr (click)="open(item)" class="clickable">
+              <tr (click)="open(item)" (keydown.enter)="open(item)" (keydown.space)="open(item); $event.preventDefault()" class="clickable" tabindex="0">
                 <td>{{ item.employee.employeeCode }}</td>
                 <td>{{ item.employee.name }}</td>
                 <td>{{ item.employee.email }}</td>
@@ -61,13 +64,7 @@
                     {{ item.status }}
                   </span>
                 </td>
-                <td>
-                  @if (item.lastLoginAt) {
-                    {{ item.lastLoginAt | date: 'short' }}
-                  } @else {
-                    <span class="muted">N/A</span>
-                  }
-                </td>
+                <td><app-last-login-cell [timestamp]="item.lastLoginAt" /></td>
               </tr>
             }
           </tbody>
@@ -78,8 +75,8 @@
 
   <!-- Detail modal -->
   @if (selected(); as item) {
-    <div class="modal-backdrop" (click)="close()">
-      <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-backdrop" (click)="close()" (keydown.escape)="close()">
+      <div class="modal-box" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
         <div class="modal-header">
           <div>
             <h3 class="modal-title">{{ item.employee.name }}</h3>

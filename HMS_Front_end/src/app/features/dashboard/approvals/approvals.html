@@ -41,7 +41,7 @@
             </thead>
             <tbody>
               @for (item of registrations(); track trackByCode($index, item)) {
-                <tr (click)="openRegistration(item)" class="clickable">
+                <tr (click)="openRegistration(item)" (keydown.enter)="openRegistration(item)" (keydown.space)="openRegistration(item); $event.preventDefault()" class="clickable" tabindex="0">
                   <td>{{ item.employee.employeeCode }}</td>
                   <td>{{ item.employee.name }}</td>
                   <td>{{ item.employee.email }}</td>
@@ -76,7 +76,7 @@
             </thead>
             <tbody>
               @for (req of changes(); track trackByRequest($index, req)) {
-                <tr (click)="openChange(req)" class="clickable">
+                <tr (click)="openChange(req)" (keydown.enter)="openChange(req)" (keydown.space)="openChange(req); $event.preventDefault()" class="clickable" tabindex="0">
                   <td>{{ req.requestId }}</td>
                   <td>{{ req.employeeCode }}</td>
                   <td>{{ req.employeeName }}</td>
@@ -94,8 +94,8 @@
 
   <!-- Registration detail modal -->
   @if (selectedRegistration(); as item) {
-    <div class="modal-backdrop" (click)="closeRegistration()">
-      <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-backdrop" (click)="closeRegistration()" (keydown.escape)="closeRegistration()">
+      <div class="modal-box" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
         <div class="modal-header">
           <div>
             <h3 class="modal-title">{{ item.employee.name }}</h3>
@@ -171,8 +171,8 @@
 
   <!-- Profile-change detail modal: only employeeCode/name/email + diffs -->
   @if (selectedChange(); as req) {
-    <div class="modal-backdrop" (click)="closeChange()">
-      <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-backdrop" (click)="closeChange()" (keydown.escape)="closeChange()">
+      <div class="modal-box" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
         <div class="modal-header">
           <div>
             <h3 class="modal-title">Profile Change Request</h3>

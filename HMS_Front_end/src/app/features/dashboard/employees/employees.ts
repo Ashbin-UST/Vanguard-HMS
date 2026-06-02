@@ -3,6 +3,7 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
+import { LastLoginCellComponent } from '../../../shared/ui/last-login-cell/last-login-cell';
 import { AdminService } from '../../../core/services/admin.service';
 import { OwnerService } from '../../../core/services/owner.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -31,6 +32,7 @@ import {
     RouterLink,
     DashboardLayoutComponent,
     DatePipe,
+    LastLoginCellComponent,
   ],
   templateUrl: './employees.html',
   styleUrl: './employees.css',

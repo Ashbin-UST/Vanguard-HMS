@@ -9,6 +9,7 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
+import { AvailabilitySlotsFormComponent } from '../../../shared/ui/availability-slots-form/availability-slots-form';
 import { AdminService } from '../../../core/services/admin.service';
 import { OwnerService } from '../../../core/services/owner.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -46,7 +47,7 @@ import {
 @Component({
   selector: 'app-create-employee',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DashboardLayoutComponent],
+  imports: [CommonModule, ReactiveFormsModule, DashboardLayoutComponent, AvailabilitySlotsFormComponent],
   templateUrl: './employees-create.html',
   styleUrl: './employees-create.css',
 })
