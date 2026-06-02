@@ -42,6 +42,12 @@ export class AppointmentDetailComponent implements OnInit {
     return d === 'OWNER' || d === 'ADMIN' || d === 'RECEPTIONIST';
   });
 
+  canEdit = computed(
+    () =>
+      this.hasReceptionAccess() &&
+      this.appointment()?.status === 'BOOKED',
+  );
+
   canCancel = computed(
     () =>
       this.hasReceptionAccess() &&
@@ -92,6 +98,12 @@ export class AppointmentDetailComponent implements OnInit {
         this.router.navigate(['/dashboard/appointments']);
       },
     });
+  }
+
+  editAppointment(): void {
+    const a = this.appointment();
+    if (!a) return;
+    this.router.navigate(['/dashboard/appointments', a.appointmentId, 'edit']);
   }
 
   async cancel(): Promise<void> {

@@ -7,6 +7,7 @@ import {
   AppointmentsResponse,
   BookedSlotsResponse,
   CreateAppointmentPayload,
+  UpdateAppointmentPayload,
 } from '../models/appointment.model';
 
 export interface AppointmentFilters {
@@ -60,16 +61,31 @@ export class AppointmentService {
   }
 
   // Booked slots for a doctor on a date (for slot-conflict rendering).
+  // Pass excludeAppointmentId when editing so the current slot is not shown as blocked.
   getBookedSlots(
     doctorEmployeeId: string,
     date: string,
+    excludeAppointmentId?: string,
   ): Observable<BookedSlotsResponse> {
-    const params = new HttpParams()
+    let params = new HttpParams()
       .set('doctorEmployeeId', doctorEmployeeId)
       .set('date', date);
+    if (excludeAppointmentId) {
+      params = params.set('excludeAppointmentId', excludeAppointmentId);
+    }
     return this.http.get<BookedSlotsResponse>(`${this.apiUrl}/booked-slots`, {
       params,
     });
+  }
+
+  updateAppointment(
+    appointmentId: string,
+    data: UpdateAppointmentPayload,
+  ): Observable<AppointmentResponse> {
+    return this.http.put<AppointmentResponse>(
+      `${this.apiUrl}/${appointmentId}`,
+      data,
+    );
   }
 
   cancelAppointment(appointmentId: string): Observable<AppointmentResponse> {

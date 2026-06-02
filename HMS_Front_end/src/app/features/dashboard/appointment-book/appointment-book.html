@@ -1,10 +1,12 @@
-<app-dashboard-layout pageTitle="Book Appointment">
+<app-dashboard-layout [pageTitle]="pageTitle">
   <div class="page">
     <div class="card">
       <div class="card-header">
-        <h3 class="card-title">New Appointment</h3>
+        <h3 class="card-title">{{ mode === 'edit' ? 'Edit Appointment' : 'New Appointment' }}</h3>
         <p class="card-sub">
-          Pick the patient and doctor, then select an available time slot.
+          {{ mode === 'edit'
+            ? 'Update the patient, doctor, or time slot for this appointment.'
+            : 'Pick the patient and doctor, then select an available time slot.' }}
         </p>
       </div>
 
@@ -112,8 +114,11 @@
             Cancel
           </button>
           <button type="submit" class="btn btn-primary" [disabled]="loading">
-            @if (loading) { <span>Booking…</span> }
-            @else { <span>Book Appointment</span> }
+            @if (loading) {
+              <span>{{ mode === 'edit' ? 'Saving…' : 'Booking…' }}</span>
+            } @else {
+              <span>{{ mode === 'edit' ? 'Save Changes' : 'Book Appointment' }}</span>
+            }
           </button>
         </div>
       </form>
