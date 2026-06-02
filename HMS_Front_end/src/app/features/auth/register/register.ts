@@ -30,13 +30,14 @@ import {
   slotTimeOrder,
 } from '../../../core/validators/app-validators';
 import { PasswordInputComponent } from '../../../shared/ui/password-input/password-input';
+import { AvailabilitySlotsFormComponent } from '../../../shared/ui/availability-slots-form/availability-slots-form';
 
 const DRAFT_KEY = 'draft:self-register';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, PasswordInputComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, PasswordInputComponent, AvailabilitySlotsFormComponent],
   templateUrl: './register.html',
   styleUrl: './register.css',
 })

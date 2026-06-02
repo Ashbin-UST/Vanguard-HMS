@@ -146,29 +146,12 @@
         </div>
 
         @if (isDoctor) {
-        <div class="slots-section" formArrayName="availabilitySlots">
-          <div class="slots-header">
-            <span class="form-label">Availability Slots *</span>
-            <button type="button" class="btn btn-secondary btn-sm" (click)="addSlot()">+ Add Slot</button>
-          </div>
-
-          @for (slot of availabilitySlots.controls; track $index; let i = $index) {
-          <div class="slot-row" [formGroupName]="i">
-            <select formControlName="day" class="form-select" aria-label="Availability day">
-              @for (day of weekDays; track day) {
-              <option [value]="day">{{ day }}</option>
-              }
-            </select>
-            <input type="time" formControlName="startTime" class="form-input" aria-label="Availability start time" />
-            <span class="slot-sep">to</span>
-            <input type="time" formControlName="endTime" class="form-input" aria-label="Availability end time" />
-            <button type="button" class="slot-remove" (click)="removeSlot(i)" aria-label="Remove">✕</button>
-          </div>
-          @if (slot.hasError('slotTimeOrder')) {
-          <p class="form-error slot-error">Start time must be before end time</p>
-          }
-          }
-        </div>
+        <app-availability-slots-form
+          [formArray]="availabilitySlots"
+          [weekDays]="weekDays"
+          (addSlot)="addSlot()"
+          (removeSlot)="removeSlot($event)"
+        />
         }
 
         <div class="form-actions">

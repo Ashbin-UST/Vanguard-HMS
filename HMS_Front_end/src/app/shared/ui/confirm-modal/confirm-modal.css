@@ -52,15 +52,15 @@
 
 .modal-icon--danger {
   background-color: #fef2f2;
-  color: #dc2626;
+  color: #b91c1c;
 }
 .modal-icon--warning {
   background-color: #fffbeb;
-  color: #d97706;
+  color: #b45309;
 }
 .modal-icon--success {
   background-color: #f0fdf4;
-  color: #16a34a;
+  color: #15803d;
 }
 .modal-icon--info {
   background-color: #eff6ff;
@@ -133,11 +133,11 @@
 }
 
 .modal-footer .btn-success {
-  background-color: #16a34a;
+  background-color: #15803d;
   color: #ffffff;
 }
 .modal-footer .btn-success:hover {
-  background-color: #15803d;
+  background-color: #166534;
 }
 
 @keyframes modalFadeIn {

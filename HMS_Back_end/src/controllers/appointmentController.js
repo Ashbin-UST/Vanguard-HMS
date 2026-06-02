@@ -6,6 +6,7 @@ const checkAppointmentValidity = require("../utils/checkAppointmentValidity");
 const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
 const emailTemplates = require("../utils/emailTemplates");
+const parsePagination = require("../utils/parsePagination");
 
 // Active (non-cancelled) appointment statuses
 const ACTIVE_STATUSES = ["BOOKED", "COMPLETED"];
@@ -66,6 +67,38 @@ const enrichAppointments = async (appointments) => {
                   }
                 : null
         };
+    });
+};
+
+const paginateAppointments = async (filter, reqQuery, res) => {
+    const { page, limit, skip } = parsePagination(reqQuery);
+
+    if (reqQuery.date) {
+        const start = new Date(reqQuery.date);
+        const end = new Date(reqQuery.date);
+        end.setHours(23, 59, 59, 999);
+        filter.appointmentDate = { $gte: start, $lte: end };
+    }
+
+    const [appointments, total] = await Promise.all([
+        Appointment.find(filter)
+            .select("-__v")
+            .sort({ appointmentDate: -1, _id: -1 })
+            .skip(skip)
+            .limit(limit)
+            .lean(),
+        Appointment.countDocuments(filter)
+    ]);
+
+    const enriched = await enrichAppointments(appointments);
+
+    return res.status(200).json({
+        message: "Appointments retrieved successfully",
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        appointments: enriched
     });
 };
 
@@ -143,15 +176,7 @@ exports.createAppointment = async (req, res) => {
 
 // Get all appointments (paginated, filterable)
 exports.getAppointments = async (req, res) => {
-
     try {
-        const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
-        const limit = Math.min(
-            Math.max(Number.parseInt(req.query.limit, 10) || 10, 1),
-            100
-        );
-        const skip = (page - 1) * limit;
-
         const filter = {};
 
         if (req.query.status) {
@@ -166,34 +191,7 @@ exports.getAppointments = async (req, res) => {
             filter.patientId = req.query.patientId;
         }
 
-        // Single-day filter
-        if (req.query.date) {
-            const start = new Date(req.query.date);
-            const end = new Date(req.query.date);
-            end.setHours(23, 59, 59, 999);
-            filter.appointmentDate = { $gte: start, $lte: end };
-        }
-
-        const [appointments, total] = await Promise.all([
-            Appointment.find(filter)
-                .select("-__v")
-                .sort({ appointmentDate: -1, _id: -1 })
-                .skip(skip)
-                .limit(limit)
-                .lean(),
-            Appointment.countDocuments(filter)
-        ]);
-
-        const enriched = await enrichAppointments(appointments);
-
-        return res.status(200).json({
-            message: "Appointments retrieved successfully",
-            total,
-            page,
-            limit,
-            totalPages: Math.ceil(total / limit),
-            appointments: enriched
-        });
+        await paginateAppointments(filter, req.query, res);
     }
     catch (err) {
         console.error("Error during appointments retrieval: ", err);
@@ -205,50 +203,14 @@ exports.getAppointments = async (req, res) => {
 
 // Get appointments for the logged-in doctor
 exports.getMyAppointments = async (req, res) => {
-
     try {
-        const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
-        const limit = Math.min(
-            Math.max(Number.parseInt(req.query.limit, 10) || 10, 1),
-            100
-        );
-        const skip = (page - 1) * limit;
-
-        const filter = {
-            doctorEmployeeId: req.user.employeeCode
-        };
+        const filter = { doctorEmployeeId: req.user.employeeCode };
 
         if (req.query.status) {
             filter.status = req.query.status;
         }
 
-        if (req.query.date) {
-            const start = new Date(req.query.date);
-            const end = new Date(req.query.date);
-            end.setHours(23, 59, 59, 999);
-            filter.appointmentDate = { $gte: start, $lte: end };
-        }
-
-        const [appointments, total] = await Promise.all([
-            Appointment.find(filter)
-                .select("-__v")
-                .sort({ appointmentDate: -1, _id: -1 })
-                .skip(skip)
-                .limit(limit)
-                .lean(),
-            Appointment.countDocuments(filter)
-        ]);
-
-        const enriched = await enrichAppointments(appointments);
-
-        return res.status(200).json({
-            message: "Appointments retrieved successfully",
-            total,
-            page,
-            limit,
-            totalPages: Math.ceil(total / limit),
-            appointments: enriched
-        });
+        await paginateAppointments(filter, req.query, res);
     }
     catch (err) {
         console.error("Error during doctor appointments retrieval: ", err);

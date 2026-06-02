@@ -3,13 +3,13 @@
     type="button"
     class="ss-trigger"
     [class.ss-open]="isOpen()"
+    [class.ss-has-clear]="!!selectedOption()"
     [disabled]="disabled"
     (click)="toggle()"
     (keydown)="onKeydown($event)"
   >
     @if (selectedOption()) {
       <span class="ss-value">{{ displayLabel() }}</span>
-      <span class="ss-clear" (click)="clear($event)" aria-label="Clear">✕</span>
     } @else {
       <span class="ss-placeholder">{{ placeholder }}</span>
     }
@@ -20,6 +20,15 @@
       </svg>
     </span>
   </button>
+
+  @if (selectedOption()) {
+    <button
+      type="button"
+      class="ss-clear"
+      (click)="clear($event)"
+      aria-label="Clear"
+    >✕</button>
+  }
 
   @if (isOpen()) {
     <div class="ss-panel">
@@ -37,13 +46,13 @@
         />
       </div>
 
-      <ul class="ss-options" role="listbox" aria-label="Available options">
+      <ul class="ss-options" aria-label="Available options">
         @for (option of filteredOptions(); track trackByValue($index, option); let i = $index) {
           <li
             class="ss-option"
             [class.active]="i === activeIndex()"
-            role="option"
             (click)="select(option)"
+            (keydown)="onKeydown($event)"
             (mouseenter)="activeIndex.set(i)"
           >
             <span class="ss-option-label">{{ optionLabel(option) }}</span>

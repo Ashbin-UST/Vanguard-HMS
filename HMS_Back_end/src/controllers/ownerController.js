@@ -1,95 +1,32 @@
-const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
 const Employee = require("../models/Employees");
 const User = require("../models/Users");
-const sendEmail = require("../utils/sendEmail");
 const emailTemplates = require("../utils/emailTemplates");
-const generateTemporaryPassword = require("../utils/generateTemporaryPassword");
-const buildEmployeeData = require("../utils/buildEmployeeData");
-const buildEmployeeProfile = require("../utils/buildEmployeeProfile");
 const buildEmployeeResponse = require("../utils/buildEmployeeResponse");
 const updateEmployeeData = require("../utils/updateEmployeeData");
-const validateUniqueEmployeeFields = require("../utils/validateUniqueEmployeeFields");
 const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
+const createAccountWithEmployee = require("../utils/createAccountWithEmployee");
+const deleteEmployeeAccount = require("../utils/deleteEmployeeAccount");
 
 // Create Admin
 const createAdmin = async (req, res) => {
-  let employee;
-  let user;
-  let temporaryPassword;
-
-  const { username, email } = req.body;
-
   try {
-    const uniquenessResult = await validateUniqueEmployeeFields(req.body);
-
-    if (!uniquenessResult.success) {
-      return res.status(uniquenessResult.status).json({
-        message: uniquenessResult.message,
-      });
-    }
-
-    // Generate temporary password
-    temporaryPassword = generateTemporaryPassword();
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
-
-    // Build Admin Employee Data
-    const employeeData = buildEmployeeData(req.body);
-
-      // Create employee
-      employee = new Employee(employeeData);
-      await employee.save();
-
-      // Create user
-      user = new User({
-        username,
-        email,
-        passwordHash: hashedPassword,
-        status: "ACTIVE",
-        roles: ["ADMIN"],
-        employeeCode: employee.employeeCode,
-        mustChangePassword: true,
-        createdByAdmin: true,
-        approvedBy: req.user.employeeCode,
-        approvedAt: new Date(),
-        createdBy: req.user.employeeCode,
-      });
-      await user.save();
-
-    // Send email
-    try {
-      await sendEmail({
-        to: user.email,
-        ...emailTemplates.adminCredentials({ username, temporaryPassword }),
-      });
-    } catch (emailError) {
-      console.error("Email sending error:", emailError);
-    }
-
-    // Record audit
-    const actor = await resolveActor(req.user);
-    await recordAudit({
-      actor,
-      action: "ADMIN_CREATED",
-      targetType: "EMPLOYEE",
-      targetId: employee.employeeCode,
-      message: `Admin account created for ${employee.name} (${employee.employeeCode})`
+    const { employee, user } = await createAccountWithEmployee(req, { // NOSONAR: false positive; function is async but Sonar loses type info across CommonJS require
+      roles: ["ADMIN"],
+      emailTemplate: emailTemplates.adminCredentials,
+      auditAction: "ADMIN_CREATED",
+      buildAuditMessage: (emp) =>
+        `Admin account created for ${emp.name} (${emp.employeeCode})`,
     });
 
     return res.status(201).json({
-      message:
-        "Admin account created successfully. Credentials sent via email.",
-
+      message: "Admin account created successfully. Credentials sent via email.",
       employee: {
         employeeCode: employee.employeeCode,
         name: employee.name,
         email: employee.email,
         designation: employee.designation,
       },
-
       user: {
         username: user.username,
         roles: user.roles,
@@ -97,6 +34,9 @@ const createAdmin = async (req, res) => {
       },
     });
   } catch (err) {
+    if (err.status) {
+      return res.status(err.status).json({ message: err.message });
+    }
     console.error("Error during admin creation: ", err);
     return res.status(500).json({
       message: "Internal server error",
@@ -203,16 +143,6 @@ const deleteAdmin = async (req, res) => {
       });
     }
 
-    // Delete user
-    await User.findOneAndDelete({
-      employeeCode,
-    });
-
-    // Delete employee
-    await Employee.findOneAndDelete({
-      employeeCode,
-    });
-
     // Record audit
     const actor = await resolveActor(req.user);
     await recordAudit({
@@ -222,6 +152,8 @@ const deleteAdmin = async (req, res) => {
       targetId: employeeCode,
       message: `Admin ${employee.name} (${employeeCode}) was deleted`
     });
+
+    await deleteEmployeeAccount(employeeCode);
 
     return res.status(200).json({
       message: "Admin deleted successfully",

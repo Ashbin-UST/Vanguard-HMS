@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
+import { LastLoginCellComponent } from '../../../shared/ui/last-login-cell/last-login-cell';
 import { OwnerService } from '../../../core/services/owner.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ConfirmModalService } from '../../../core/services/confirm-modal.service';
@@ -17,7 +18,7 @@ import { EmployeeListItem } from '../../../core/models/employee.model';
 @Component({
   selector: 'app-admins',
   standalone: true,
-  imports: [CommonModule, RouterLink, DashboardLayoutComponent, DatePipe],
+  imports: [CommonModule, RouterLink, DashboardLayoutComponent, DatePipe, LastLoginCellComponent],
   templateUrl: './admins.html',
   styleUrl: './admins.css',
 })

@@ -8,6 +8,7 @@ const emailTemplates = require("../utils/emailTemplates");
 const buildEmployeeProfile = require("../utils/buildEmployeeProfile");
 const buildEmployeeData = require("../utils/buildEmployeeData");
 const validateUniqueEmployeeFields = require("../utils/validateUniqueEmployeeFields");
+const getCurrentUser = require("../utils/getCurrentUser");
 const { RESTRICTED_ROLES_SET } = require("../config/constants");
 require("dotenv").config();
 
@@ -306,44 +307,8 @@ exports.logout = (req, res) => {
 
 // Get current authenticated user + profile (used after a page refresh)
 exports.me = async (req, res) => {
-
     try {
-        const user = await User.findOne({
-            employeeCode: req.user.employeeCode
-        }).select(
-            "-passwordHash -resetPasswordTokenHash -resetPasswordTokenExpiry -__v"
-        );
-
-        if (!user) {
-            return res.status(404).json({
-                message: "User not found"
-            });
-        }
-
-        const employee = await Employee.findOne({
-            employeeCode: user.employeeCode
-        }).select("-__v");
-
-        if (!employee) {
-            return res.status(404).json({
-                message: "Employee profile not found"
-            });
-        }
-
-        const profile = buildEmployeeProfile(employee);
-
-        return res.status(200).json({
-            message: "User retrieved successfully",
-            user: {
-                employeeCode: user.employeeCode,
-                username: user.username,
-                email: user.email,
-                roles: user.roles,
-                mustChangePassword: user.mustChangePassword,
-                lastLoginAt: user.lastLoginAt,
-                profile
-            }
-        });
+        return await getCurrentUser(req.user.employeeCode, res);
     }
     catch (err) {
         console.error("Error during me: ", err);
