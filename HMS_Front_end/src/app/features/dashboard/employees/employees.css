@@ -193,6 +193,13 @@
   font-size: 0.8125rem;
 }
 
+.modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
 .modal-close {
   background: none;
   border: none;

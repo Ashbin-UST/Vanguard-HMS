@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiMessage } from '../models/api-response.model';
-import { CreateEmployeePayload, EmployeeListItem } from '../models/employee.model';
+import { CreateEmployeePayload, EmployeeListItem, UpdateEmployeePayload } from '../models/employee.model';
 import { AuditLogsResponse } from '../models/audit.model';
 import { ProfileChangeRequestsResponse } from '../models/profile-change-request.model';
 
@@ -30,6 +30,10 @@ export class AdminService {
     return this.http.get<EmployeesResponse>(`${this.apiUrl}/employees`);
   }
 
+  getEmployee(employeeCode: string): Observable<EmployeeListItem> {
+    return this.http.get<EmployeeListItem>(`${this.apiUrl}/employees/${employeeCode}`);
+  }
+
   getPendingEmployees(): Observable<EmployeesResponse> {
     return this.http.get<EmployeesResponse>(
       `${this.apiUrl}/pending-employees`,
@@ -52,7 +56,7 @@ export class AdminService {
 
   updateEmployee(
     employeeCode: string,
-    data: Partial<CreateEmployeePayload>,
+    data: UpdateEmployeePayload,
   ): Observable<ApiMessage> {
     return this.http.put<ApiMessage>(
       `${this.apiUrl}/update-employee/${employeeCode}`,

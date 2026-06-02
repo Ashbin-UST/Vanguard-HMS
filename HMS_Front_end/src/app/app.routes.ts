@@ -106,6 +106,16 @@ export const routes: Routes = [
             './features/dashboard/employees-create/employees-create'
           ).then((m) => m.CreateEmployeeComponent),
       },
+      {
+        path: 'employees/:code/edit',
+        canActivate: [designationGuard([])],
+        canDeactivate: [unsavedChangesGuard],
+        data: { mode: 'edit' },
+        loadComponent: () =>
+          import(
+            './features/dashboard/employees-create/employees-create'
+          ).then((m) => m.CreateEmployeeComponent),
+      },
 
       // Approvals: OWNER + ADMIN
       {

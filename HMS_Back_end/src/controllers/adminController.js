@@ -83,6 +83,35 @@ exports.createEmployee = async (req, res) => {
   }
 };
 
+// Get single employee by code
+exports.getEmployee = async (req, res) => {
+  try {
+    const { employeeCode } = req.params;
+
+    const employee = await Employee.findOne({ employeeCode });
+    if (!employee) {
+      return res.status(404).json({ message: "Employee not found" });
+    }
+
+    const user = await User.findOne({ employeeCode }).select("-passwordHash");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const profile = buildEmployeeProfile(employee);
+
+    return res.status(200).json({
+      employee: profile,
+      status: user.status,
+      roles: user.roles,
+      lastLoginAt: user.lastLoginAt,
+    });
+  } catch (err) {
+    console.error("Get employee error:", err);
+    return res.status(500).json({ message: "Server error while fetching employee" });
+  }
+};
+
 // Get all active staff employees
 exports.getEmployees = async (req, res) => {
   try {

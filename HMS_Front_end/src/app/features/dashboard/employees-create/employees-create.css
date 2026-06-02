@@ -34,6 +34,18 @@
   padding: 1.25rem;
 }
 
+.card-loading {
+  padding: 2rem;
+  text-align: center;
+  color: #475569;
+}
+
+.form-input--readonly {
+  background-color: #f8fafc;
+  color: #64748b;
+  cursor: default;
+}
+
 .form-grid {
   display: grid;
   gap: 1.25rem;
