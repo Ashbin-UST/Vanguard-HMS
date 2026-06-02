@@ -65,6 +65,9 @@ export interface CreateAppointmentPayload {
   timeSlot: string;
 }
 
+// Payload to update an appointment (same scheduling fields as create).
+export type UpdateAppointmentPayload = CreateAppointmentPayload;
+
 // GET /appointments (and /appointments/my) response.
 export interface AppointmentsResponse {
   message: string;

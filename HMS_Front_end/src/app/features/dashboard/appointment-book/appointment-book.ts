@@ -8,7 +8,7 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { debounceTime, Subject } from 'rxjs';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { SearchableSelectComponent } from '../../../shared/ui/searchable-select/searchable-select';
@@ -30,7 +30,7 @@ import {
   todayIsoDate,
 } from '../../../core/validators/app-validators';
 
-const DRAFT_KEY = 'draft:appointment-book';
+const DRAFT_KEY_CREATE = 'draft:appointment-book';
 
 // Slot length in minutes — kept consistent with the backend HH:mm-HH:mm format.
 const SLOT_MINUTES = 30;
@@ -47,16 +47,13 @@ const DAY_MAP: Record<number, WeekDay> = {
 };
 
 /**
- * Appointment booking (OWNER / ADMIN / RECEPTIONIST).
+ * Appointment booking / editing (OWNER / ADMIN / RECEPTIONIST).
  *
- *   - Patient: searchable dropdown sourced from /patients/search (server-side)
- *   - Doctor: searchable dropdown sourced from /employees/doctors
- *   - Date: native date picker clamped to today+ (no past dates), with the
- *     no-past-date validator running on typed values too
- *   - Slots: derived from the doctor's availabilitySlots for the picked
- *     weekday, split into SLOT_MINUTES chunks; booked slots come from
- *     /appointments/booked-slots and render red + struck-through (handled by
- *     SlotPickerComponent).
+ * Operates in two modes driven by route data `{ mode: 'edit' }`:
+ *   - create (default): books a new appointment via POST
+ *   - edit: pre-populates form from an existing BOOKED appointment and
+ *     updates it via PUT; the original slot is excluded from the
+ *     "booked" list so it shows as selectable again.
  */
 @Component({
   selector: 'app-appointment-book',
@@ -81,6 +78,7 @@ export class AppointmentBookComponent
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly formDraft = inject(FormDraftService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   form: FormGroup = this.fb.group({
     patientId: ['', Validators.required],
@@ -106,6 +104,14 @@ export class AppointmentBookComponent
   loading = false;
   submittedOk = false;
 
+  // 'create' | 'edit' — set from route data in ngOnInit.
+  mode: 'create' | 'edit' = 'create';
+  // appointmentId being edited (edit mode only).
+  editAppointmentId: string | null = null;
+
+  // Slot to restore after async booked-slots load (edit mode only).
+  private pendingTimeSlot: string | null = null;
+
   // Date-picker minimum: today, raised to the doctor's joining date when later.
   minDate = signal(this.todayIso);
   // The selected doctor's joining date as yyyy-mm-dd (null if none/unset).
@@ -129,9 +135,19 @@ export class AppointmentBookComponent
 
   private readonly patientSearch$ = new Subject<string>();
 
+  get pageTitle(): string {
+    return this.mode === 'edit' ? 'Edit Appointment' : 'Book Appointment';
+  }
+
   ngOnInit(): void {
-    // Pre-load top doctors and a small patient page so the dropdowns aren't
-    // empty before the user types.
+    this.mode = (this.route.snapshot.data['mode'] ?? 'create') as 'create' | 'edit';
+    this.editAppointmentId = this.route.snapshot.paramMap.get('appointmentId');
+
+    if (this.mode === 'edit' && !this.editAppointmentId) {
+      this.router.navigate(['/dashboard/appointments']);
+      return;
+    }
+
     this.employeeService.getDoctors().subscribe({
       next: (res) => {
         const docs = res.doctors || [];
@@ -143,10 +159,12 @@ export class AppointmentBookComponent
             sublabel: d.specialization || d.department || '',
           })),
         );
-        // If a doctor was already selected (e.g. restored draft), resolve its
-        // joining date now that the list is available.
         this.updateDoctorJoining();
         this.cdr.markForCheck();
+
+        if (this.mode === 'edit' && this.editAppointmentId) {
+          this.loadForEdit(this.editAppointmentId);
+        }
       },
       error: () => this.toast.error('Failed to load doctors.'),
     });
@@ -185,15 +203,73 @@ export class AppointmentBookComponent
       this.refreshSlots(),
     );
 
-    // Draft restore + auto-save.
-    const draft = this.formDraft.get(DRAFT_KEY);
-    if (draft) {
-      this.form.patchValue(draft);
-    }
-    this.form.valueChanges.subscribe(() => {
-      if (!this.submittedOk) {
-        this.formDraft.save(DRAFT_KEY, this.form.getRawValue());
+    // Draft restore + auto-save (create mode only).
+    if (this.mode === 'create') {
+      const draft = this.formDraft.get(DRAFT_KEY_CREATE);
+      if (draft) {
+        this.form.patchValue(draft);
       }
+      this.form.valueChanges.subscribe(() => {
+        if (!this.submittedOk) {
+          this.formDraft.save(DRAFT_KEY_CREATE, this.form.getRawValue());
+        }
+      });
+    }
+  }
+
+  // Loads and patches the form for edit mode. Called after doctors list is
+  // available so that doctor joining date and slot generation work correctly.
+  private loadForEdit(id: string): void {
+    this.loading = true;
+    this.appointmentService.getAppointmentById(id).subscribe({
+      next: (res) => {
+        const a = res.appointment;
+        if (a.status !== 'BOOKED') {
+          this.loading = false;
+          this.toast.error('Only BOOKED appointments can be edited.');
+          this.router.navigate(['/dashboard/appointments', id]);
+          return;
+        }
+
+        // Ensure the appointment's patient appears in the dropdown even if
+        // it was not in the initial 25-result page load.
+        if (a.patient) {
+          const alreadyListed = this.patientOptions().some(
+            (o) => o.value === a.patientId,
+          );
+          if (!alreadyListed) {
+            this.patientOptions.set([
+              {
+                value: a.patientId,
+                label: a.patient.name,
+                sublabel: `${a.patientId} · ${a.patient.phone}`,
+              },
+              ...this.patientOptions(),
+            ]);
+          }
+        }
+
+        // Set values without emitting so valueChanges subscriptions don't
+        // fire multiple times and race with each other.
+        this.form.get('patientId')!.setValue(a.patientId, { emitEvent: false });
+        this.form.get('doctorEmployeeId')!.setValue(a.doctorEmployeeId, { emitEvent: false });
+        this.form.get('appointmentDate')!.setValue(
+          this.toIso(new Date(a.appointmentDate)),
+          { emitEvent: false },
+        );
+
+        this.updateDoctorJoining();
+
+        // refreshSlots clears the timeSlot; restore it once booked-slots loads.
+        this.pendingTimeSlot = a.timeSlot;
+        this.refreshSlots();
+        this.loading = false;
+      },
+      error: () => {
+        this.loading = false;
+        this.toast.error('Failed to load appointment.');
+        this.router.navigate(['/dashboard/appointments']);
+      },
     });
   }
 
@@ -298,17 +374,33 @@ export class AppointmentBookComponent
     }
 
     // 2. Fetch currently booked slots for that doctor + date.
+    // In edit mode, exclude the current appointment so its original slot
+    // remains selectable.
     this.loadingSlots.set(true);
-    this.appointmentService.getBookedSlots(doctorId, date).subscribe({
-      next: (res) => {
-        this.bookedSlots.set(res.bookedSlots || []);
-        this.loadingSlots.set(false);
-      },
-      error: () => {
-        this.loadingSlots.set(false);
-        this.bookedSlots.set([]);
-      },
-    });
+    this.appointmentService
+      .getBookedSlots(
+        doctorId,
+        date,
+        this.mode === 'edit' ? (this.editAppointmentId ?? undefined) : undefined,
+      )
+      .subscribe({
+        next: (res) => {
+          this.bookedSlots.set(res.bookedSlots || []);
+          this.loadingSlots.set(false);
+          // Restore the pre-selected slot after slots finish loading (edit mode).
+          if (this.pendingTimeSlot) {
+            this.form.patchValue(
+              { timeSlot: this.pendingTimeSlot },
+              { emitEvent: false },
+            );
+            this.pendingTimeSlot = null;
+          }
+        },
+        error: () => {
+          this.loadingSlots.set(false);
+          this.bookedSlots.set([]);
+        },
+      });
   }
 
   // Expands availability windows (e.g. 09:00–17:00) into SLOT_MINUTES chunks
@@ -358,29 +450,60 @@ export class AppointmentBookComponent
     this.loading = true;
     const payload = this.form.getRawValue();
 
-    this.appointmentService.createAppointment(payload).subscribe({
-      next: (res) => {
-        this.loading = false;
-        this.cdr.markForCheck();
-        this.submittedOk = true;
-        this.formDraft.clear(DRAFT_KEY);
-        this.toast.success(res.message || 'Appointment booked.');
-        this.router.navigate([
-          '/dashboard/appointments',
-          res.appointment.appointmentId,
-        ]);
-      },
-      error: (err) => {
-        this.loading = false;
-        this.cdr.markForCheck();
-        this.toast.error(err.error?.message || 'Failed to book appointment.');
-        // Refresh slots in case a race produced the conflict.
-        this.refreshSlots();
-      },
-    });
+    if (this.mode === 'edit') {
+      this.appointmentService
+        .updateAppointment(this.editAppointmentId!, payload)
+        .subscribe({
+          next: (res) => {
+            this.loading = false;
+            this.cdr.markForCheck();
+            this.submittedOk = true;
+            this.toast.success(res.message || 'Appointment updated.');
+            this.router.navigate([
+              '/dashboard/appointments',
+              this.editAppointmentId,
+            ]);
+          },
+          error: (err) => {
+            this.loading = false;
+            this.cdr.markForCheck();
+            this.toast.error(
+              err.error?.message || 'Failed to update appointment.',
+            );
+            this.refreshSlots();
+          },
+        });
+    } else {
+      this.appointmentService.createAppointment(payload).subscribe({
+        next: (res) => {
+          this.loading = false;
+          this.cdr.markForCheck();
+          this.submittedOk = true;
+          this.formDraft.clear(DRAFT_KEY_CREATE);
+          this.toast.success(res.message || 'Appointment booked.');
+          this.router.navigate([
+            '/dashboard/appointments',
+            res.appointment.appointmentId,
+          ]);
+        },
+        error: (err) => {
+          this.loading = false;
+          this.cdr.markForCheck();
+          this.toast.error(
+            err.error?.message || 'Failed to book appointment.',
+          );
+          // Refresh slots in case a race produced the conflict.
+          this.refreshSlots();
+        },
+      });
+    }
   }
 
   onCancel(): void {
-    this.router.navigate(['/dashboard/appointments']);
+    if (this.mode === 'edit' && this.editAppointmentId) {
+      this.router.navigate(['/dashboard/appointments', this.editAppointmentId]);
+    } else {
+      this.router.navigate(['/dashboard/appointments']);
+    }
   }
 }

@@ -198,6 +198,16 @@ export const routes: Routes = [
           ).then((m) => m.AppointmentBookComponent),
       },
       {
+        path: 'appointments/:appointmentId/edit',
+        canActivate: [designationGuard(['RECEPTIONIST'])],
+        canDeactivate: [unsavedChangesGuard],
+        data: { mode: 'edit' },
+        loadComponent: () =>
+          import(
+            './features/dashboard/appointment-book/appointment-book'
+          ).then((m) => m.AppointmentBookComponent),
+      },
+      {
         path: 'appointments/:appointmentId',
         canActivate: [designationGuard(['RECEPTIONIST', 'DOCTOR'])],
         loadComponent: () =>
