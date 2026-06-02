@@ -5,6 +5,7 @@ const ProfileChangeRequest = require("../models/ProfileChangeRequests");
 const emailTemplates = require("../utils/emailTemplates");
 const sendEmail = require("../utils/sendEmail");
 const buildEmployeeResponse = require("../utils/buildEmployeeResponse");
+const buildEmployeeProfile = require("../utils/buildEmployeeProfile");
 const updateEmployeeData = require("../utils/updateEmployeeData");
 const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
