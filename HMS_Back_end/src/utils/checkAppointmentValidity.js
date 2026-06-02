@@ -2,11 +2,18 @@ const Appointment = require("../models/Appointments");
 const Patient = require("../models/Patients");
 const validateEmployeeStatus = require("./validateEmployeeStatus");
 
+// Returns the filter with an appointmentId exclusion added when editing.
+const withExclusion = (filter, excludeAppointmentId) => {
+  if (!excludeAppointmentId) return filter;
+  return { ...filter, appointmentId: { $ne: excludeAppointmentId } };
+};
+
 const checkAppointmentValidity = async ({
   patientId,
   doctorId,
   appointmentDate,
   timeSlot,
+  excludeAppointmentId,
 }) => {
   // Check for patient existence
   const patient = await Patient.findOne({
@@ -121,13 +128,13 @@ const checkAppointmentValidity = async ({
     };
   }
 
-  // Check patient duplicate
-  const patientAppointment = await Appointment.findOne({
-    patientId,
-    appointmentDate,
-    timeSlot,
-    status: { $ne: "CANCELED" },
-  });
+  // Check patient duplicate (exclude the appointment being updated, if any)
+  const patientAppointment = await Appointment.findOne(
+    withExclusion(
+      { patientId, appointmentDate, timeSlot, status: { $ne: "CANCELED" } },
+      excludeAppointmentId,
+    ),
+  );
 
   if (patientAppointment) {
     return {
@@ -137,13 +144,13 @@ const checkAppointmentValidity = async ({
     };
   }
 
-  // Check doctor duplicate
-  const doctorAppointment = await Appointment.findOne({
-    doctorEmployeeId: doctorId,
-    appointmentDate,
-    timeSlot,
-    status: { $ne: "CANCELED" },
-  });
+  // Check doctor duplicate (exclude the appointment being updated, if any)
+  const doctorAppointment = await Appointment.findOne(
+    withExclusion(
+      { doctorEmployeeId: doctorId, appointmentDate, timeSlot, status: { $ne: "CANCELED" } },
+      excludeAppointmentId,
+    ),
+  );
 
   if (doctorAppointment) {
     return {

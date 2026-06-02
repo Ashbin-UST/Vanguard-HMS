@@ -168,6 +168,23 @@ const appointmentScheduled = ({
   `),
 });
 
+const appointmentUpdated = ({
+  patientName,
+  doctorName,
+  appointmentDate,
+  timeSlot,
+}) => ({
+  subject: "Appointment Updated",
+  html: wrap(`
+    <h2>Appointment Updated</h2>
+    <p>Your appointment details have been updated.</p>
+    <p><strong>Patient Name:</strong> ${patientName}</p>
+    <p><strong>Doctor Name:</strong> ${doctorName}</p>
+    <p><strong>Appointment Date:</strong> ${formatDate(appointmentDate)}</p>
+    <p><strong>Time Slot:</strong> ${timeSlot}</p>
+  `),
+});
+
 // --- Password reset -------------------------------------------------------
 
 const passwordReset = ({ resetToken }) => ({
@@ -198,5 +215,6 @@ module.exports = {
   profileChangeApproved,
   profileChangeRejected,
   appointmentScheduled,
+  appointmentUpdated,
   passwordReset,
 };

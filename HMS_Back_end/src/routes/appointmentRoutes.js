@@ -103,6 +103,15 @@ router.get(
     controller.getAppointmentById
 );
 
+// Update appointment scheduling fields (reception level, BOOKED only)
+router.put(
+    "/:appointmentId",
+    RECEPTION_LEVEL,
+    [...appointmentIdValidation, ...createAppointmentValidation],
+    validate,
+    controller.updateAppointment
+);
+
 // Cancel appointment (reception level)
 router.put(
     "/:appointmentId/cancel",
