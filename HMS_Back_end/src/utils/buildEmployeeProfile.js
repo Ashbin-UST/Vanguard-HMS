@@ -1,15 +1,6 @@
-const medicalFields = new Set([
-    "DOCTOR",
-    "NURSE",
-    "LAB_TECH",
-    "PHARMACIST"
-]);
+const { MEDICAL_DESIGNATIONS_SET, SPECIALIZATION_DESIGNATIONS_SET } = require("../config/constants");
 
-const specializationFields = new Set([
-    "DOCTOR",
-    "LAB_TECH"
-]);
-
+// Build the employee profile response object, including designation-specific fields
 const buildEmployeeProfile = (employee) => {
 
     const profile = {
@@ -23,17 +14,17 @@ const buildEmployeeProfile = (employee) => {
         qualification: employee.qualification,
     };
 
-    // Add medical registration number for medical staff
-    if (medicalFields.has(employee.designation)) {
+    // Include medical registration number for medical staff only
+    if (MEDICAL_DESIGNATIONS_SET.has(employee.designation)) {
         profile.medicalRegistrationNumber = employee.medicalRegistrationNumber;
     }
 
-    // Add specialization for doctors and lab technicians
-    if (specializationFields.has(employee.designation)) {
+    // Include specialization for designations that carry one
+    if (SPECIALIZATION_DESIGNATIONS_SET.has(employee.designation)) {
         profile.specialization = employee.specialization;
     }
 
-    // Add doctor-only fields
+    // Include doctor-only scheduling fields
     if (employee.designation === "DOCTOR") {
         profile.consultationFee = employee.consultationFee;
         profile.availabilitySlots = employee.availabilitySlots;

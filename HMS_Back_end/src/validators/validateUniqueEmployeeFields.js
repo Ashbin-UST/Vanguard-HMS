@@ -1,12 +1,6 @@
 const User = require("../models/Users");
 const Employee = require("../models/Employees");
-
-const medicalFields = new Set([
-    "DOCTOR",
-    "NURSE",
-    "LAB_TECH",
-    "PHARMACIST"
-]);
+const { MEDICAL_DESIGNATIONS_SET } = require("../config/constants");
 
 const validateUniqueEmployeeFields = async (data) => {
 
@@ -17,6 +11,7 @@ const validateUniqueEmployeeFields = async (data) => {
         medicalRegistrationNumber
     } = data;
 
+    // Check username uniqueness across all user accounts
     const existingUsername = await User.findOne({
         username
     });
@@ -25,10 +20,11 @@ const validateUniqueEmployeeFields = async (data) => {
         return {
             success: false,
             status: 409,
-            message: "Username already exists" 
+            message: "Username already exists"
         };
     }
 
+    // Check email uniqueness in the users collection
     const existingUserEmail = await User.findOne({
         email
     });
@@ -40,7 +36,8 @@ const validateUniqueEmployeeFields = async (data) => {
             message: "User with this email already exists"
         };
     }
-    
+
+    // Check email uniqueness in the employees collection
     const existingEmployeeEmail = await Employee.findOne({
         email
     });
@@ -53,7 +50,8 @@ const validateUniqueEmployeeFields = async (data) => {
         };
     }
 
-    if (medicalFields.has(designation)){
+    // Medical registration number uniqueness is only enforced for medical designations
+    if (MEDICAL_DESIGNATIONS_SET.has(designation)){
         const existingMedicalEmployee = await Employee.findOne({
             medicalRegistrationNumber
         });

@@ -5,21 +5,11 @@ const validate = require("../middlewares/validate");
 const auth = require("../middlewares/authMiddleware");
 const authorizeRoles = require("../middlewares/authorizeRolesMiddleware");
 const controller = require("../controllers/nodeController");
+const { STAFF_DESIGNATIONS, RESTRICTED_ROLES } = require("../config/constants");
 
-// All routes require authentication
 router.use(auth);
 
-const allowedDesignationTypes = new Set([
-    "OWNER",
-    "ADMIN",
-    "DOCTOR",
-    "RECEPTIONIST",
-    "CASHIER",
-    "NURSE",
-    "LAB_TECH",
-    "PHARMACIST"
-]);
-
+// Validates node name, path format, and allowed designation values
 const createNodeValidation = [
 
     body("name")
@@ -37,10 +27,11 @@ const createNodeValidation = [
         .withMessage("At least one allowed designation is required"),
 
     body("allowedDesignations.*")
-        .isIn([...allowedDesignationTypes])
+        .isIn([...STAFF_DESIGNATIONS, ...RESTRICTED_ROLES])
         .withMessage("Valid designation is required")
 ];
 
+// Same as createNodeValidation but all fields are optional
 const updateNodeValidation = [
 
     param("nodeId")
@@ -68,10 +59,11 @@ const updateNodeValidation = [
 
     body("allowedDesignations.*")
         .optional()
-        .isIn([...allowedDesignationTypes])
+        .isIn([...STAFF_DESIGNATIONS, ...RESTRICTED_ROLES])
         .withMessage("Valid designation is required")
 ];
 
+// Validates the nodeId URL parameter
 const nodeIdValidation = [
 
     param("nodeId")
@@ -79,7 +71,7 @@ const nodeIdValidation = [
         .withMessage("Node ID is required")
 ];
 
-// Create node
+// Node management routes (ADMIN / OWNER only)
 router.post(
     "/create-node",
     authorizeRoles("ADMIN", "OWNER"),
@@ -88,7 +80,6 @@ router.post(
     controller.createNode
 );
 
-// Update node
 router.put(
     "/update-node/:nodeId",
     authorizeRoles("ADMIN", "OWNER"),
@@ -97,7 +88,6 @@ router.put(
     controller.updateNode
 );
 
-// Delete node
 router.delete(
     "/delete-node/:nodeId",
     authorizeRoles("ADMIN", "OWNER"),
@@ -106,7 +96,7 @@ router.delete(
     controller.deleteNode
 );
 
-// Get sidebar nodes
+// Returns the sidebar nodes visible to the authenticated user's designation
 router.get(
     "/my-nodes",
     controller.getMyNodes

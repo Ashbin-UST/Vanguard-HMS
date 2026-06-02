@@ -7,18 +7,20 @@ const authorizeRoles = require("../middlewares/authorizeRolesMiddleware");
 const controller = require("../controllers/adminController");
 const { employeeBaseValidators } = require("../validators/employeeValidation");
 
-// All routes require authentication and admin authorization
 router.use(auth, authorizeRoles("OWNER", "ADMIN"));
 
+// Full employee field set plus joining date (required at creation)
 const employeeCreationValidation = [
   ...employeeBaseValidators,
   body("joiningDate").notEmpty().withMessage("Joining date is required"),
 ];
 
+// Validates the employeeCode URL parameter
 const employeeCodeValidation = [
   param("employeeCode").notEmpty().withMessage("Employee Code is required"),
 ];
 
+// Employee management routes
 router.post(
   "/create-employee",
   employeeCreationValidation,
@@ -65,12 +67,13 @@ router.delete(
   controller.deleteEmployee,
 );
 
-// Audit logs (recent activity)
+// Audit log route
 router.get("/audit-logs", controller.getAuditLogs);
 
-// Profile change requests
+// Profile change request routes
 router.get("/profile-change-requests", controller.getProfileChangeRequests);
 
+// Validates the requestId URL parameter
 const requestIdValidation = [
   param("requestId").notEmpty().withMessage("Request ID is required"),
 ];

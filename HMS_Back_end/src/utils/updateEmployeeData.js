@@ -1,9 +1,9 @@
 const sanitizeQualifications = require("./qualificationSanitizer");
-
-const specializationFields = new Set(["DOCTOR", "LAB_TECH"]);
+const { SPECIALIZATION_DESIGNATIONS_SET } = require("../config/constants");
 
 const doctorOnlyFields = new Set(["consultationFee", "availabilitySlots"]);
 
+// Apply allowed field updates to an employee document, enforcing designation-based restrictions
 const updateEmployeeData = (employee, updateData) => {
   const allowedFields = [
     "name",
@@ -18,28 +18,27 @@ const updateEmployeeData = (employee, updateData) => {
     "availabilitySlots",
   ];
 
-  // Determine final designation after update
+  // Use the incoming designation if provided, otherwise keep the existing one
   const updatedDesignation = updateData.designation || employee.designation;
 
   allowedFields.forEach((field) => {
     if (updateData[field] !== undefined) {
 
-      // Sanitize qualifications
       if (field === "qualification") {
         employee[field] = sanitizeQualifications(updateData[field]);
 
         return;
       }
 
-      // Restrict specialization
+      // Ignore specialization if the (new) designation does not support it
       if (
         field === "specialization" &&
-        !specializationFields.has(updatedDesignation)
+        !SPECIALIZATION_DESIGNATIONS_SET.has(updatedDesignation)
       ) {
         return;
       }
 
-      // Restrict doctor-only fields
+      // Ignore doctor-only fields if the (new) designation is not DOCTOR
       if (doctorOnlyFields.has(field) && updatedDesignation !== "DOCTOR") {
         return;
       }
@@ -48,12 +47,12 @@ const updateEmployeeData = (employee, updateData) => {
     }
   });
 
-  // Remove specialization if invalid for designation
-  if (!specializationFields.has(updatedDesignation)) {
+  // Clear specialization when the designation no longer supports it
+  if (!SPECIALIZATION_DESIGNATIONS_SET.has(updatedDesignation)) {
     employee.specialization = undefined;
   }
 
-  // Remove doctor-only fields if designation is not DOCTOR
+  // Clear doctor-only fields when the designation is no longer DOCTOR
   if (updatedDesignation !== "DOCTOR") {
     employee.consultationFee = undefined;
     employee.availabilitySlots = undefined;

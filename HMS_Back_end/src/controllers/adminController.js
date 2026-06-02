@@ -14,6 +14,7 @@ const createAccountWithEmployee = require("../utils/createAccountWithEmployee");
 const parsePagination = require("../utils/parsePagination");
 const { RESTRICTED_ROLES_SET } = require("../config/constants");
 
+// Fetch all STAFF users with a given status and their linked employee records
 const getEmployeesByStatus = async (status, res) => {
   const users = await User.find({ roles: "STAFF", status }).select("-passwordHash");
   const employeeCodes = users.map((user) => user.employeeCode);
@@ -25,6 +26,7 @@ const getEmployeesByStatus = async (status, res) => {
   });
 };
 
+// Lookup a profile change request and guard that it is still PENDING
 const findPendingRequest = async (requestId, res) => {
   const request = await ProfileChangeRequest.findOne({ requestId });
   if (!request) {
@@ -38,12 +40,11 @@ const findPendingRequest = async (requestId, res) => {
   return request;
 };
 
-// Employee Account Creation
+// Create a new STAFF employee account with a temporary password
 exports.createEmployee = async (req, res) => {
   const { designation } = req.body;
 
   try {
-    // Prevent admin from creating ADMIN or OWNER accounts
     if (RESTRICTED_ROLES_SET.has(designation)) {
       return res.status(403).json({
         message: "Invalid designation. Cannot create admin or owner accounts.",
@@ -84,7 +85,7 @@ exports.createEmployee = async (req, res) => {
   }
 };
 
-// Get single employee by code
+// Fetch a single employee profile with their account status and roles
 exports.getEmployee = async (req, res) => {
   try {
     const { employeeCode } = req.params;
@@ -113,7 +114,7 @@ exports.getEmployee = async (req, res) => {
   }
 };
 
-// Get all active staff employees
+// List all active STAFF employees
 exports.getEmployees = async (req, res) => {
   try {
     await getEmployeesByStatus("ACTIVE", res);
@@ -125,7 +126,7 @@ exports.getEmployees = async (req, res) => {
   }
 };
 
-// Get employees having account status pending
+// List STAFF employees with PENDING account status awaiting approval
 exports.getPendingEmployees = async (req, res) => {
   try {
     await getEmployeesByStatus("PENDING", res);
@@ -137,13 +138,11 @@ exports.getPendingEmployees = async (req, res) => {
   }
 };
 
-// Approve pending employee request
+// Approve a self-registered employee: set status to ACTIVE and notify by email
 exports.approveEmployee = async (req, res) => {
   try {
-    // Get employeecode
     const employeeCode = req.params.employeeCode;
 
-    // Find user in db
     const user = await User.findOne({
       employeeCode,
     });
@@ -154,14 +153,12 @@ exports.approveEmployee = async (req, res) => {
       });
     }
 
-    // Ensure role is staff
     if (user.roles.some((role) => RESTRICTED_ROLES_SET.has(role))) {
       return res.status(403).json({
         message: "Only STAFF accounts can be approved",
       });
     }
 
-    //Ensure current status as pending
     if (String(user.status) !== "PENDING") {
       return res.status(400).json({
         message: "Account status is not pending",
@@ -174,7 +171,7 @@ exports.approveEmployee = async (req, res) => {
 
     await user.save();
 
-    // Send email AFTER approval
+    // Notify the employee that their account has been approved
     try {
       await sendEmail({
         to: user.email,
@@ -184,7 +181,7 @@ exports.approveEmployee = async (req, res) => {
       console.error("Email sending error:", emailError);
     }
 
-    // Record audit
+    // Log the approval action
     const actor = await resolveActor(req.user);
     await recordAudit({
       actor,
@@ -209,7 +206,7 @@ exports.approveEmployee = async (req, res) => {
   }
 };
 
-// Reject pending employee request
+// Reject a self-registration request: email the employee then delete the account
 exports.rejectEmployee = async (req, res) => {
   try {
     const employeeCode = req.params.employeeCode;
@@ -224,21 +221,19 @@ exports.rejectEmployee = async (req, res) => {
       });
     }
 
-    // Ensure role is staff
     if (user.roles.some((role) => RESTRICTED_ROLES_SET.has(role))) {
       return res.status(403).json({
         message: "Only STAFF accounts can be rejected",
       });
     }
 
-    // Ensure current status is pending
     if (String(user.status) !== "PENDING") {
       return res.status(400).json({
         message: "Account status is not pending",
       });
     }
 
-    // Send rejection email BEFORE deletion
+    // Email before deletion so the address is still reachable
     try {
       await sendEmail({
         to: user.email,
@@ -248,7 +243,7 @@ exports.rejectEmployee = async (req, res) => {
       console.error("Email sending error:", emailError);
     }
 
-    // Record audit
+    // Log the rejection before the record is removed
     const actor = await resolveActor(req.user);
 
     await recordAudit({
@@ -259,7 +254,6 @@ exports.rejectEmployee = async (req, res) => {
       message: `Employee registration ${employeeCode} (${user.username}) was rejected`,
     });
 
-    // DELETE USER + EMPLOYEE
     await deleteEmployeeAccount(employeeCode);
 
     return res.status(200).json({
@@ -274,12 +268,11 @@ exports.rejectEmployee = async (req, res) => {
   }
 };
 
-// Update employee
+// Update mutable fields on a STAFF employee record
 exports.updateEmployee = async (req, res) => {
   try {
     const { employeeCode } = req.params;
 
-    // Find employee
     const employee = await Employee.findOne({
       employeeCode,
     });
@@ -290,7 +283,6 @@ exports.updateEmployee = async (req, res) => {
       });
     }
 
-    // Prevent updating OWNER or ADMIN
     if (RESTRICTED_ROLES_SET.has(employee.designation)) {
       return res.status(403).json({
         message: "Cannot update OWNER or ADMIN accounts",
@@ -299,10 +291,9 @@ exports.updateEmployee = async (req, res) => {
 
     updateEmployeeData(employee, req.body);
 
-    // Save employee
     await employee.save();
 
-    // Record audit
+    // Log the update
     const actor = await resolveActor(req.user);
     await recordAudit({
       actor,
@@ -329,13 +320,12 @@ exports.updateEmployee = async (req, res) => {
   }
 };
 
-// Delete employee
+// Delete a STAFF employee and their linked user account
 exports.deleteEmployee = async (req, res) => {
 
   try {
     const employeeCode = req.params.employeeCode;
 
-    // Find employee
     const employee = await Employee.findOne({
       employeeCode,
     });
@@ -346,14 +336,13 @@ exports.deleteEmployee = async (req, res) => {
       });
     }
 
-    // Prevent deleting OWNER or ADMIN
     if (RESTRICTED_ROLES_SET.has(employee.designation)) {
       return res.status(403).json({
         message: "Cannot delete OWNER or ADMIN accounts",
       });
     }
 
-    // Record audit
+    // Log before deletion so the record still exists for the message
     const actor = await resolveActor(req.user);
     await recordAudit({
       actor,
@@ -363,7 +352,6 @@ exports.deleteEmployee = async (req, res) => {
       message: `Employee ${employee.name} (${employeeCode}) was deleted`
     });
 
-    // DELETE USER + EMPLOYEE
     await deleteEmployeeAccount(employeeCode);
 
     return res.status(200).json({
@@ -377,7 +365,7 @@ exports.deleteEmployee = async (req, res) => {
   }
 };
 
-// Get audit logs (recent activity)
+// Fetch paginated audit log entries with optional action filter
 exports.getAuditLogs = async (req, res) => {
   try {
     const { page, limit, skip } = parsePagination(req.query, 20);
@@ -414,7 +402,7 @@ exports.getAuditLogs = async (req, res) => {
   }
 };
 
-// Get pending profile change requests
+// List all pending profile change requests
 exports.getProfileChangeRequests = async (req, res) => {
   try {
     const requests = await ProfileChangeRequest.find({
@@ -424,7 +412,7 @@ exports.getProfileChangeRequests = async (req, res) => {
       .sort({ created_at: -1 })
       .lean();
 
-    // Convert the Map field to a plain object for JSON
+    // Normalize the Map field to a plain object for JSON serialization
     const formatted = requests.map((request) => ({
       ...request,
       requestedChanges: request.requestedChanges || {},
@@ -443,7 +431,7 @@ exports.getProfileChangeRequests = async (req, res) => {
   }
 };
 
-// Approve a profile change request
+// Apply the requested field changes to the employee and notify them
 exports.approveProfileChange = async (req, res) => {
   try {
     const { requestId } = req.params;
@@ -461,7 +449,6 @@ exports.approveProfileChange = async (req, res) => {
       });
     }
 
-    // Apply the requested new values
     request.requestedChanges.forEach((change, field) => {
       employee[field] = change.new;
     });
@@ -473,7 +460,7 @@ exports.approveProfileChange = async (req, res) => {
     request.reviewedAt = new Date();
     await request.save();
 
-    // Notify employee
+    // Notify the employee of approval
     try {
       await sendEmail({
         to: employee.email,
@@ -483,7 +470,7 @@ exports.approveProfileChange = async (req, res) => {
       console.error("Email sending error:", emailError);
     }
 
-    // Record audit
+    // Log the approval
     const actor = await resolveActor(req.user);
     await recordAudit({
       actor,
@@ -508,7 +495,7 @@ exports.approveProfileChange = async (req, res) => {
   }
 };
 
-// Reject a profile change request
+// Reject a profile change request and notify the employee
 exports.rejectProfileChange = async (req, res) => {
   try {
     const { requestId } = req.params;
@@ -521,7 +508,7 @@ exports.rejectProfileChange = async (req, res) => {
     request.reviewedAt = new Date();
     await request.save();
 
-    // Notify employee
+    // Notify the employee of rejection
     try {
       await sendEmail({
         to: request.email,
@@ -531,7 +518,7 @@ exports.rejectProfileChange = async (req, res) => {
       console.error("Email sending error:", emailError);
     }
 
-    // Record audit
+    // Log the rejection
     const actor = await resolveActor(req.user);
     await recordAudit({
       actor,

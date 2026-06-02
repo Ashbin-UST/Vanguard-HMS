@@ -1,5 +1,6 @@
 const { body } = require("express-validator");
 
+// Returns an express-validator chain that enforces password strength rules for the given field
 const passwordStrengthValidator = (fieldName) =>
   body(fieldName)
     .isLength({ min: 8 })

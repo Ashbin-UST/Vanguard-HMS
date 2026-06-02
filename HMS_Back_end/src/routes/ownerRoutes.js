@@ -6,9 +6,9 @@ const auth = require("../middlewares/authMiddleware");
 const authorizeRoles = require("../middlewares/authorizeRolesMiddleware");
 const controller = require("../controllers/ownerController");
 
-// All routes require authentication and owner authorization
 router.use(auth, authorizeRoles("OWNER"));
 
+// Admin creation fields; designation and department are fixed to ADMIN / Administration
 const adminCreationValidation = [
 
     body("username")
@@ -45,12 +45,14 @@ const adminCreationValidation = [
         .withMessage("At least one qualification is required")
 ];
 
+// Validates the employeeCode URL parameter
 const employeeCodeValidation = [
     param("employeeCode")
         .notEmpty()
         .withMessage("Employee Code is required")
 ];
 
+// Admin management routes
 router.post(
     "/create-admin",
     adminCreationValidation,
