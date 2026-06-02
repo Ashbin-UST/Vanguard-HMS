@@ -280,7 +280,18 @@ export class AppointmentBookComponent
       (w) => w.day === weekday,
     );
     const candidate = this.expandSlots(dayWindows);
-    this.availableSlots.set(candidate);
+
+    // For today, hide slots whose start time has already passed.
+    const now = new Date();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    const filtered =
+      date === todayIsoDate()
+        ? candidate.filter(
+            (slot) => this.toMinutes(slot.split('-')[0]) > nowMinutes,
+          )
+        : candidate;
+
+    this.availableSlots.set(filtered);
 
     if (candidate.length === 0) {
       return;
