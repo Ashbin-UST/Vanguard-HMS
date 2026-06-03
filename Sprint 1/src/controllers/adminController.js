@@ -2,23 +2,8 @@ const User = require("../models/Users");
 const Employee = require("../models/Employees");
 const emailTemplates = require("../utils/emailTemplates");
 const sendEmail = require("../utils/sendEmail");
-const buildEmployeeResponse = require("../utils/buildEmployeeResponse");
-const buildEmployeeProfile = require("../utils/buildEmployeeProfile");
-const deleteEmployeeAccount = require("../utils/deleteEmployeeAccount");
 const createAccountWithEmployee = require("../utils/createAccountWithEmployee");
 const { RESTRICTED_ROLES_SET } = require("../config/constants");
-
-// Fetch all STAFF users with a given status and their linked employee records
-const getEmployeesByStatus = async (status, res) => {
-  const users = await User.find({ roles: "STAFF", status }).select("-passwordHash");
-  const employeeCodes = users.map((user) => user.employeeCode);
-  const employees = await Employee.find({ employeeCode: { $in: employeeCodes } });
-  const formattedEmployees = buildEmployeeResponse(employees, users);
-  return res.status(200).json({
-    totalEmployees: formattedEmployees.length,
-    employees: formattedEmployees,
-  });
-};
 
 // Create a new STAFF employee account with a temporary password
 exports.createEmployee = async (req, res) => {
@@ -58,59 +43,6 @@ exports.createEmployee = async (req, res) => {
     console.error("Employee creation error:", err);
     return res.status(500).json({
       message: "Server error during employee creation",
-    });
-  }
-};
-
-// Fetch a single employee profile
-exports.getEmployee = async (req, res) => {
-  try {
-    const { employeeCode } = req.params;
-
-    const employee = await Employee.findOne({ employeeCode });
-    if (!employee) {
-      return res.status(404).json({ message: "Employee not found" });
-    }
-
-    const user = await User.findOne({ employeeCode }).select("-passwordHash");
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    const profile = buildEmployeeProfile(employee);
-
-    return res.status(200).json({
-      employee: profile,
-      status: user.status,
-      roles: user.roles,
-      lastLoginAt: user.lastLoginAt,
-    });
-  } catch (err) {
-    console.error("Get employee error:", err);
-    return res.status(500).json({ message: "Server error while fetching employee" });
-  }
-};
-
-// List all active STAFF employees
-exports.getEmployees = async (req, res) => {
-  try {
-    await getEmployeesByStatus("ACTIVE", res);
-  } catch (err) {
-    console.error("Get employees error:", err);
-    return res.status(500).json({
-      message: "Server error while fetching employees",
-    });
-  }
-};
-
-// List STAFF employees with PENDING account status awaiting approval
-exports.getPendingEmployees = async (req, res) => {
-  try {
-    await getEmployeesByStatus("PENDING", res);
-  } catch (err) {
-    console.error("Get employees error:", err);
-    return res.status(500).json({
-      message: "Server error while fetching employees",
     });
   }
 };
@@ -206,7 +138,10 @@ exports.rejectEmployee = async (req, res) => {
       console.error("Email sending error:", emailError);
     }
 
-    await deleteEmployeeAccount(employeeCode);
+    await Promise.all([
+      Employee.deleteOne({ employeeCode }),
+      User.deleteOne({ employeeCode }),
+    ]);
 
     return res.status(200).json({
       message: "Employee registration request rejected successfully",

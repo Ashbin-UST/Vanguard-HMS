@@ -168,7 +168,7 @@ exports.logout = (req, res) => {
     });
 };
 
-// Return the current user's account and profile (used on page refresh)
+// Return the current user's account and profile
 exports.me = async (req, res) => {
     try {
         return await getCurrentUser(req.user.employeeCode, res);
