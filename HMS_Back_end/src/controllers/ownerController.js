@@ -7,6 +7,7 @@ const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
 const createAccountWithEmployee = require("../utils/createAccountWithEmployee");
 const deleteEmployeeAccount = require("../utils/deleteEmployeeAccount");
+const cancelDoctorAppointments = require("../utils/cancelDoctorAppointments");
 
 // Create an ADMIN account with a temporary password
 const createAdmin = async (req, res) => {
@@ -150,6 +151,7 @@ const deleteAdmin = async (req, res) => {
       message: `Admin ${employee.name} (${employeeCode}) was deleted`
     });
 
+    await cancelDoctorAppointments(employeeCode, employee.name, actor);
     await deleteEmployeeAccount(employeeCode);
 
     return res.status(200).json({

@@ -10,6 +10,7 @@ const updateEmployeeData = require("../utils/updateEmployeeData");
 const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
 const deleteEmployeeAccount = require("../utils/deleteEmployeeAccount");
+const cancelDoctorAppointments = require("../utils/cancelDoctorAppointments");
 const createAccountWithEmployee = require("../utils/createAccountWithEmployee");
 const parsePagination = require("../utils/parsePagination");
 const { RESTRICTED_ROLES_SET } = require("../config/constants");
@@ -353,6 +354,7 @@ exports.deleteEmployee = async (req, res) => {
       message: `Employee ${employee.name} (${employeeCode}) was deleted`
     });
 
+    await cancelDoctorAppointments(employeeCode, employee.name, actor);
     await deleteEmployeeAccount(employeeCode);
 
     return res.status(200).json({
