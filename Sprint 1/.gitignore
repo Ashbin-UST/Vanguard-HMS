@@ -144,3 +144,6 @@ vite.config.ts.timestamp-*
 
 # Sonar Properties
 sonar-project.properties
+
+#sonar scanner
+.scannerwork
