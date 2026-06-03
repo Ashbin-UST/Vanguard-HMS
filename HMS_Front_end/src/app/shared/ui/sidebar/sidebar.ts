@@ -40,6 +40,9 @@ export class SidebarComponent implements OnInit {
   // collapse the sidebar overlay on mobile.
   @Output() navigate = new EventEmitter<void>();
 
+  // Emitted when the user clicks the sidebar's own toggle button.
+  @Output() toggle = new EventEmitter<void>();
+
   title = 'HMS';
   subtitle = 'Hospital Management';
 
@@ -107,6 +110,10 @@ export class SidebarComponent implements OnInit {
 
   toggleUserMenu(): void {
     this.userMenuOpen.update((v) => !v);
+  }
+
+  onToggle(): void {
+    this.toggle.emit();
   }
 
   // Called when a nav link is tapped; lets the parent close the mobile overlay.
