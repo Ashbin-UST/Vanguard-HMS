@@ -9,8 +9,9 @@
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
         <!-- Email -->
         <div class="form-group">
-          <label class="form-label">Email</label>
+          <label for="email" class="form-label">Email</label>
           <input
+            id="email"
             type="email"
             formControlName="email"
             class="form-input"
@@ -23,8 +24,9 @@
 
         <!-- Password -->
         <div class="form-group">
-          <label class="form-label">Password</label>
+          <label for="password" class="form-label">Password</label>
           <input
+          id="password"
             type="password"
             formControlName="password"
             class="form-input"

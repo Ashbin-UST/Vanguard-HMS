@@ -12,8 +12,10 @@
         <div class="form-grid">
           <!-- Patient: searchable -->
           <div class="form-group">
-            <label class="form-label">Patient *</label>
+            <label for="patientId" class="form-label">Patient *</label>
+
             <app-searchable-select
+              id="patientId"
               formControlName="patientId"
               [options]="patientOptions()"
               valueKey="value"
@@ -23,6 +25,7 @@
               searchPlaceholder="Search by name, UHID, phone..."
               [onSearch]="onPatientSearch"
             ></app-searchable-select>
+
             @if (form.get('patientId')?.touched && form.get('patientId')?.invalid) {
               <p class="form-error">Patient is required</p>
             }
@@ -30,8 +33,10 @@
 
           <!-- Doctor: searchable -->
           <div class="form-group">
-            <label class="form-label">Doctor *</label>
+            <label for="doctorEmployeeId" class="form-label">Doctor *</label>
+
             <app-searchable-select
+              id="doctorEmployeeId"
               formControlName="doctorEmployeeId"
               [options]="doctorOptions()"
               valueKey="value"
@@ -40,6 +45,7 @@
               placeholder="Select a doctor"
               searchPlaceholder="Search by name or specialization..."
             ></app-searchable-select>
+
             @if (form.get('doctorEmployeeId')?.touched && form.get('doctorEmployeeId')?.invalid) {
               <p class="form-error">Doctor is required</p>
             }
@@ -47,19 +53,27 @@
 
           <!-- Date: no past dates -->
           <div class="form-group">
-            <label class="form-label">Appointment Date *</label>
+            <label for="appointmentDate" class="form-label">
+              Appointment Date *
+            </label>
+
             <input
+              id="appointmentDate"
               type="date"
               formControlName="appointmentDate"
               class="form-input"
               [attr.min]="todayIso"
             />
+
             @if (form.get('appointmentDate')?.touched) {
               @if (form.get('appointmentDate')?.hasError('required')) {
                 <p class="form-error">Appointment date is required</p>
               }
+
               @if (form.get('appointmentDate')?.hasError('pastDate')) {
-                <p class="form-error">Appointments cannot be booked for past dates</p>
+                <p class="form-error">
+                  Appointments cannot be booked for past dates
+                </p>
               }
             }
           </div>
@@ -67,7 +81,8 @@
           <!-- Fee summary -->
           @if (selectedDoctor) {
             <div class="form-group">
-              <label class="form-label">Consultation Fee</label>
+              <span class="form-label">Consultation Fee</span>
+
               <div class="fee-pill">
                 @if (selectedDoctor.consultationFee != null) {
                   ₹ {{ selectedDoctor.consultationFee }}
@@ -82,12 +97,15 @@
         <!-- Slots -->
         <div class="slots-block">
           <div class="slots-header">
-            <label class="form-label">Time Slot *</label>
+            <label for="timeSlot" class="form-label">Time Slot *</label>
+
             @if (loadingSlots()) {
               <span class="muted">Checking availability…</span>
             }
           </div>
+
           <app-slot-picker
+            id="timeSlot"
             formControlName="timeSlot"
             [slots]="availableSlots()"
             [bookedSlots]="bookedSlots()"
@@ -97,6 +115,7 @@
                 : 'The doctor is not available on this day'
             "
           ></app-slot-picker>
+
           @if (form.get('timeSlot')?.touched && form.get('timeSlot')?.invalid) {
             <p class="form-error">Please pick an available time slot</p>
           }
@@ -106,9 +125,13 @@
           <button type="button" class="btn btn-secondary" (click)="onCancel()">
             Cancel
           </button>
+
           <button type="submit" class="btn btn-primary" [disabled]="loading">
-            @if (loading) { <span>Booking…</span> }
-            @else { <span>Book Appointment</span> }
+            @if (loading) {
+              <span>Booking…</span>
+            } @else {
+              <span>Book Appointment</span>
+            }
           </button>
         </div>
       </form>

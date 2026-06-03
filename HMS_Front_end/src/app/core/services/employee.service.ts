@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ApiMessage } from '../models/api-response.model';
+
 import { EmployeeProfile } from '../models/employee.model';
 import { MeResponse } from '../models/user.model';
 import { DoctorsResponse } from '../models/appointment.model';
@@ -33,7 +33,7 @@ export interface ProfileUpdatePayload {
   providedIn: 'root',
 })
 export class EmployeeService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/employees`;
 
   // Current authenticated user + profile (used after a refresh).

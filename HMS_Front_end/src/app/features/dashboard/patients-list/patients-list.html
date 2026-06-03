@@ -52,11 +52,12 @@
               <th>Email</th>
               <th>Gender</th>
               <th>Status</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
             @for (p of patients(); track trackByUHID($index, p)) {
-              <tr (click)="open(p)" class="clickable">
+              <tr class="clickable">
                 <td>{{ p.UHID }}</td>
                 <td>{{ p.name }}</td>
                 <td>{{ p.phone }}</td>
@@ -67,6 +68,15 @@
                     {{ p.status }}
                   </span>
                 </td>
+                <td class="row-actions">
+                  <button
+                    type="button"
+                    class="row-action-btn"
+                    (click)="open(p)"
+                  >
+                    View →
+                  </button>
+                </td>
               </tr>
             }
           </tbody>
@@ -76,6 +86,7 @@
       @if (!searching() && totalPages() > 1) {
         <div class="pagination">
           <button
+            type="button"
             class="btn btn-secondary btn-sm"
             (click)="prevPage()"
             [disabled]="page() === 1"
@@ -86,6 +97,7 @@
             Page {{ page() }} of {{ totalPages() }} · {{ total() }} total
           </span>
           <button
+            type="button"
             class="btn btn-secondary btn-sm"
             (click)="nextPage()"
             [disabled]="page() === totalPages()"

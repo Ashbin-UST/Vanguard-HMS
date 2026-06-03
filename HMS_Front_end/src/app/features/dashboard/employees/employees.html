@@ -43,11 +43,12 @@
               <th>Designation</th>
               <th>Status</th>
               <th>Last Login</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
             @for (item of rows(); track trackByCode($index, item)) {
-              <tr (click)="open(item)" class="clickable">
+              <tr class="clickable">
                 <td>{{ item.employee.employeeCode }}</td>
                 <td>{{ item.employee.name }}</td>
                 <td>{{ item.employee.email }}</td>
@@ -67,6 +68,15 @@
                     <span class="muted">Never</span>
                   }
                 </td>
+                <td class="row-actions">
+                  <button
+                    type="button"
+                    class="row-action-btn"
+                    (click)="open(item)"
+                  >
+                    View →
+                  </button>
+                </td>
               </tr>
             }
           </tbody>
@@ -77,8 +87,16 @@
 
   <!-- Detail modal -->
   @if (selected(); as item) {
-    <div class="modal-backdrop" (click)="close()">
-      <div class="modal-box" (click)="$event.stopPropagation()">
+    <div
+      class="modal-backdrop"
+      (click)="close()"
+      (keydown.escape)="close()"
+    >
+      <div
+        class="modal-box"
+        (click)="$event.stopPropagation()"
+        (keydown)="$event.stopPropagation()"
+      >
         <div class="modal-header">
           <div>
             <h3 class="modal-title">{{ item.employee.name }}</h3>

@@ -18,7 +18,7 @@ export interface PatientFilters {
   providedIn: 'root',
 })
 export class PatientService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/patients`;
 
   createPatient(data: CreatePatientPayload): Observable<PatientResponse> {

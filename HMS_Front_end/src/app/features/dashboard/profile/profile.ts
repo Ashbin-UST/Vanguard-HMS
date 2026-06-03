@@ -42,12 +42,12 @@ const DRAFT_KEY = 'draft:profile';
   styleUrl: './profile.css',
 })
 export class ProfileComponent implements OnInit, CanComponentDeactivate {
-  private fb = inject(FormBuilder);
-  private authService = inject(AuthService);
-  private employeeService = inject(EmployeeService);
-  private toast = inject(ToastService);
-  private formDraft = inject(FormDraftService);
-  private router = inject(Router);
+  private readonly fb = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
+  private readonly employeeService = inject(EmployeeService);
+  private readonly toast = inject(ToastService);
+  private readonly formDraft = inject(FormDraftService);
+  private readonly router = inject(Router);
 
   profile = signal<EmployeeProfile | null>(null);
   loading = signal(true);

@@ -9,7 +9,7 @@
   border-radius: 0.75rem;
   padding: 2rem;
   text-align: center;
-  color: #94a3b8;
+  color: #334155;
   border: 1px dashed #e2e8f0;
 }
 
@@ -55,7 +55,7 @@
   margin: 1.5rem 0 1rem;
   font-size: 0.8125rem;
   font-weight: 700;
-  color: #475569;
+  color: #334155;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   padding-bottom: 0.5rem;
@@ -81,7 +81,7 @@
 .detail-label {
   font-size: 0.6875rem;
   font-weight: 700;
-  color: #64748b;
+  color: #334155;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -119,16 +119,16 @@
 
 .status--canceled {
   background-color: #fef2f2;
-  color: #dc2626;
+  color: #991b1b;
 }
 
 .status--completed {
   background-color: #f0fdf4;
-  color: #16a34a;
+  color: #14532d;
 }
 
 .muted {
-  color: #94a3b8;
+  color: #334155;
   margin: 0;
   font-size: 0.875rem;
 }

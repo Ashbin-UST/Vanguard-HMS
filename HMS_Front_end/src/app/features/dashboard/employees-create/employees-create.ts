@@ -39,14 +39,14 @@ import {
 export class CreateEmployeeComponent
   implements OnInit, CanComponentDeactivate
 {
-  private fb = inject(FormBuilder);
-  private adminService = inject(AdminService);
-  private ownerService = inject(OwnerService);
-  private toast = inject(ToastService);
-  private cdr = inject(ChangeDetectorRef);
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private formDraft = inject(FormDraftService);
+  private readonly fb = inject(FormBuilder);
+  private readonly adminService = inject(AdminService);
+  private readonly ownerService = inject(OwnerService);
+  private readonly toast = inject(ToastService);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly formDraft = inject(FormDraftService);
 
   mode: 'staff' | 'admin' = 'staff';
   form: FormGroup;

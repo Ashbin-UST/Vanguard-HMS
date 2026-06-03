@@ -37,12 +37,12 @@ const DRAFT_KEY = 'draft:self-register';
   styleUrl: './register.css',
 })
 export class RegisterComponent implements OnInit, CanComponentDeactivate {
-  private fb = inject(FormBuilder);
-  private authService = inject(AuthService);
-  private router = inject(Router);
-  private toast = inject(ToastService);
-  private cdr = inject(ChangeDetectorRef);
-  private formDraft = inject(FormDraftService);
+  private readonly fb = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly toast = inject(ToastService);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly formDraft = inject(FormDraftService);
 
   registerForm: FormGroup;
   loading = false;

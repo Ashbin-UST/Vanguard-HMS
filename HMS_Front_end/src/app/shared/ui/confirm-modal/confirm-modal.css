@@ -52,26 +52,26 @@
 
 .modal-icon--danger {
   background-color: #fef2f2;
-  color: #dc2626;
+  color: #991b1b;
 }
 .modal-icon--warning {
   background-color: #fffbeb;
-  color: #d97706;
+  color: #78350f;
 }
 .modal-icon--success {
   background-color: #f0fdf4;
-  color: #16a34a;
+  color: #14532d;
 }
 .modal-icon--info {
   background-color: #eff6ff;
-  color: #2563eb;
+  color: #1e40af;
 }
 
 .modal-close {
   background: none;
   border: none;
   font-size: 1rem;
-  color: #94a3b8;
+  color: #334155;
   cursor: pointer;
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
@@ -96,7 +96,7 @@
 
 .modal-message {
   font-size: 0.9rem;
-  color: #64748b;
+  color: #334155;
   margin: 0;
   line-height: 1.5;
 }
@@ -111,7 +111,7 @@
 .modal-input-label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #475569;
+  color: #334155;
 }
 
 .modal-footer {
@@ -133,11 +133,11 @@
 }
 
 .modal-footer .btn-success {
-  background-color: #16a34a;
+  background-color: #15803d;
   color: #ffffff;
 }
 .modal-footer .btn-success:hover {
-  background-color: #15803d;
+  background-color: #166534;
 }
 
 @keyframes modalFadeIn {

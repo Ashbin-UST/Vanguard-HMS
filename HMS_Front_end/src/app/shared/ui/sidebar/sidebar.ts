@@ -21,9 +21,9 @@ import { SidebarNode } from '../../../core/models/node.model';
   styleUrl: './sidebar.css',
 })
 export class SidebarComponent implements OnInit {
-  private authService = inject(AuthService);
-  private nodeService = inject(NodeService);
-  private sanitizer = inject(DomSanitizer);
+  private readonly authService = inject(AuthService);
+  private readonly nodeService = inject(NodeService);
+  private readonly sanitizer = inject(DomSanitizer);
 
   title = 'HMS';
   subtitle = 'Hospital Management';
@@ -47,7 +47,7 @@ export class SidebarComponent implements OnInit {
   ];
 
   // Backend-provided nodes (everything except the guaranteed defaults).
-  private backendNodes = signal<SidebarNode[]>([]);
+  private readonly backendNodes = signal<SidebarNode[]>([]);
 
   // Final rendered list: defaults first, then backend nodes, de-duplicated.
   menuItems = computed<SidebarNode[]>(() => {
@@ -121,7 +121,7 @@ export class SidebarComponent implements OnInit {
   // --- Icons --------------------------------------------------------------
 
   // Cache so we don't re-sanitize identical markup on every change detection.
-  private iconCache = new Map<string, SafeHtml>();
+  private readonly iconCache = new Map<string, SafeHtml>();
 
   // Inline 24x24 stroke icons keyed by the node's `icon` field (with aliases).
   private readonly icons: Record<string, string> = {
@@ -157,6 +157,7 @@ export class SidebarComponent implements OnInit {
       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ` +
       `stroke-width="2" stroke-linecap="round" stroke-linejoin="round">` +
       `${inner}</svg>`;
+    // Safe because this SVG is static, hardcoded, and not built from user/API input.
     const safe = this.sanitizer.bypassSecurityTrustHtml(svg);
     this.iconCache.set(key, safe);
     return safe;

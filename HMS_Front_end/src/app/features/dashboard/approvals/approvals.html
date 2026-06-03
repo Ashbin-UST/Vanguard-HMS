@@ -1,7 +1,7 @@
 <app-dashboard-layout pageTitle="Approvals">
   <div class="page">
     <div class="tabs">
-      <button
+      <button 
         type="button"
         class="tab-btn"
         [class.active]="tab() === 'registrations'"
@@ -10,6 +10,7 @@
         Registration Requests
         <span class="tab-count">{{ registrations().length }}</span>
       </button>
+
       <button
         type="button"
         class="tab-btn"
@@ -39,15 +40,26 @@
                 <th></th>
               </tr>
             </thead>
+
             <tbody>
               @for (item of registrations(); track trackByCode($index, item)) {
-                <tr (click)="openRegistration(item)" class="clickable">
+                <tr class="clickable">
                   <td>{{ item.employee.employeeCode }}</td>
                   <td>{{ item.employee.name }}</td>
                   <td>{{ item.employee.email }}</td>
                   <td>{{ item.employee.department }}</td>
-                  <td><span class="badge">{{ item.employee.designation }}</span></td>
-                  <td class="row-actions">View →</td>
+                  <td>
+                    <span class="badge">{{ item.employee.designation }}</span>
+                  </td>
+                  <td class="row-actions">
+                    <button
+                      type="button"
+                      class="row-action-btn"
+                      (click)="openRegistration(item)"
+                    >
+                      View →
+                    </button>
+                  </td>
                 </tr>
               }
             </tbody>
@@ -74,15 +86,24 @@
                 <th></th>
               </tr>
             </thead>
+
             <tbody>
               @for (req of changes(); track trackByRequest($index, req)) {
-                <tr (click)="openChange(req)" class="clickable">
+                <tr class="clickable">
                   <td>{{ req.requestId }}</td>
                   <td>{{ req.employeeCode }}</td>
                   <td>{{ req.employeeName }}</td>
                   <td>{{ req.email }}</td>
                   <td>{{ req.created_at | date: 'short' }}</td>
-                  <td class="row-actions">View →</td>
+                  <td class="row-actions">
+                    <button
+                      type="button"
+                      class="row-action-btn"
+                      (click)="openChange(req)"
+                    >
+                      View →
+                    </button>
+                  </td>
                 </tr>
               }
             </tbody>
@@ -94,47 +115,78 @@
 
   <!-- Registration detail modal -->
   @if (selectedRegistration(); as item) {
-    <div class="modal-backdrop" (click)="closeRegistration()">
-      <div class="modal-box" (click)="$event.stopPropagation()">
+    <div
+      class="modal-backdrop"
+      (click)="closeRegistration()"
+      (keydown.enter)="closeRegistration()"
+      (keydown.space)="closeRegistration(); $event.preventDefault()"
+      (keydown.escape)="closeRegistration()"
+    >
+      <dialog
+        class="modal-box"
+        open
+        aria-modal="true"
+        (click)="$event.stopPropagation()"
+        (keydown)="$event.stopPropagation()"
+      >
         <div class="modal-header">
           <div>
             <h3 class="modal-title">{{ item.employee.name }}</h3>
-            <p class="modal-sub">{{ item.employee.employeeCode }} · Pending Approval</p>
+            <p class="modal-sub">
+              {{ item.employee.employeeCode }} · Pending Approval
+            </p>
           </div>
-          <button type="button" class="modal-close" (click)="closeRegistration()">✕</button>
+
+          <button
+            type="button"
+            class="modal-close"
+            aria-label="Close registration approval modal"
+            (click)="closeRegistration()"
+          >
+            ✕
+          </button>
         </div>
+
         <div class="modal-body">
           <div class="detail-grid">
             <div class="detail">
               <span class="detail-label">Email</span>
               <span class="detail-value">{{ item.employee.email }}</span>
             </div>
+
             <div class="detail">
               <span class="detail-label">Phone</span>
               <span class="detail-value">{{ item.employee.phone }}</span>
             </div>
+
             <div class="detail">
               <span class="detail-label">Department</span>
               <span class="detail-value">{{ item.employee.department }}</span>
             </div>
+
             <div class="detail">
               <span class="detail-label">Designation</span>
               <span class="detail-value">{{ item.employee.designation }}</span>
             </div>
+
             <div class="detail">
               <span class="detail-label">Joining Date</span>
               <span class="detail-value">
                 @if (item.employee.joiningDate) {
                   {{ item.employee.joiningDate | date: 'mediumDate' }}
-                } @else { — }
+                } @else {
+                  —
+                }
               </span>
             </div>
+
             <div class="detail">
               <span class="detail-label">Qualification</span>
               <span class="detail-value">
                 {{ (item.employee.qualification || []).join(', ') || '—' }}
               </span>
             </div>
+
             @if (item.employee.medicalRegistrationNumber) {
               <div class="detail">
                 <span class="detail-label">Med. Registration No</span>
@@ -143,53 +195,92 @@
                 </span>
               </div>
             }
+
             @if (item.employee.specialization) {
               <div class="detail">
                 <span class="detail-label">Specialization</span>
-                <span class="detail-value">{{ item.employee.specialization }}</span>
+                <span class="detail-value">
+                  {{ item.employee.specialization }}
+                </span>
               </div>
             }
+
             @if (item.employee.consultationFee != null) {
               <div class="detail">
                 <span class="detail-label">Consultation Fee</span>
-                <span class="detail-value">{{ item.employee.consultationFee }}</span>
+                <span class="detail-value">
+                  {{ item.employee.consultationFee }}
+                </span>
               </div>
             }
           </div>
         </div>
+
         <div class="modal-footer">
-          <button type="button" class="btn btn-danger" (click)="rejectRegistration(item)">
+          <button
+            type="button"
+            class="btn btn-danger"
+            (click)="rejectRegistration(item)"
+          >
             Reject
           </button>
-          <button type="button" class="btn btn-success" (click)="approveRegistration(item)">
+
+          <button
+            type="button"
+            class="btn btn-success"
+            (click)="approveRegistration(item)"
+          >
             Approve
           </button>
         </div>
-      </div>
+      </dialog>
     </div>
   }
 
   <!-- Profile-change detail modal: only employeeCode/name/email + diffs -->
   @if (selectedChange(); as req) {
-    <div class="modal-backdrop" (click)="closeChange()">
-      <div class="modal-box" (click)="$event.stopPropagation()">
+    <div
+      class="modal-backdrop"
+      (click)="closeChange()"
+      (keydown.enter)="closeChange()"
+      (keydown.space)="closeChange(); $event.preventDefault()"
+      (keydown.escape)="closeChange()"
+    >
+      <dialog
+        class="modal-box"
+        open
+        aria-modal="true"
+        (click)="$event.stopPropagation()"
+        (keydown)="$event.stopPropagation()"
+      >
         <div class="modal-header">
           <div>
             <h3 class="modal-title">Profile Change Request</h3>
             <p class="modal-sub">{{ req.requestId }}</p>
           </div>
-          <button type="button" class="modal-close" (click)="closeChange()">✕</button>
+
+          <button
+            type="button"
+            class="modal-close"
+            aria-label="Close profile change modal"
+            (click)="closeChange()"
+          >
+            ✕
+          </button>
         </div>
+
         <div class="modal-body">
           <div class="detail-grid">
             <div class="detail">
               <span class="detail-label">Employee Code</span>
               <span class="detail-value">{{ req.employeeCode }}</span>
             </div>
+
             <div class="detail">
               <span class="detail-label">Name</span>
               <span class="detail-value">{{ req.employeeName }}</span>
             </div>
+
             <div class="detail">
               <span class="detail-label">Email</span>
               <span class="detail-value">{{ req.email }}</span>
@@ -197,10 +288,12 @@
           </div>
 
           <h4 class="detail-section">Requested Changes</h4>
+
           <ul class="diff-list">
             @for (entry of changeEntries(req); track entry.field) {
               <li class="diff-row">
                 <div class="diff-field">{{ formatField(entry.field) }}</div>
+
                 <div class="diff-values">
                   <span class="diff-old">{{ formatValue(entry.diff.old) }}</span>
                   <span class="diff-arrow">→</span>
@@ -210,15 +303,25 @@
             }
           </ul>
         </div>
+
         <div class="modal-footer">
-          <button type="button" class="btn btn-danger" (click)="rejectChange(req)">
+          <button
+            type="button"
+            class="btn btn-danger"
+            (click)="rejectChange(req)"
+          >
             Reject
           </button>
-          <button type="button" class="btn btn-success" (click)="approveChange(req)">
+
+          <button
+            type="button"
+            class="btn btn-success"
+            (click)="approveChange(req)"
+          >
             Approve
           </button>
         </div>
-      </div>
+      </dialog>
     </div>
   }
 </app-dashboard-layout>

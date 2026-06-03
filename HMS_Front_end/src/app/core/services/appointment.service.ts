@@ -20,7 +20,7 @@ export interface AppointmentFilters {
   providedIn: 'root',
 })
 export class AppointmentService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/appointments`;
 
   createAppointment(

@@ -36,12 +36,12 @@ import {
   styleUrl: './employees.css',
 })
 export class EmployeesListComponent implements OnInit {
-  private adminService = inject(AdminService);
-  private ownerService = inject(OwnerService);
-  private authService = inject(AuthService);
-  private toast = inject(ToastService);
-  private confirmModal = inject(ConfirmModalService);
-  private router = inject(Router);
+  private readonly adminService = inject(AdminService);
+  private readonly ownerService = inject(OwnerService);
+  private readonly authService = inject(AuthService);
+  private readonly toast = inject(ToastService);
+  private readonly confirmModal = inject(ConfirmModalService);
+  private readonly router = inject(Router);
 
   loading = signal(true);
   employees = signal<EmployeeListItem[]>([]);

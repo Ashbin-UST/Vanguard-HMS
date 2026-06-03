@@ -9,7 +9,15 @@
   >
     @if (selectedOption()) {
       <span class="ss-value">{{ displayLabel() }}</span>
-      <span class="ss-clear" (click)="clear($event)" aria-label="Clear">✕</span>
+      <span
+        class="ss-clear"
+        aria-label="Clear"
+        (click)="clear($event)"
+        (keydown.enter)="clear($event)"
+        (keydown.space)="clear($event); $event.preventDefault()"
+      >
+        ✕
+      </span>
     } @else {
       <span class="ss-placeholder">{{ placeholder }}</span>
     }
@@ -36,19 +44,21 @@
         />
       </div>
 
-      <ul class="ss-options" role="listbox">
+      <ul class="ss-options">
         @for (option of filteredOptions(); track trackByValue($index, option); let i = $index) {
-          <li
-            class="ss-option"
-            [class.active]="i === activeIndex()"
-            role="option"
-            (click)="select(option)"
-            (mouseenter)="activeIndex.set(i)"
-          >
-            <span class="ss-option-label">{{ optionLabel(option) }}</span>
-            @if (sublabelKey && optionSublabel(option)) {
-              <span class="ss-option-sublabel">{{ optionSublabel(option) }}</span>
-            }
+          <li class="ss-option-item">
+            <button
+              type="button"
+              class="ss-option"
+              [class.active]="i === activeIndex()"
+              (click)="select(option)"
+              (mouseenter)="activeIndex.set(i)"
+            >
+              <span class="ss-option-label">{{ optionLabel(option) }}</span>
+              @if (sublabelKey && optionSublabel(option)) {
+                <span class="ss-option-sublabel">{{ optionSublabel(option) }}</span>
+              }
+            </button>
           </li>
         } @empty {
           <li class="ss-empty">{{ emptyText }}</li>

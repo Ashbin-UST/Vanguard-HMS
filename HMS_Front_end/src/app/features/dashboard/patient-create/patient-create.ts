@@ -38,12 +38,12 @@ const DRAFT_KEY = 'draft:patient-create';
 export class PatientCreateComponent
   implements OnInit, CanComponentDeactivate
 {
-  private fb = inject(FormBuilder);
-  private patientService = inject(PatientService);
-  private toast = inject(ToastService);
-  private cdr = inject(ChangeDetectorRef);
-  private formDraft = inject(FormDraftService);
-  private router = inject(Router);
+  private readonly fb = inject(FormBuilder);
+  private readonly patientService = inject(PatientService);
+  private readonly toast = inject(ToastService);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly formDraft = inject(FormDraftService);
+  private readonly router = inject(Router);
 
   genders = GENDERS;
   loading = false;

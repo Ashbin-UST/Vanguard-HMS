@@ -22,11 +22,11 @@ import {
   styleUrl: './reset-password.css',
 })
 export class ResetPasswordComponent implements OnInit {
-  private fb = inject(FormBuilder);
-  private authService = inject(AuthService);
-  private route = inject(ActivatedRoute);
-  private toast = inject(ToastService);
-  private cdr = inject(ChangeDetectorRef);
+  private readonly fb = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly toast = inject(ToastService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   resetPasswordForm: FormGroup;
   loading = false;

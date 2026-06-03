@@ -1,5 +1,9 @@
 @if (modalService.modalState().isOpen) {
-  <div class="modal-backdrop" (click)="onBackdropClick($event)">
+  <div
+    class="modal-backdrop"
+    (click)="onBackdropClick($event)"
+    (keydown.escape)="onCancel()"
+  >
     <div class="modal-box" [class]="'modal-box--' + modalService.modalState().config.type">
 
       <!-- Header -->
@@ -10,7 +14,7 @@
           @if (modalService.modalState().config.type === 'success') { ✓ }
           @if (modalService.modalState().config.type === 'info')    { ℹ }
         </div>
-        <button class="modal-close" (click)="onCancel()">✕</button>
+        <button type="button" class="modal-close" (click)="onCancel()">✕</button>
       </div>
 
       <!-- Body -->
@@ -25,10 +29,11 @@
         <!-- Optional Input (for cancel reason, etc.) -->
         @if (modalService.modalState().config.showInput) {
           <div class="modal-input-group">
-            <label class="modal-input-label">
+            <label for="confirmModalInput" class="modal-input-label">
               {{ modalService.modalState().config.inputLabel }}
             </label>
             <input
+              id="confirmModalInput"
               type="text"
               class="form-input"
               [placeholder]="modalService.modalState().config.inputPlaceholder || ''"
@@ -42,12 +47,14 @@
       <!-- Footer -->
       <div class="modal-footer">
         <button
+          type="button"
           class="btn btn-secondary"
           (click)="onCancel()"
         >
           {{ modalService.modalState().config.cancelText }}
         </button>
         <button
+          type="button"
           [class]="'btn btn-' + (modalService.modalState().config.type === 'danger' ? 'danger' : 
                                   modalService.modalState().config.type === 'success' ? 'success' : 'primary')"
           (click)="onConfirm()"

@@ -72,14 +72,14 @@ const DAY_MAP: Record<number, WeekDay> = {
 export class AppointmentBookComponent
   implements OnInit, CanComponentDeactivate
 {
-  private fb = inject(FormBuilder);
-  private patientService = inject(PatientService);
-  private employeeService = inject(EmployeeService);
-  private appointmentService = inject(AppointmentService);
-  private toast = inject(ToastService);
-  private cdr = inject(ChangeDetectorRef);
-  private formDraft = inject(FormDraftService);
-  private router = inject(Router);
+  private readonly fb = inject(FormBuilder);
+  private readonly patientService = inject(PatientService);
+  private readonly employeeService = inject(EmployeeService);
+  private readonly appointmentService = inject(AppointmentService);
+  private readonly toast = inject(ToastService);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly formDraft = inject(FormDraftService);
+  private readonly router = inject(Router);
 
   form: FormGroup = this.fb.group({
     patientId: ['', Validators.required],
@@ -106,7 +106,7 @@ export class AppointmentBookComponent
   patientOptions = signal<any[]>([]);
   doctorOptions = signal<any[]>([]);
 
-  private patientSearch$ = new Subject<string>();
+  private readonly patientSearch$ = new Subject<string>();
 
   ngOnInit(): void {
     // Pre-load top doctors and a small patient page so the dropdowns aren't

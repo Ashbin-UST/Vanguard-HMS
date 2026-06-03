@@ -12,19 +12,7 @@ import { AuditLog } from '../../../core/models/audit.model';
 import { Appointment } from '../../../core/models/appointment.model';
 import { todayIsoDate } from '../../../core/validators/app-validators';
 
-/**
- * Single dashboard landing.
- *
- * Renders a different set of cards based on the logged-in user's designation:
- *   - OWNER / ADMIN: active employee count, pending requests count,
- *     patient count, booked appointments count, recent activity feed.
- *   - RECEPTIONIST: patient count, booked appointments count,
- *     quick links to create patient / book appointment.
- *   - DOCTOR: today's / upcoming appointment counts, quick link to "My
- *     Appointments". No patient/admin metrics — doctors don't see those.
- *   - Other staff: a simple greeting card. They have no extra menu items by
- *     default (sidebar shows only Overview + Profile).
- */
+
 @Component({
   selector: 'app-overview',
   standalone: true,
@@ -33,11 +21,11 @@ import { todayIsoDate } from '../../../core/validators/app-validators';
   styleUrl: './overview.css',
 })
 export class OverviewComponent implements OnInit {
-  private authService = inject(AuthService);
-  private adminService = inject(AdminService);
-  private ownerService = inject(OwnerService);
-  private appointmentService = inject(AppointmentService);
-  private patientService = inject(PatientService);
+  private readonly authService = inject(AuthService);
+  private  readonly adminService = inject(AdminService);
+  private readonly ownerService = inject(OwnerService);
+  private readonly appointmentService = inject(AppointmentService);
+  private readonly patientService = inject(PatientService);
 
   // Stats
   activeEmployees = signal<number | null>(null);
@@ -177,7 +165,7 @@ export class OverviewComponent implements OnInit {
 
   // Short action label for the activity feed.
   actionLabel(action: string): string {
-    return action.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) =>
+    return action.replaceAll('_', ' ').toLowerCase().replaceAll(/\b\w/g, (c) =>
       c.toUpperCase(),
     );
   }

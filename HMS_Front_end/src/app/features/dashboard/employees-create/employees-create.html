@@ -12,21 +12,29 @@
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()" class="card-body">
         <div class="form-grid">
-         
-
           <div class="form-group">
-            <label class="form-label">Full Name *</label>
-            <input type="text" formControlName="name" class="form-input"
-                   placeholder="John Doe" />
+            <label for="name" class="form-label">Full Name *</label>
+            <input
+              id="name"
+              type="text"
+              formControlName="name"
+              class="form-input"
+              placeholder="John Doe"
+            />
             @if (form.get('name')?.touched && form.get('name')?.invalid) {
               <p class="form-error">Name is required</p>
             }
           </div>
 
           <div class="form-group">
-            <label class="form-label">Email *</label>
-            <input type="email" formControlName="email" class="form-input"
-                   placeholder="john.doe@hospital.com" />
+            <label for="email" class="form-label">Email *</label>
+            <input
+              id="email"
+              type="email"
+              formControlName="email"
+              class="form-input"
+              placeholder="john.doe@hospital.com"
+            />
             @if (form.get('email')?.touched) {
               @if (form.get('email')?.hasError('required')) {
                 <p class="form-error">Email is required</p>
@@ -38,24 +46,34 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Phone *</label>
-            <input type="tel" formControlName="phone" class="form-input"
-                   placeholder="+91 1234567890" />
+            <label for="phone" class="form-label">Phone *</label>
+            <input
+              id="phone"
+              type="tel"
+              formControlName="phone"
+              class="form-input"
+              placeholder="+91 1234567890"
+            />
             @if (form.get('phone')?.touched) {
               @if (form.get('phone')?.hasError('required')) {
                 <p class="form-error">Phone is required</p>
               }
               @if (form.get('phone')?.hasError('phone')) {
                 <p class="form-error">
-                  Enter 10 digits, optionally with a country code (e.g. +91 1234567890 or 1234567890)
+                  Enter 10 digits, optionally with a country code
+                  (e.g. +91 1234567890 or 1234567890)
                 </p>
               }
             }
           </div>
 
           <div class="form-group">
-            <label class="form-label">Department *</label>
-            <select formControlName="department" class="form-select">
+            <label for="department" class="form-label">Department *</label>
+            <select
+              id="department"
+              formControlName="department"
+              class="form-select"
+            >
               <option value="">Select department</option>
               @for (d of departments; track d) {
                 <option [value]="d">{{ d }}</option>
@@ -67,9 +85,14 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Designation *</label>
-            <select formControlName="designation" (change)="onDesignationChange()"
-                    class="form-select" [disabled]="mode === 'admin'">
+            <label for="designation" class="form-label">Designation *</label>
+            <select
+              id="designation"
+              formControlName="designation"
+              class="form-select"
+              [disabled]="mode === 'admin'"
+              (change)="onDesignationChange()"
+            >
               @if (mode !== 'admin') {
                 <option value="">Select designation</option>
               }
@@ -83,17 +106,27 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Joining Date *</label>
-            <input type="date" formControlName="joiningDate" class="form-input" />
+            <label for="joiningDate" class="form-label">Joining Date *</label>
+            <input
+              id="joiningDate"
+              type="date"
+              formControlName="joiningDate"
+              class="form-input"
+            />
             @if (form.get('joiningDate')?.touched && form.get('joiningDate')?.invalid) {
               <p class="form-error">Joining date is required</p>
             }
           </div>
 
           <div class="form-group">
-            <label class="form-label">Qualification *</label>
-            <input type="text" formControlName="qualification" class="form-input"
-                   placeholder="MBBS, MD (comma separated)" />
+            <label for="qualification" class="form-label">Qualification *</label>
+            <input
+              id="qualification"
+              type="text"
+              formControlName="qualification"
+              class="form-input"
+              placeholder="MBBS, MD (comma separated)"
+            />
             @if (form.get('qualification')?.touched && form.get('qualification')?.invalid) {
               <p class="form-error">At least one qualification is required</p>
             }
@@ -101,9 +134,16 @@
 
           @if (showMedical) {
             <div class="form-group">
-              <label class="form-label">Medical Registration No *</label>
-              <input type="text" formControlName="medicalRegistrationNumber"
-                     class="form-input" placeholder="MED123456" />
+              <label for="medicalRegistrationNumber" class="form-label">
+                Medical Registration No *
+              </label>
+              <input
+                id="medicalRegistrationNumber"
+                type="text"
+                formControlName="medicalRegistrationNumber"
+                class="form-input"
+                placeholder="MED123456"
+              />
               @if (form.get('medicalRegistrationNumber')?.touched && form.get('medicalRegistrationNumber')?.invalid) {
                 <p class="form-error">Medical registration number is required</p>
               }
@@ -112,9 +152,16 @@
 
           @if (showSpecialization) {
             <div class="form-group">
-              <label class="form-label">Specialization *</label>
-              <input type="text" formControlName="specialization"
-                     class="form-input" placeholder="Cardiology" />
+              <label for="specialization" class="form-label">
+                Specialization *
+              </label>
+              <input
+                id="specialization"
+                type="text"
+                formControlName="specialization"
+                class="form-input"
+                placeholder="Cardiology"
+              />
               @if (form.get('specialization')?.touched && form.get('specialization')?.invalid) {
                 <p class="form-error">Specialization is required</p>
               }
@@ -123,9 +170,17 @@
 
           @if (isDoctor) {
             <div class="form-group">
-              <label class="form-label">Consultation Fee *</label>
-              <input type="number" formControlName="consultationFee"
-                     class="form-input" placeholder="500" min="0" />
+              <label for="consultationFee" class="form-label">
+                Consultation Fee *
+              </label>
+              <input
+                id="consultationFee"
+                type="number"
+                formControlName="consultationFee"
+                class="form-input"
+                placeholder="500"
+                min="0"
+              />
               @if (form.get('consultationFee')?.touched) {
                 @if (form.get('consultationFee')?.hasError('required')) {
                   <p class="form-error">Consultation fee is required</p>
@@ -141,23 +196,59 @@
         @if (isDoctor) {
           <div class="slots-section" formArrayName="availabilitySlots">
             <div class="slots-header">
-              <label class="form-label">Availability Slots *</label>
-              <button type="button" class="btn btn-secondary btn-sm"
-                      (click)="addSlot()">+ Add Slot</button>
+              <span class="form-label">Availability Slots *</span>
+              <button
+                type="button"
+                class="btn btn-secondary btn-sm"
+                (click)="addSlot()"
+              >
+                + Add Slot
+              </button>
             </div>
 
             @for (slot of availabilitySlots.controls; track $index; let i = $index) {
               <div class="slot-row" [formGroupName]="i">
-                <select formControlName="day" class="form-select">
+                <label class="sr-only" [for]="'slotDay' + i">Day</label>
+                <select
+                  [id]="'slotDay' + i"
+                  formControlName="day"
+                  class="form-select"
+                >
                   @for (day of weekDays; track day) {
                     <option [value]="day">{{ day }}</option>
                   }
                 </select>
-                <input type="time" formControlName="startTime" class="form-input" />
+
+                <label class="sr-only" [for]="'slotStartTime' + i">
+                  Start Time
+                </label>
+                <input
+                  [id]="'slotStartTime' + i"
+                  type="time"
+                  formControlName="startTime"
+                  class="form-input"
+                />
+
                 <span class="slot-sep">to</span>
-                <input type="time" formControlName="endTime" class="form-input" />
-                <button type="button" class="slot-remove"
-                        (click)="removeSlot(i)" aria-label="Remove">✕</button>
+
+                <label class="sr-only" [for]="'slotEndTime' + i">
+                  End Time
+                </label>
+                <input
+                  [id]="'slotEndTime' + i"
+                  type="time"
+                  formControlName="endTime"
+                  class="form-input"
+                />
+
+                <button
+                  type="button"
+                  class="slot-remove"
+                  (click)="removeSlot(i)"
+                  aria-label="Remove slot"
+                >
+                  ✕
+                </button>
               </div>
             }
           </div>
@@ -167,9 +258,13 @@
           <button type="button" class="btn btn-secondary" (click)="onCancel()">
             Cancel
           </button>
+
           <button type="submit" class="btn btn-primary" [disabled]="loading">
-            @if (loading) { <span>Creating…</span> }
-            @else { <span>Create</span> }
+            @if (loading) {
+              <span>Creating…</span>
+            } @else {
+              <span>Create</span>
+            }
           </button>
         </div>
       </form>

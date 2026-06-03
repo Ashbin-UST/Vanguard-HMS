@@ -16,17 +16,17 @@ const TOKEN_KEY = 'hms_token';
 const USER_KEY = 'hms_user';
 
 // Designations that are treated as superusers (access to everything).
-const SUPERUSER_DESIGNATIONS: Designation[] = ['OWNER', 'ADMIN'];
+const SUPERUSER_DESIGNATIONS = new Set<Designation>(['OWNER', 'ADMIN']);
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  private http = inject(HttpClient);
-  private router = inject(Router);
-  private formDraft = inject(FormDraftService);
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly formDraft = inject(FormDraftService);
 
-  private currentUserSubject = new BehaviorSubject<User | null>(null);
+  private readonly currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
   // Signal mirror for components that prefer signals.
@@ -190,7 +190,7 @@ export class AuthService {
   // True if the user is OWNER or ADMIN (full access).
   isSuperUser(): boolean {
     const designation = this.getDesignation();
-    return !!designation && SUPERUSER_DESIGNATIONS.includes(designation);
+    return !!designation && SUPERUSER_DESIGNATIONS.has(designation);
   }
 
   /**
@@ -202,7 +202,7 @@ export class AuthService {
     if (!designation) {
       return false;
     }
-    if (SUPERUSER_DESIGNATIONS.includes(designation)) {
+    if (SUPERUSER_DESIGNATIONS.has(designation)) {
       return true;
     }
     return allowed.includes(designation);

@@ -33,9 +33,9 @@ import {
   styleUrl: './patients-list.css',
 })
 export class PatientsListComponent implements OnInit {
-  private patientService = inject(PatientService);
-  private toast = inject(ToastService);
-  private router = inject(Router);
+  private readonly patientService = inject(PatientService);
+  private readonly toast = inject(ToastService);
+  private readonly router = inject(Router);
 
   patients = signal<Patient[]>([]);
   loading = signal(true);
@@ -55,7 +55,7 @@ export class PatientsListComponent implements OnInit {
   searching = computed(() => this.searchTerm().trim().length > 0);
 
   // Debounce search input.
-  private searchSubject = new Subject<string>();
+  private readonly searchSubject = new Subject<string>();
 
   ngOnInit(): void {
     this.load();

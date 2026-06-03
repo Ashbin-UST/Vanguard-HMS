@@ -9,7 +9,7 @@
   border-radius: 0.75rem;
   padding: 2rem;
   text-align: center;
-  color: #94a3b8;
+  color: #334155;
   border: 1px dashed #e2e8f0;
 }
 
@@ -35,7 +35,7 @@
 
 .card-sub {
   margin: 0.25rem 0 0;
-  color: #64748b;
+  color: #334155;
   font-size: 0.8125rem;
 }
 
@@ -58,7 +58,7 @@
 .profile-label {
   font-size: 0.6875rem;
   font-weight: 700;
-  color: #64748b;
+  color: #334155;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }

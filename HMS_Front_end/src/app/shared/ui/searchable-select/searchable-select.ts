@@ -42,7 +42,7 @@ import {
   ],
 })
 export class SearchableSelectComponent implements ControlValueAccessor {
-  private host = inject(ElementRef);
+  private readonly host = inject(ElementRef);
 
   // The list of selectable options.
   @Input() set options(value: any[]) {
@@ -51,7 +51,7 @@ export class SearchableSelectComponent implements ControlValueAccessor {
   get options(): any[] {
     return this._options();
   }
-  private _options = signal<any[]>([]);
+  private readonly _options = signal<any[]>([]);
 
   // Property names used to read each option's value, primary and secondary text.
   @Input() valueKey = 'id';

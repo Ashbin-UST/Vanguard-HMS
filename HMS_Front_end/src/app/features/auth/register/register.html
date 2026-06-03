@@ -13,8 +13,8 @@
 
           <!-- Name -->
           <div class="form-group">
-            <label class="form-label">Full Name *</label>
-            <input type="text" formControlName="name" class="form-input"
+            <label for="fullname" class="form-label">Full Name *</label>
+            <input id="fullname" type="text" formControlName="name" class="form-input"
                    placeholder="John Doe" />
             @if (registerForm.get('name')?.invalid && registerForm.get('name')?.touched) {
               <p class="form-error">Name is required</p>
@@ -23,8 +23,8 @@
 
           <!-- Email -->
           <div class="form-group">
-            <label class="form-label">Email *</label>
-            <input type="email" formControlName="email" class="form-input"
+            <label for="email" class="form-label">Email *</label>
+            <input id="email" type="email" formControlName="email" class="form-input"
                    placeholder="john.doe@hospital.com" />
             @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
               <p class="form-error">Valid email is required</p>
@@ -33,8 +33,8 @@
 
           <!-- Phone -->
           <div class="form-group">
-            <label class="form-label">Phone *</label>
-            <input type="tel" formControlName="phone" class="form-input"
+            <label for="phone" class="form-label">Phone *</label>
+            <input id="phone" type="tel" formControlName="phone" class="form-input"
                    placeholder="+91 1234567890" />
             @if (registerForm.get('phone')?.invalid && registerForm.get('phone')?.touched) {
               <p class="form-error">
@@ -45,8 +45,8 @@
 
           <!-- Department -->
           <div class="form-group">
-            <label class="form-label">Department *</label>
-            <select formControlName="department" class="form-select">
+            <label for="department" class="form-label">Department *</label>
+            <select id="department" formControlName="department" class="form-select">
               <option value="">Select Department</option>
               @for (dept of departments; track dept) {
                 <option [value]="dept">{{ dept }}</option>
@@ -59,8 +59,8 @@
 
           <!-- Designation -->
           <div class="form-group">
-            <label class="form-label">Designation *</label>
-            <select formControlName="designation" (change)="onDesignationChange()"
+            <label for="designation" class="form-label">Designation *</label>
+            <select id="designation" formControlName="designation" (change)="onDesignationChange()"
                     class="form-select">
               <option value="">Select Designation</option>
               @for (d of designations; track d) {
@@ -74,8 +74,8 @@
 
           <!-- Joining Date -->
           <div class="form-group">
-            <label class="form-label">Joining Date *</label>
-            <input type="date" formControlName="joiningDate" class="form-input" />
+            <label for="joiningDate" class="form-label">Joining Date *</label>
+            <input id="joiningDate" type="date" formControlName="joiningDate" class="form-input" />
             @if (registerForm.get('joiningDate')?.invalid && registerForm.get('joiningDate')?.touched) {
               <p class="form-error">Joining date is required</p>
             }
@@ -83,8 +83,8 @@
 
           <!-- Qualification -->
           <div class="form-group">
-            <label class="form-label">Qualification *</label>
-            <input type="text" formControlName="qualification" class="form-input"
+            <label for="qualification" class="form-label">Qualification *</label>
+            <input id="qualification" type="text" formControlName="qualification" class="form-input"
                    placeholder="MBBS, MD (comma separated)" />
             @if (registerForm.get('qualification')?.invalid && registerForm.get('qualification')?.touched) {
               <p class="form-error">At least one qualification is required</p>
@@ -94,8 +94,8 @@
           <!-- Medical Registration No (medical designations) -->
           @if (showMedicalFields) {
             <div class="form-group">
-              <label class="form-label">Medical Registration No *</label>
-              <input type="text" formControlName="medicalRegistrationNumber"
+              <label for="medicalRegistrationNumber" class="form-label">Medical Registration No *</label>
+              <input id="medicalRegistrationNumber" type="text" formControlName="medicalRegistrationNumber"
                      class="form-input" placeholder="MED123456" />
               @if (registerForm.get('medicalRegistrationNumber')?.invalid && registerForm.get('medicalRegistrationNumber')?.touched) {
                 <p class="form-error">Medical registration number is required</p>
@@ -106,8 +106,8 @@
           <!-- Specialization (doctor / lab tech) -->
           @if (showSpecialization) {
             <div class="form-group">
-              <label class="form-label">Specialization *</label>
-              <input type="text" formControlName="specialization"
+              <label for="specialization" class="form-label">Specialization *</label>
+              <input id="specialization" type="text" formControlName="specialization"
                      class="form-input" placeholder="Cardiology" />
               @if (registerForm.get('specialization')?.invalid && registerForm.get('specialization')?.touched) {
                 <p class="form-error">Specialization is required</p>
@@ -118,8 +118,8 @@
           <!-- Consultation Fee (doctor) -->
           @if (isDoctor) {
             <div class="form-group">
-              <label class="form-label">Consultation Fee *</label>
-              <input type="number" formControlName="consultationFee"
+              <label for="consultationFee" class="form-label">Consultation Fee *</label>
+              <input id="consultationFee" type="number" formControlName="consultationFee"
                      class="form-input" placeholder="500" min="0" />
               @if (registerForm.get('consultationFee')?.invalid && registerForm.get('consultationFee')?.touched) {
                 <p class="form-error">Consultation fee is required</p>
@@ -129,8 +129,8 @@
 
           <!-- Password -->
           <div class="form-group">
-            <label class="form-label">Password *</label>
-            <input type="password" formControlName="password" class="form-input"
+            <label for="password" class="form-label">Password *</label>
+            <input id="password" type="password" formControlName="password" class="form-input"
                    placeholder="Min 8 characters" />
             <!-- Live (before submit): required + min length -->
             @if (registerForm.get('password')?.touched) {
@@ -160,8 +160,8 @@
 
           <!-- Confirm Password -->
           <div class="form-group">
-            <label class="form-label">Confirm Password *</label>
-            <input type="password" formControlName="confirmPassword"
+            <label for="confirmPassword" class="form-label">Confirm Password *</label>
+            <input id="confirmPassword" type="password" formControlName="confirmPassword"
                    class="form-input" placeholder="Confirm password" />
             @if (registerForm.hasError('passwordMismatch') && registerForm.get('confirmPassword')?.touched) {
               <p class="form-error">Passwords must match</p>
@@ -173,8 +173,8 @@
         @if (isDoctor) {
           <div class="slots-section" formArrayName="availabilitySlots">
             <div class="slots-header">
-              <label class="form-label">Availability Slots *</label>
-              <button type="button" class="btn btn-secondary btn-sm"
+              <label for="availabilitySlots" class="form-label">Availability Slots *</label>
+              <button id="availabilitySlots" type="button" class="btn btn-secondary btn-sm"
                       (click)="addSlot()">+ Add Slot</button>
             </div>
 

@@ -20,7 +20,7 @@
 }
 
 .ss-trigger:hover {
-  border-color: #94a3b8;
+  border-color: #334155;
 }
 
 .ss-trigger.ss-open,
@@ -32,7 +32,7 @@
 
 .ss-disabled .ss-trigger {
   background-color: #f1f5f9;
-  color: #94a3b8;
+  color: #334155;
   cursor: not-allowed;
 }
 
@@ -45,14 +45,14 @@
 
 .ss-placeholder {
   flex: 1;
-  color: #94a3b8;
+  color: #334155;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .ss-clear {
-  color: #94a3b8;
+  color: #334155;
   font-size: 0.75rem;
   padding: 0 0.25rem;
   border-radius: 0.25rem;
@@ -60,14 +60,14 @@
 }
 
 .ss-clear:hover {
-  color: #dc2626;
+  color: #991b1b;
 }
 
 .ss-caret {
   display: inline-flex;
   width: 1rem;
   height: 1rem;
-  color: #94a3b8;
+  color: #334155;
   flex-shrink: 0;
   transition: transform 0.15s;
 }
@@ -146,14 +146,14 @@
 
 .ss-option-sublabel {
   font-size: 0.75rem;
-  color: #64748b;
+  color: #334155;
 }
 
 .ss-empty {
   list-style: none;
   padding: 0.875rem 0.625rem;
   text-align: center;
-  color: #94a3b8;
+  color: #334155;
   font-size: 0.875rem;
 }
 

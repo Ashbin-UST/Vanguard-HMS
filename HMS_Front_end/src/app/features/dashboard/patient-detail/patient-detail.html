@@ -93,15 +93,15 @@
             <h4 class="section-title">Personal Information</h4>
             <div class="form-grid">
               <div class="form-group">
-                <label class="form-label">Full Name *</label>
-                <input type="text" formControlName="name" class="form-input" />
+                <label for="name" class="form-label">Full Name *</label>
+                <input id="name" type="text" formControlName="name" class="form-input" />
                 @if (form.get('name')?.touched && form.get('name')?.invalid) {
                   <p class="form-error">Name is required</p>
                 }
               </div>
               <div class="form-group">
-                <label class="form-label">Email *</label>
-                <input type="email" formControlName="email" class="form-input" />
+                <label for="email" class="form-label">Email *</label>
+                <input id="email" type="email" formControlName="email" class="form-input" />
                 @if (form.get('email')?.touched) {
                   @if (form.get('email')?.hasError('required')) {
                     <p class="form-error">Email is required</p>
@@ -112,8 +112,8 @@
                 }
               </div>
               <div class="form-group">
-                <label class="form-label">Phone *</label>
-                <input type="tel" formControlName="phone" class="form-input" />
+                <label for="phone" class="form-label">Phone *</label>
+                <input id="phone" type="tel" formControlName="phone" class="form-input" />
                 @if (form.get('phone')?.touched) {
                   @if (form.get('phone')?.hasError('required')) {
                     <p class="form-error">Phone is required</p>
@@ -126,16 +126,17 @@
                 }
               </div>
               <div class="form-group">
-                <label class="form-label">Gender *</label>
-                <select formControlName="gender" class="form-select">
+                <label for="gender" class="form-label">Gender *</label>
+                <select id="gender" formControlName="gender" class="form-select">
                   @for (g of genders; track g) {
                     <option [value]="g">{{ g }}</option>
                   }
                 </select>
               </div>
               <div class="form-group">
-                <label class="form-label">Date of Birth *</label>
+                <label for="dob" class="form-label">Date of Birth *</label>
                 <input
+                  id="dob"
                   type="date"
                   formControlName="dob"
                   class="form-input"
@@ -151,8 +152,8 @@
                 }
               </div>
               <div class="form-group">
-                <label class="form-label">Status *</label>
-                <select formControlName="status" class="form-select">
+                <label for="status" class="form-label">Status *</label>
+                <select id="status" formControlName="status" class="form-select">
                   @for (s of statuses; track s) {
                     <option [value]="s">{{ s }}</option>
                   }
@@ -163,29 +164,29 @@
             <h4 class="section-title">Address</h4>
             <div class="form-grid" formGroupName="address">
               <div class="form-group">
-                <label class="form-label">House Name *</label>
-                <input type="text" formControlName="houseName" class="form-input" />
+                <label for="houseName" class="form-label">House Name *</label>
+                <input id="houseName" type="text" formControlName="houseName" class="form-input" />
                 @if (addressCtrl('houseName')?.touched && addressCtrl('houseName')?.invalid) {
                   <p class="form-error">House name is required</p>
                 }
               </div>
               <div class="form-group">
-                <label class="form-label">House Number *</label>
-                <input type="text" formControlName="houseNumber" class="form-input" />
+                <label for="houseNumber" class="form-label">House Number *</label>
+                <input id="houseNumber" type="text" formControlName="houseNumber" class="form-input" />
                 @if (addressCtrl('houseNumber')?.touched && addressCtrl('houseNumber')?.invalid) {
                   <p class="form-error">House number is required</p>
                 }
               </div>
               <div class="form-group">
-                <label class="form-label">City *</label>
-                <input type="text" formControlName="city" class="form-input" />
+                <label for="city" class="form-label">City *</label>
+                <input id="city" type="text" formControlName="city" class="form-input" />
                 @if (addressCtrl('city')?.touched && addressCtrl('city')?.invalid) {
                   <p class="form-error">City is required</p>
                 }
               </div>
               <div class="form-group">
-                <label class="form-label">Post Code *</label>
-                <input type="text" formControlName="postCode" class="form-input" />
+                <label for="postCode" class="form-label">Post Code *</label>
+                <input id="postCode" type="text" formControlName="postCode" class="form-input" />
                 @if (addressCtrl('postCode')?.touched && addressCtrl('postCode')?.invalid) {
                   <p class="form-error">Post code is required</p>
                 }
@@ -195,22 +196,22 @@
             <h4 class="section-title">Emergency Contact</h4>
             <div class="form-grid" formGroupName="emergencyContact">
               <div class="form-group">
-                <label class="form-label">Contact Name *</label>
-                <input type="text" formControlName="contactName" class="form-input" />
+                <label for="contactName" class="form-label">Contact Name *</label>
+                <input id="contactName" type="text" formControlName="contactName" class="form-input" />
                 @if (emergencyCtrl('contactName')?.touched && emergencyCtrl('contactName')?.invalid) {
                   <p class="form-error">Contact name is required</p>
                 }
               </div>
               <div class="form-group">
-                <label class="form-label">Relationship *</label>
-                <input type="text" formControlName="relationship" class="form-input" />
+                <label for="relationship" class="form-label">Relationship *</label>
+                <input id="relationship" type="text" formControlName="relationship" class="form-input" />
                 @if (emergencyCtrl('relationship')?.touched && emergencyCtrl('relationship')?.invalid) {
                   <p class="form-error">Relationship is required</p>
                 }
               </div>
               <div class="form-group">
-                <label class="form-label">Contact Number *</label>
-                <input type="tel" formControlName="contactNumber" class="form-input" />
+                <label for="contactNumber" class="form-label">Contact Number *</label>
+                <input id="contactNumber" type="tel" formControlName="contactNumber" class="form-input" />
                 @if (emergencyCtrl('contactNumber')?.touched) {
                   @if (emergencyCtrl('contactNumber')?.hasError('required')) {
                     <p class="form-error">Contact number is required</p>
