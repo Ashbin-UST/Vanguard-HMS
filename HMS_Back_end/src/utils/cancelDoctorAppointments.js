@@ -22,8 +22,8 @@ async function cancelDoctorAppointments(employeeCode, doctorName, actor) {
         targetId: appointment.appointmentId,
         message: `Appointment ${appointment.appointmentId} was cancelled due to deletion of doctor ${doctorName} (${employeeCode})`,
       });
-    } catch (auditErr) {
-      console.error(`Audit log failed for appointment ${appointment.appointmentId}:`, auditErr);
+    } catch (error_) {
+      console.error(`Audit log failed for appointment ${appointment.appointmentId}:`, error_);
     }
 
     try {
@@ -39,8 +39,8 @@ async function cancelDoctorAppointments(employeeCode, doctorName, actor) {
           }),
         });
       }
-    } catch (emailErr) {
-      console.error(`Email failed for appointment ${appointment.appointmentId}:`, emailErr);
+    } catch (error_) {
+      console.error(`Email failed for appointment ${appointment.appointmentId}:`, error_);
     }
   }
 }
