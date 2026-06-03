@@ -13,7 +13,7 @@
     class="sidebar-host"
     [class.open]="sidebarOpen()"
     (navigate)="onSidebarNavigate()"
-    (toggle)="toggleSidebar()"
+    (sidebarToggled)="toggleSidebar()"
   ></app-sidebar>
 
   <div class="dashboard-main">
