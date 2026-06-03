@@ -35,7 +35,7 @@ const appointmentSchema = new mongoose.Schema({
     }
 });
 
-// Pre-save hook to generate sequential ID
+// Pre-save hook to generate sequential appointment id
 appointmentSchema.pre('save', async function () {
     if (this.isNew) {
             const counter = await Counter.findOneAndUpdate(

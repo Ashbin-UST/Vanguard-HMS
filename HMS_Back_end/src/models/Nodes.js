@@ -44,7 +44,7 @@ const nodeSchema = new mongoose.Schema(
     }
 );
 
-// Auto generate nodeId
+// Pre-save hook to generate sequential node id
 nodeSchema.pre("save", async function () {
 
     if (this.isNew) {

@@ -58,7 +58,7 @@ const profileChangeRequestSchema = new mongoose.Schema(
     }
 );
 
-// Auto generate requestId
+// Pre-save hook to generate sequential profile change request id
 profileChangeRequestSchema.pre("save", async function () {
     if (this.isNew) {
         const counter = await Counter.findOneAndUpdate(

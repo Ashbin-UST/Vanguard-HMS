@@ -85,7 +85,7 @@ exports.createEmployee = async (req, res) => {
   }
 };
 
-// Fetch a single employee profile with their account status and roles
+// Fetch a single employee profile
 exports.getEmployee = async (req, res) => {
   try {
     const { employeeCode } = req.params;
@@ -138,7 +138,7 @@ exports.getPendingEmployees = async (req, res) => {
   }
 };
 
-// Approve a self-registered employee: set status to ACTIVE and notify by email
+// Approve a self-registered employee
 exports.approveEmployee = async (req, res) => {
   try {
     const employeeCode = req.params.employeeCode;
@@ -206,7 +206,7 @@ exports.approveEmployee = async (req, res) => {
   }
 };
 
-// Reject a self-registration request: email the employee then delete the account
+// Reject a self-registration request
 exports.rejectEmployee = async (req, res) => {
   try {
     const employeeCode = req.params.employeeCode;
@@ -254,6 +254,7 @@ exports.rejectEmployee = async (req, res) => {
       message: `Employee registration ${employeeCode} (${user.username}) was rejected`,
     });
 
+    // Delete the account from the database
     await deleteEmployeeAccount(employeeCode);
 
     return res.status(200).json({
@@ -431,7 +432,7 @@ exports.getProfileChangeRequests = async (req, res) => {
   }
 };
 
-// Apply the requested field changes to the employee and notify them
+// Approve profile change request
 exports.approveProfileChange = async (req, res) => {
   try {
     const { requestId } = req.params;
@@ -495,7 +496,7 @@ exports.approveProfileChange = async (req, res) => {
   }
 };
 
-// Reject a profile change request and notify the employee
+// Reject a profile change request
 exports.rejectProfileChange = async (req, res) => {
   try {
     const { requestId } = req.params;

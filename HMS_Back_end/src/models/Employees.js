@@ -97,7 +97,7 @@ const employeeSchema = new mongoose.Schema({
   },
 });
 
-// Pre-save hook to generate sequential ID
+// Pre-save hook to generate sequential employee code
 employeeSchema.pre("save", async function () {
   if (this.isNew && !this.employeeCode) {
     const counter = await Counter.findOneAndUpdate(

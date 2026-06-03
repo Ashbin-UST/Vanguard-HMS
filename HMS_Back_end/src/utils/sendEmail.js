@@ -7,10 +7,7 @@ const sendEmail = async ({ to, subject, html }) => {
         rejectUnauthorized: false
     });
 
-    // Support both:
-    // to: "user@gmail.com"
-    // to: ["user1@gmail.com", "user2@gmail.com"]
-
+    // Accept a single address string or an array of addresses
     const recipients = Array.isArray(to)
         ? to.map((email) => ({ email }))
         : [{ email: to }];

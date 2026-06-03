@@ -5,6 +5,7 @@ const Employee = require("../models/Employees");
 
 // Get Admin Dashboard Statistics
 exports.getAdminDashboardStats = async (req, res) => {
+
     try {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -62,6 +63,7 @@ exports.getAdminDashboardStats = async (req, res) => {
 
 // Get Doctor Dashboard Statistics
 exports.getDoctorDashboardStats = async (req, res) => {
+
     try {
         const doctorEmployeeCode = req.user.employeeCode;
         const today = new Date();
@@ -111,6 +113,7 @@ exports.getDoctorDashboardStats = async (req, res) => {
 
 // Get Receptionist Dashboard Statistics
 exports.getReceptionistDashboardStats = async (req, res) => {
+
     try {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -154,6 +157,7 @@ exports.getReceptionistDashboardStats = async (req, res) => {
 
 // Get General Dashboard Statistics
 exports.getDashboardStats = async (req, res) => {
+
     try {
         const userRole = req.user.roles[0];
 
@@ -178,6 +182,7 @@ exports.getDashboardStats = async (req, res) => {
 
 // Get Appointment Statistics
 exports.getAppointmentStats = async (req, res) => {
+
     try {
         const { startDate, endDate } = req.query;
 
@@ -214,6 +219,7 @@ exports.getAppointmentStats = async (req, res) => {
 
 // Get Patient Statistics
 exports.getPatientStats = async (req, res) => {
+
     try {
         const total = await Patient.countDocuments({ status: 'ACTIVE' });
         const inactive = await Patient.countDocuments({ status: 'INACTIVE' });
@@ -241,6 +247,7 @@ exports.getPatientStats = async (req, res) => {
 
 // Get Employee Statistics
 exports.getEmployeeStats = async (req, res) => {
+
     try {
         const total = await User.countDocuments({ roles: 'STAFF' });
         const active = await User.countDocuments({ roles: 'STAFF', status: 'ACTIVE' });

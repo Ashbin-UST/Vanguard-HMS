@@ -6,7 +6,7 @@ const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
 const emailTemplates = require("../utils/emailTemplates");
 
-// Fields a patient record exposes (passwordHash is always excluded)
+// Fields a patient record exposes
 const PATIENT_PROJECTION = "-passwordHash -__v";
 
 // Create Patient Account
@@ -93,7 +93,7 @@ exports.createPatient = async (req, res) => {
     }
 };
 
-// Get all patients (paginated, filterable)
+// Get all patients
 exports.getPatients = async (req, res) => {
 
     try {

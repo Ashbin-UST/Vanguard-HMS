@@ -44,21 +44,26 @@ const employeeBaseValidators = [
   body("qualification")
     .isArray({ min: 1 })
     .withMessage("At least one qualification is required"),
+
   // Medical registration number is required for medical designations
   body("medicalRegistrationNumber")
     .if((value, { req }) => MEDICAL_DESIGNATIONS_SET.has(req.body.designation))
     .notEmpty()
     .withMessage("Medical registration number is required"),
+
   // Specialization is required for designations that carry one
   body("specialization")
     .if((value, { req }) => SPECIALIZATION_DESIGNATIONS_SET.has(req.body.designation))
     .notEmpty()
     .withMessage("Specialization is required"),
+  
+  // DOCTOR only fields
   body("consultationFee")
     .if(body("designation").equals("DOCTOR"))
     .notEmpty()
     .withMessage("Consultation fee is required for doctor"),
-  // Availability slots are required for doctors; each slot's start must precede its end
+
+  // Each slot's start must precede its end
   body("availabilitySlots")
     .if(body("designation").equals("DOCTOR"))
     .isArray({ min: 1 })

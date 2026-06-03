@@ -6,9 +6,10 @@ const auth = require("../middlewares/authMiddleware");
 const authorizeRoles = require("../middlewares/authorizeRolesMiddleware");
 const controller = require("../controllers/ownerController");
 
+// All the routes require authentication and authorization as OWNER
 router.use(auth, authorizeRoles("OWNER"));
 
-// Admin creation fields; designation and department are fixed to ADMIN / Administration
+// Admin creation fields
 const adminCreationValidation = [
 
     body("username")

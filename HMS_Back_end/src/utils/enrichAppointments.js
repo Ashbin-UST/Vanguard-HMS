@@ -1,15 +1,13 @@
 const Employee = require("../models/Employees");
 const Patient = require("../models/Patients");
 
-/**
- * Enriches a list of plain appointment objects with patient and doctor
- * display details so callers never have to issue N extra lookups.
- */
+// Attach patient and doctor display details to a list of plain appointment objects
 const enrichAppointments = async (appointments) => {
     if (!appointments.length) {
         return [];
     }
 
+    // Collect unique IDs then fetch all patients and doctors in two parallel queries
     const patientIds = [
         ...new Set(appointments.map((a) => a.patientId))
     ];

@@ -1,6 +1,6 @@
 const { MEDICAL_DESIGNATIONS_SET, SPECIALIZATION_DESIGNATIONS_SET } = require("../config/constants");
 
-// Build the employee profile response object, including designation-specific fields
+// Build the employee profile response object
 const buildEmployeeProfile = (employee) => {
 
     const profile = {

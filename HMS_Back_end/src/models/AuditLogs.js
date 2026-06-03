@@ -60,7 +60,7 @@ const auditLogSchema = new mongoose.Schema(
     }
 );
 
-// Auto generate auditId
+// Pre-save hook to generate sequential audit record id
 auditLogSchema.pre("save", async function () {
     if (this.isNew) {
         const counter = await Counter.findOneAndUpdate(

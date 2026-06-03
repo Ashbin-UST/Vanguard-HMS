@@ -2,7 +2,7 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 const Node = require("../models/Nodes");
 
-// Default sidebar menu items grouped by role; Overview and Profile are rendered by the frontend
+// Default sidebar menu items grouped by role
 const DEFAULT_NODES = [
     {
         name: "Employees",

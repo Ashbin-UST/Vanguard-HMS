@@ -15,6 +15,7 @@ const checkAppointmentValidity = async ({
   timeSlot,
   excludeAppointmentId,
 }) => {
+
   // Verify the patient exists
   const patient = await Patient.findOne({
     UHID: patientId,
@@ -36,7 +37,7 @@ const checkAppointmentValidity = async ({
 
   const doctor = validDoctor.employee;
 
-  // Reject past dates; normalize both sides to midnight for a clean day comparison
+  // Reject past dates
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
 
@@ -70,7 +71,7 @@ const checkAppointmentValidity = async ({
     }
   }
 
-  // Reject dates before the doctor's joining date (same calendar day is allowed)
+  // Reject dates before the doctor's joining date
   if (doctor.joiningDate) {
     const apptDay = new Date(appointmentDate);
     apptDay.setHours(0, 0, 0, 0);

@@ -3,7 +3,6 @@ const crypto = require("node:crypto");
 const generateTemporaryPassword = ( length = 12 ) => {
 
     // Characters allowed in password
-
     const characters =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
         "abcdefghijklmnopqrstuvwxyz" +
@@ -13,7 +12,6 @@ const generateTemporaryPassword = ( length = 12 ) => {
     let password = "";
 
     // Generate random characters
-
     for (let i = 0; i < length; i++) {
 
         const randomIndex =

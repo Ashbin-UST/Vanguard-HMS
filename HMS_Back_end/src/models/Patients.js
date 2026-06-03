@@ -56,7 +56,7 @@ const patientSchema = new mongoose.Schema({
     }
 });
 
-// Pre-save hook to generate sequential ID
+// Pre-save hook to generate sequential patient id as UHID
 patientSchema.pre('save', async function () {
     if (this.isNew) {
         const counter = await Counter.findOneAndUpdate(
