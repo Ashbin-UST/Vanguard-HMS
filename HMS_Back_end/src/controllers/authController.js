@@ -206,7 +206,7 @@ exports.forgotPassword = async (req, res) => {
             );
         }
 
-        // Send the raw token in the email; only the hash is stored server-side
+        // Send the raw token in the email attached to the url
         try {
             await sendEmail({
                 to: user.email,
@@ -322,7 +322,7 @@ exports.me = async (req, res) => {
     }
 }
 
-// Submit a self-registration request; account starts in PENDING until admin approves
+// Submit a self-registration request
 exports.selfRegister = async (req, res) => {
 
     const { username, email, password, designation } = req.body;

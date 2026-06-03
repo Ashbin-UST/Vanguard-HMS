@@ -1,15 +1,6 @@
 const Employee = require("../models/Employees");
 
-/**
- * Resolves the acting employee's identity for audit logging.
- *
- * The JWT only carries employeeCode and roles, so when we need the
- * actor's name/designation for a readable audit trail we look it up.
- * Returns a plain object safe to spread into recordAudit({ actor }).
- *
- * @param {Object} reqUser - req.user decoded from the JWT.
- * @returns {Promise<{employeeCode: string, name?: string, designation?: string}>}
- */
+// Look up the acting employee's name and designation for a readable audit trail
 const resolveActor = async (reqUser) => {
     const employeeCode = reqUser?.employeeCode;
 

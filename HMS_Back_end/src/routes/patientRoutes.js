@@ -10,7 +10,7 @@ const {
     uhidValidation
 } = require("../validators/patientValidators");
 
-// All patient routes require authentication and reception-level authorization
+// All the routes require authentication and reception-level authorization
 router.use(auth, authorizeDesignation("OWNER", "ADMIN", "RECEPTIONIST"));
 
 // Patient CRUD routes

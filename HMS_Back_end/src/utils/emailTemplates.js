@@ -34,8 +34,6 @@ const formatDate = (value) => {
   });
 };
 
-// --- Account credentials --------------------------------------------------
-
 // Employee account created by an admin/owner — sends login credentials.
 const employeeCredentials = ({ username, temporaryPassword }) => ({
   subject: "HMS Employee Account Created",
@@ -75,8 +73,6 @@ const patientCredentials = ({ email, temporaryPassword }) => ({
   `),
 });
 
-// --- Account lifecycle ----------------------------------------------------
-
 // Self-registered employee was approved by an admin.
 const accountApproved = () => ({
   subject: "HMS Employee Account Approved",
@@ -114,8 +110,6 @@ const registrationRequest = ({ name, employeeCode, department, designation }) =>
   `),
 });
 
-// --- Profile change requests ----------------------------------------------
-
 // Notify admins that an employee requested a profile change.
 const profileChangeRequest = ({ name, employeeCode }) => ({
   subject: "Employee Profile Change Request",
@@ -130,6 +124,7 @@ const profileChangeRequest = ({ name, employeeCode }) => ({
   `),
 });
 
+// Admin approves profile change request- notification send to employee
 const profileChangeApproved = () => ({
   subject: "Profile Change Request Approved",
   html: wrap(`
@@ -138,6 +133,7 @@ const profileChangeApproved = () => ({
   `),
 });
 
+// Admin rejects profile change request- notification send to employee
 const profileChangeRejected = () => ({
   subject: "Profile Change Request Rejected",
   html: wrap(`
@@ -149,8 +145,7 @@ const profileChangeRejected = () => ({
   `),
 });
 
-// --- Appointments ---------------------------------------------------------
-
+// Appointment bookedby employee (Admin or Receptionist)- notification send to patient
 const appointmentScheduled = ({
   patientName,
   doctorName,
@@ -168,6 +163,7 @@ const appointmentScheduled = ({
   `),
 });
 
+// Appointment updated by employee(Admin or Receptionist)- notification send to patient
 const appointmentUpdated = ({
   patientName,
   doctorName,
@@ -185,6 +181,7 @@ const appointmentUpdated = ({
   `),
 });
 
+// Appointment canceled by employee(Admin or Receptionist)- notification send to patient
 const appointmentCanceled = ({
   patientName,
   doctorName,
@@ -203,8 +200,7 @@ const appointmentCanceled = ({
   `),
 });
 
-// --- Password reset -------------------------------------------------------
-
+// Password reset request by employee- email with resetToken embedded in url is sent to the employee
 const passwordReset = ({ resetToken }) => ({
   subject: "HMS Password Reset Request",
   html: wrap(`

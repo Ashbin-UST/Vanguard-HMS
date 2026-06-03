@@ -45,7 +45,7 @@ const paginateAppointments = async (filter, reqQuery, res) => {
     });
 };
 
-// Create a new appointment after validating patient, doctor, and time slot
+// Create appointment
 exports.createAppointment = async (req, res) => {
 
     try {
@@ -78,7 +78,7 @@ exports.createAppointment = async (req, res) => {
             createdByEmployeeId: req.user.employeeCode
         });
 
-        // Notify patient by email; failure does not block the response
+        // Notify patient by email
         try {
             await sendEmail({
                 to: validAppointment.patient.email,
@@ -93,7 +93,7 @@ exports.createAppointment = async (req, res) => {
             console.error("Email sending error:", emailError);
         }
 
-        // Log who created the appointment
+        // Log the appointment creation
         const actor = await resolveActor(req.user);
         await recordAudit({
             actor,
@@ -163,7 +163,7 @@ exports.getMyAppointments = async (req, res) => {
     }
 };
 
-// Fetch a single appointment and attach enriched patient/doctor info
+// Fetch a single appointment
 exports.getAppointmentById = async (req, res) => {
 
     try {
@@ -212,7 +212,7 @@ exports.getBookedSlots = async (req, res) => {
         const end = new Date(date);
         end.setHours(23, 59, 59, 999);
 
-        // Only BOOKED appointments occupy a slot; CANCELED frees it
+        // Only BOOKED appointments occupy a slot
         const bookedSlotsFilter = {
             doctorEmployeeId,
             appointmentDate: { $gte: start, $lte: end },
@@ -243,7 +243,7 @@ exports.getBookedSlots = async (req, res) => {
     }
 };
 
-// Cancel an appointment and notify the patient by email
+// Cancel an appointment
 exports.cancelAppointment = async (req, res) => {
 
     try {
@@ -293,7 +293,7 @@ exports.cancelAppointment = async (req, res) => {
             console.error("Email sending error:", emailError);
         }
 
-        // Log who cancelled the appointment
+        // Log appointment cancellation
         const actor = await resolveActor(req.user);
         await recordAudit({
             actor,
@@ -316,7 +316,7 @@ exports.cancelAppointment = async (req, res) => {
     }
 };
 
-// Update scheduling fields on a BOOKED appointment (reception level)
+// Update scheduling fields on a BOOKED appointment
 exports.updateAppointment = async (req, res) => {
 
     try {
@@ -361,7 +361,7 @@ exports.updateAppointment = async (req, res) => {
         appointment.timeSlot = timeSlot;
         await appointment.save();
 
-        // Notify patient of the updated schedule; failure does not block the response
+        // Notify patient of the updated schedule
         try {
             await sendEmail({
                 to: validAppointment.patient.email,
@@ -376,7 +376,7 @@ exports.updateAppointment = async (req, res) => {
             console.error("Email sending error:", emailError);
         }
 
-        // Log who updated the appointment
+        // Log appointment updation
         const actor = await resolveActor(req.user);
         await recordAudit({
             actor,
@@ -399,7 +399,7 @@ exports.updateAppointment = async (req, res) => {
     }
 };
 
-// Mark an appointment COMPLETED; only the assigned doctor may do this
+// Mark an appointment COMPLETED
 exports.completeAppointment = async (req, res) => {
 
     try {
@@ -413,6 +413,7 @@ exports.completeAppointment = async (req, res) => {
             });
         }
 
+        // Only the concerned doctor can mark an appointment as complete
         if (appointment.doctorEmployeeId !== req.user.employeeCode) {
             return res.status(403).json({
                 message: "You can only complete your own appointments"
@@ -448,7 +449,7 @@ exports.completeAppointment = async (req, res) => {
         appointment.status = "COMPLETED";
         await appointment.save();
 
-        // Log who completed the appointment
+        // Log appointment completion
         const actor = await resolveActor(req.user);
         await recordAudit({
             actor,

@@ -7,6 +7,7 @@ const authorizeRoles = require("../middlewares/authorizeRolesMiddleware");
 const controller = require("../controllers/nodeController");
 const { STAFF_DESIGNATIONS, RESTRICTED_ROLES } = require("../config/constants");
 
+// All the routes require authentication
 router.use(auth);
 
 // Validates node name, path format, and allowed designation values

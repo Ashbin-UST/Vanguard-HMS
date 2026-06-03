@@ -119,7 +119,7 @@ const updateAdmin = async (req, res) => {
   }
 };
 
-// Delete an admin account; the owner account cannot be deleted
+// Delete an admin account
 const deleteAdmin = async (req, res) => {
   try {
     const { employeeCode } = req.params;

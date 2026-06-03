@@ -10,6 +10,7 @@ const {
     appointmentIdValidation
 } = require("../validators/appointmentValidators");
 
+// All the routes require authentication
 router.use(auth);
 
 // Authorization level shortcuts used across appointment routes

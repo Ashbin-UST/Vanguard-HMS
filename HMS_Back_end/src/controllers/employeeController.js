@@ -9,11 +9,12 @@ const resolveActor = require("../utils/resolveActor");
 const getCurrentUser = require("../utils/getCurrentUser");
 const { RESTRICTED_ROLES_SET } = require("../config/constants");
 
-// Fields an employee is allowed to self-update (via approval flow)
+// Fields an employee is allowed to self-update
 const SELF_EDITABLE_FIELDS = ["phone", "qualification"];
 
-// Get current authenticated user + profile (used after a page refresh)
+// Get current authenticated user + profile
 exports.getMe = async (req, res) => {
+
     try {
         return await getCurrentUser(req.user.employeeCode, res);
     }
@@ -25,7 +26,7 @@ exports.getMe = async (req, res) => {
     }
 };
 
-// Get all active doctors (for appointment booking dropdown)
+// Get all active doctors
 exports.getDoctors = async (req, res) => {
 
     try {
@@ -57,7 +58,7 @@ exports.getDoctors = async (req, res) => {
     }
 };
 
-// Submit a profile change request (requires admin approval)
+// Submit a profile change request
 exports.profileUpdate = async (req, res) => {
 
     try {

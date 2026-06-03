@@ -6,11 +6,11 @@ const auth = require("../middlewares/authMiddleware");
 const authorizeDesignation = require("../middlewares/authorizeDesignations");
 const controller = require("../controllers/employeeController");
 
+// All the routes require authentication
+router.use(auth);
+
 // Phone: optional country code (+ 1 to 3 digits) followed by exactly 10 digits
 const PHONE_REGEX = /^(\+\d{1,3} )?\d{10}$/;
-
-// All employee routes require authentication
-router.use(auth);
 
 const profileUpdateValidation = [
     body("phone")

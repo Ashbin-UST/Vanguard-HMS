@@ -41,7 +41,7 @@ const medicalRecordSchema = new mongoose.Schema({
 }, {timeStamps: { createdAt: "created_at" }}
 );
 
-// Pre-save hook to generate sequential ID
+// Pre-save hook to generate sequential medical record id
 medicalRecordSchema.pre('save', async function () {
     if (this.isNew) {
             const counter = await Counter.findOneAndUpdate(

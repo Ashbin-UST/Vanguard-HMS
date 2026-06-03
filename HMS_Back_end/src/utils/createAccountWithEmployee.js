@@ -8,14 +8,14 @@ const validateUniqueEmployeeFields = require("../validators/validateUniqueEmploy
 const recordAudit = require("./recordAudit");
 const resolveActor = require("./resolveActor");
 
-// Creates an employee + user account together; throws on uniqueness violations or DB errors
+// Creates employee + user account
 async function createAccountWithEmployee(
     req,
     { roles, emailTemplate, auditAction, buildAuditMessage }
 ) {
     const { username, email } = req.body;
 
-    // Reject if username, email, or medical reg number is already taken
+    // Reject if username, email, or medical registration number is already taken
     const uniquenessResult = await validateUniqueEmployeeFields(req.body);
     if (!uniquenessResult.success) {
         const err = new Error(uniquenessResult.message);
@@ -23,12 +23,12 @@ async function createAccountWithEmployee(
         throw err;
     }
 
-    // Generate a temporary password that the user must change on first login
+    // Generate a temporary password
     const temporaryPassword = generateTemporaryPassword();
     const passwordHash = await bcrypt.hash(temporaryPassword, 10);
     const employeeData = buildEmployeeData(req.body);
 
-    // Persist the employee record (pre-save hook assigns employeeCode)
+    // Persist the employee record
     const employee = new Employee(employeeData);
     await employee.save();
 
@@ -48,7 +48,7 @@ async function createAccountWithEmployee(
     });
     await user.save();
 
-    // Email the temporary password; failure does not block account creation
+    // Email the temporary password
     try {
         await sendEmail({
             to: user.email,

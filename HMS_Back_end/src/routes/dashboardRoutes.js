@@ -4,7 +4,7 @@ const auth = require("../middlewares/authMiddleware");
 const authorizeDesignation = require("../middlewares/authorizeDesignations");
 const controller = require("../controllers/dashboardController");
 
-// All routes require authentication
+// All the routes require authentication
 router.use(auth);
 
 // General dashboard stats (role-specific)
