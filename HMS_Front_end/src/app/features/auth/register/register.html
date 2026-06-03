@@ -9,15 +9,7 @@
       <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
         <div class="form-grid">
 
-          <!-- Username -->
-          <div class="form-group">
-            <label class="form-label">Username *</label>
-            <input type="text" formControlName="username" class="form-input"
-                   placeholder="john.doe" />
-            @if (registerForm.get('username')?.invalid && registerForm.get('username')?.touched) {
-              <p class="form-error">Username is required</p>
-            }
-          </div>
+          
 
           <!-- Name -->
           <div class="form-group">

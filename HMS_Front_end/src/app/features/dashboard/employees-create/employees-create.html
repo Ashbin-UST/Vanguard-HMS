@@ -12,14 +12,7 @@
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()" class="card-body">
         <div class="form-grid">
-          <div class="form-group">
-            <label class="form-label">Username *</label>
-            <input type="text" formControlName="username" class="form-input"
-                   placeholder="john.doe" />
-            @if (form.get('username')?.touched && form.get('username')?.invalid) {
-              <p class="form-error">Username is required</p>
-            }
-          </div>
+         
 
           <div class="form-group">
             <label class="form-label">Full Name *</label>

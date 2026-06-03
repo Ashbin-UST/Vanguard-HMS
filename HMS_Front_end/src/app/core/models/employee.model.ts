@@ -66,7 +66,6 @@ export interface EmployeeListItem {
 
 // Payload to create an employee (admin) / admin (owner).
 export interface CreateEmployeePayload {
-  username: string;
   name: string;
   phone: string;
   email: string;

@@ -20,9 +20,7 @@ exports.createEmployee = async (req, res) => {
   let employee;
   let user;
   let temporaryPassword;
-
-  const { username, email, designation } = req.body;
-
+  const { email, designation } = req.body;
   try {
     // Prevent admin from creating ADMIN or OWNER accounts
     if (restrictedDesignations.has(designation)) {
@@ -32,7 +30,6 @@ exports.createEmployee = async (req, res) => {
     }
 
     const uniquenessResult = await validateUniqueEmployeeFields(req.body);
-
     if (!uniquenessResult.success) {
       return res.status(uniquenessResult.status).json({
         message: uniquenessResult.message,
@@ -55,7 +52,6 @@ exports.createEmployee = async (req, res) => {
 
     // Create user
     user = new User({
-      username,
       email,
       passwordHash,
       roles: ["STAFF"],
@@ -67,43 +63,30 @@ exports.createEmployee = async (req, res) => {
       approvedAt: new Date(),
       createdBy: req.user.employeeCode,
     });
-
     await user.save();
 
     // Send email AFTER successful transaction
     try {
       await sendEmail({
         to: user.email,
-
         subject: "HMS Employee Account Created",
-
         html: `
           <h2>Welcome to HMS</h2>
-
           <p>
             Your employee account has been created successfully.
           </p>
-
-          <p>
-            <strong>Username:</strong>
-            ${username}
-          </p>
-
           <p>
             <strong>Temporary Password:</strong>
             ${temporaryPassword}
           </p>
-
           <p>
             Please login using the link below and change your password immediately.
           </p>
-
           <p>
             <a href="http://localhost:4200">
               Login to HMS
             </a>
           </p>
-
           <p>
             Regards,
             <br />
@@ -129,7 +112,6 @@ exports.createEmployee = async (req, res) => {
       message:
         "Employee account created successfully. Login credentials have been sent via email.",
       user: {
-        username: user.username,
         email: user.email,
         roles: user.roles,
       },
@@ -292,13 +274,12 @@ exports.approveEmployee = async (req, res) => {
       action: "EMPLOYEE_APPROVED",
       targetType: "EMPLOYEE",
       targetId: user.employeeCode,
-      message: `Employee account ${user.employeeCode} (${user.username}) was approved`
+      message: `Employee account ${user.employeeCode} (${user.email}) was approved`
     });
 
     res.status(200).json({
       message: "Employee account approved successfully",
       user: {
-        username: user.username,
         email: user.email,
       },
     });
@@ -377,13 +358,12 @@ exports.rejectEmployee = async (req, res) => {
       action: "EMPLOYEE_REJECTED",
       targetType: "EMPLOYEE",
       targetId: user.employeeCode,
-      message: `Employee registration ${user.employeeCode} (${user.username}) was rejected`
+      message: `Employee registration ${user.employeeCode} (${user.email}) was rejected`
     });
 
     res.status(200).json({
       message: "Employee registration request rejected successfully",
       user: {
-        username: user.username,
         email: user.email,
       },
     });
@@ -719,7 +699,6 @@ exports.rejectProfileChange = async (req, res) => {
     } catch (emailError) {
       console.error("Email sending error:", emailError);
     }
-
     // Record audit
     const actor = await resolveActor(req.user);
     await recordAudit({
@@ -729,7 +708,6 @@ exports.rejectProfileChange = async (req, res) => {
       targetId: request.requestId,
       message: `Profile change ${request.requestId} for ${request.employeeName} (${request.employeeCode}) was rejected`,
     });
-
     return res.status(200).json({
       message: "Profile change request rejected successfully",
       request: {

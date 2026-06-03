@@ -12,18 +12,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { NodeService } from '../../../core/services/node.service';
 import { SidebarNode } from '../../../core/models/node.model';
 
-/**
- * Dynamic sidebar.
- *
- * Menu items are loaded from GET /nodes/my-nodes (already filtered by the
- * logged-in user's designation). Overview and Profile are ALWAYS shown as
- * guaranteed defaults even if the backend returns zero nodes, so a freshly
- * seeded (or unseeded) database still gives every user those two items and
- * nothing they shouldn't see.
- *
- * The footer shows a round avatar, username, designation, and a click-to-open
- * dropdown containing a red Logout action with an icon.
- */
+
 @Component({
   selector: 'app-sidebar',
   standalone: true,
@@ -115,13 +104,13 @@ export class SidebarComponent implements OnInit {
   }
 
   getUserInitial(): string {
-    const name = this.currentUser?.profile?.name || this.currentUser?.username;
+    const name = this.currentUser?.profile?.name || this.currentUser?.email;
     return name?.charAt(0)?.toUpperCase() || 'U';
   }
 
   getDisplayName(): string {
     return (
-      this.currentUser?.profile?.name || this.currentUser?.username || 'User'
+      this.currentUser?.profile?.name || this.currentUser?.email || 'User'
     );
   }
 

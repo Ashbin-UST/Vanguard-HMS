@@ -1,6 +1,5 @@
 const User = require("../models/Users");
 const Employee = require("../models/Employees");
-
 const medicalFields = new Set([
     "DOCTOR",
     "NURSE",
@@ -9,30 +8,15 @@ const medicalFields = new Set([
 ]);
 
 const validateUniqueEmployeeFields = async (data) => {
-
     const{
-        username,
         email,
         designation,
         medicalRegistrationNumber
     } = data;
 
-    const existingUsername = await User.findOne({
-        username
-    });
-
-    if (existingUsername){
-        return {
-            success: false,
-            status: 409,
-            message: "Username already exists" 
-        };
-    }
-
     const existingUserEmail = await User.findOne({
         email
     });
-
     if (existingUserEmail) {
         return {
             success: false,
@@ -40,11 +24,9 @@ const validateUniqueEmployeeFields = async (data) => {
             message: "User with this email already exists"
         };
     }
-    
     const existingEmployeeEmail = await Employee.findOne({
         email
     });
-
     if (existingEmployeeEmail) {
         return {
             success: false,
@@ -54,11 +36,10 @@ const validateUniqueEmployeeFields = async (data) => {
     }
 
     if (medicalFields.has(designation)){
-        const existingMedicalEmployee = await Employee.findOne({
+        const existingMedicalRegistrationNumber = await Employee.findOne({
             medicalRegistrationNumber
         });
-
-        if (existingMedicalEmployee){
+        if (existingMedicalRegistrationNumber){
             return {
                 success: false,
                 status: 409,
@@ -66,7 +47,6 @@ const validateUniqueEmployeeFields = async (data) => {
             };
         }
     }
-
     return {
         success: true
     };

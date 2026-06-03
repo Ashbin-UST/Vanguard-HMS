@@ -1,7 +1,6 @@
 import { EmployeeProfile, Designation, UserRole } from './employee.model';
 export interface User {
-  id: string;
-  username: string;
+  employeeCode: string;
   email: string;
   roles: UserRole[];
   mustChangePassword?: boolean;

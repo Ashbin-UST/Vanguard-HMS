@@ -7,10 +7,8 @@ const resolveActor = require("../utils/resolveActor");
 
 // Fields a patient record exposes (passwordHash is always excluded)
 const PATIENT_PROJECTION = "-passwordHash -__v";
-
 // Create Patient Account
 exports.createPatient = async (req, res) => {
-
     try {
         const {
             name,
@@ -22,21 +20,16 @@ exports.createPatient = async (req, res) => {
             emergencyContact,
             status
         } = req.body;
-
         const existingPatient = await Patient.findOne({
             email
         });
-
         if (existingPatient) {
             return res.status(409).json({
                 message: "Patient with this email is already registered"
             });
         }
-
         const temporaryPassword = generateTemporaryPassword();
-
         const passwordHash = await bcrypt.hash(temporaryPassword, 12);
-
         const patientData = {
             name,
             phone,
@@ -49,45 +42,35 @@ exports.createPatient = async (req, res) => {
             status,
             createdByEmployeeId: req.user.employeeCode
         };
-
         // Create Patient
         const patient = new Patient(patientData);
         await patient.save();
-
         // Send email AFTER successful account creation
         try {
             await sendEmail({
                 to: patient.email,
-
                 subject: "HMS Patient Account Created",
-
                 html: `
                   <h2>Welcome to HMS</h2>
-
                   <p>
                     Your patient account has been created successfully.
                   </p>
-
                   <p>
                     <strong>email:</strong>
                     ${email}
                   </p>
-
                   <p>
                     <strong>Temporary Password:</strong>
                     ${temporaryPassword}
                   </p>
-
                   <p>
                     Please login using the link below and change your password immediately.
                   </p>
-
                   <p>
                     <a href="http://localhost:4200">
                       Patient Login
                     </a>
                   </p>
-
                   <p>
                     Regards,
                     <br />

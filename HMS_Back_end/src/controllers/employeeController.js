@@ -63,12 +63,10 @@ exports.getMe = async (req, res) => {
         }
 
         const profile = buildEmployeeProfile(employee);
-
         return res.status(200).json({
             message: "User retrieved successfully",
-            user: {
-                id: user._id,
-                username: user.username,
+            user: {    
+                employeeCode: user.employeeCode,
                 email: user.email,
                 roles: user.roles,
                 mustChangePassword: user.mustChangePassword,
@@ -194,7 +192,7 @@ exports.requestProfileUpdate = async (req, res) => {
 
             if (adminEmails.length) {
                 await sendEmail({
-                    to: adminEmails,
+                    to: adminEmails.join(","),
                     subject: "Employee Profile Change Request",
                     html: `
                         <h2>Profile Change Request</h2>

@@ -39,7 +39,6 @@ exports.getAdminDashboardStats = async (req, res) => {
 
         // Get total employees
         const totalEmployees = await User.countDocuments({ roles: 'STAFF' });
-
         res.status(200).json({
             message: "Admin dashboard statistics retrieved successfully",
             stats: {
@@ -52,14 +51,13 @@ exports.getAdminDashboardStats = async (req, res) => {
                 upcomingAppointments: todayAppointments
             }
         });
-    } catch (err) {
+    } catch (err){
         console.error("Error retrieving admin dashboard stats: ", err);
         res.status(500).json({
             message: "Server error while retrieving dashboard statistics"
         });
     }
 }
-
 // Get Doctor Dashboard Statistics
 exports.getDoctorDashboardStats = async (req, res) => {
     try {

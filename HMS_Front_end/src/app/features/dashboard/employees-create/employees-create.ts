@@ -28,17 +28,7 @@ import {
   nonNegative,
 } from '../../../core/validators/app-validators';
 
-/**
- * Reusable create-employee form.
- *
- *   route data: { mode: 'staff' } — POST /admin/create-employee (any staff
- *     designation). OWNER and ADMIN can access.
- *   route data: { mode: 'admin' } — POST /owner/create-admin (ADMIN only).
- *     OWNER access only (enforced by route guard).
- *
- * No password input — backend generates and emails a temporary password. The
- * created user is then forced through the change-password gate on first login.
- */
+
 @Component({
   selector: 'app-create-employee',
   standalone: true,
@@ -72,7 +62,6 @@ export class CreateEmployeeComponent
 
   constructor() {
     this.form = this.fb.group({
-      username: ['', [Validators.required, notBlank]],
       name: ['', [Validators.required, notBlank]],
       email: ['', [Validators.required, Validators.email]],
       phone: ['', [Validators.required, phoneValidator]],
@@ -178,7 +167,7 @@ export class CreateEmployeeComponent
 
     const raw = this.form.getRawValue();
     const payload: any = {
-      username: raw.username,
+      
       name: raw.name,
       email: raw.email,
       phone: raw.phone,

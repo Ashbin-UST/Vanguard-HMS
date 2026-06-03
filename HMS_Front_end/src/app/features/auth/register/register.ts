@@ -61,7 +61,7 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
   constructor() {
     this.registerForm = this.fb.group(
       {
-        username: ['', Validators.required],
+       
         name: ['', Validators.required],
         email: ['', [Validators.required, Validators.email]],
         phone: ['', [Validators.required, phoneValidator]],
@@ -173,7 +173,7 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
 
     // Build the backend payload, omitting empty optional fields.
     const payload: any = {
-      username: raw.username,
+      
       name: raw.name,
       email: raw.email,
       phone: raw.phone,

@@ -3,7 +3,6 @@ const Employee = require("../models/Employees");
 
 // Create node
 exports.createNode = async (req, res) => {
-
     try {
         const {
             name,
@@ -15,13 +14,11 @@ exports.createNode = async (req, res) => {
 
         // Check duplicate path
         const existingNode = await Node.findOne({ path });
-
         if (existingNode) {
             return res.status(409).json({
                 message: "Node path already exists"
             });
         }
-
         // Create node
         const node = await Node.create({
             name,
@@ -30,12 +27,10 @@ exports.createNode = async (req, res) => {
             allowedRoles,
             allowedDesignations
         });
-
         return res.status(201).json({
             message: "Node created successfully",
             node
         });
-
     }
     catch (err) {
         console.error("Error during node creation:", err);
@@ -47,7 +42,6 @@ exports.createNode = async (req, res) => {
 
 // Update node
 exports.updateNode = async (req, res) => {
-
     try {
         const {
             name,
@@ -56,29 +50,22 @@ exports.updateNode = async (req, res) => {
             allowedRoles,
             allowedDesignations
         } = req.body;
-
         const updateData = {};
-
         if (name !== undefined) {
             updateData.name = name;
         }
-
         if (path !== undefined) {
             updateData.path = path;
         }
-
         if (icon !== undefined) {
             updateData.icon = icon;
         }
-
         if (allowedRoles !== undefined) {
             updateData.allowedRoles = allowedRoles;
         }
-
         if (allowedDesignations !== undefined) {
             updateData.allowedDesignations = allowedDesignations;
         }
-
         const updatedNode = await Node.findOneAndUpdate(
             {
                 nodeId: req.params.nodeId
@@ -91,13 +78,11 @@ exports.updateNode = async (req, res) => {
                 runValidators: true
             }
         );
-
         if (!updatedNode) {
             return res.status(404).json({
                 message: "Node not found"
             });
         }
-
         return res.status(200).json({
             message: "Node updated successfully",
             node: updatedNode
@@ -110,7 +95,6 @@ exports.updateNode = async (req, res) => {
         });
     }
 };
-
 // Delete node
 exports.deleteNode = async (req, res) => {
 
@@ -138,7 +122,6 @@ exports.deleteNode = async (req, res) => {
         });
     }
 };
-
 // Get sidebar nodes
 exports.getMyNodes = async (req, res) => {
 

@@ -18,7 +18,7 @@ const createAdmin = async (req, res) => {
   let user;
   let temporaryPassword;
 
-  const { username, email } = req.body;
+  const { email } = req.body;
 
   try {
     const uniquenessResult = await validateUniqueEmployeeFields(req.body);
@@ -44,7 +44,6 @@ const createAdmin = async (req, res) => {
 
       // Create user
       user = new User({
-        username,
         email,
         passwordHash: hashedPassword,
         status: "ACTIVE",
@@ -67,19 +66,12 @@ const createAdmin = async (req, res) => {
 
         html: `
                 <h2>Welcome to HMS</h2>
-
                 <p>Your admin account has been created successfully.</p>
-
-                <p>
-                    <strong>Username:</strong>
-                    ${username}
-                </p>
-
+               
                 <p>
                     <strong>Temporary Password:</strong>
                     ${temporaryPassword}
                 </p>
-
                 <p> Please login using the link below and change your password immediately. </p>
 
                 <p> <a href="http://localhost:4200"> Login to HMS </a> </p>
@@ -113,7 +105,8 @@ const createAdmin = async (req, res) => {
       },
 
       user: {
-        username: user.username,
+        email: user.email,
+        employeeCode: user.employeeCode,
         roles: user.roles,
         status: user.status,
       },

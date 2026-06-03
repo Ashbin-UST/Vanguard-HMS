@@ -48,23 +48,21 @@ export class LoginComponent {
     const { email, password } = this.loginForm.value;
 
     this.authService.login(email, password).subscribe({
-      next: (response) => {
+      next: (response:any) => {
         this.loading = false;
         this.cdr.markForCheck();
         if (response?.token && response?.user) {
           this.toast.success(
-            `Welcome back, ${response.user.profile?.name || response.user.username}!`,
+            `Welcome back, ${response.user.profile?.name || response.user.email}!`,
           );
 
-          // First-login users (temporary password) must change it before
-          // accessing anything — send them straight to change-password.
+          
           if (response.user.mustChangePassword) {
             this.router.navigate(['/change-password']);
             return;
           }
 
-          // Honor a returnUrl (e.g. an emailed /dashboard link), else go to the
-          // single dynamic dashboard overview.
+        
           const returnUrl =
             this.route.snapshot.queryParamMap.get('returnUrl') ||
             '/dashboard/overview';

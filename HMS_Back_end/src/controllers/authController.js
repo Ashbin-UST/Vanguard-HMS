@@ -8,10 +8,165 @@ const buildEmployeeProfile = require("../utils/buildEmployeeProfile");
 const buildEmployeeData = require("../utils/buildEmployeeData");
 const validateUniqueEmployeeFields = require("../utils/validateUniqueEmployeeFields");
 require("dotenv").config();
-
 // Self-registration restricted designations
 const restrictedSelfRegisterDesignations = new Set(["ADMIN", "OWNER"]);
+// Employee self registration
+exports.selfRegister = async (req, res) => {
+    const {email, password, designation } = req.body;
+    try {
+        // Prevent self-registration as ADMIN or OWNER
+        if (restrictedSelfRegisterDesignations.has(designation)) {
+            return res.status(403).json({
+                message:
+                    "Invalid designation. Cannot create admin or owner accounts."
+            });
+        }
 
+        const uniquenessResult = await validateUniqueEmployeeFields(req.body);
+
+        if (!uniquenessResult.success) {
+            return res.status(uniquenessResult.status).json({
+                message: uniquenessResult.message
+            });
+        }
+        const passwordHash = await bcrypt.hash(password, 10);
+        const employeeData = buildEmployeeData(req.body);
+        const employee = new Employee(employeeData);
+        await employee.save();
+
+        const user = new User({
+            email,
+            passwordHash,
+            roles: ["STAFF"],
+            employeeCode: employee.employeeCode,
+            status: "PENDING",
+            mustChangePassword: false,
+            createdByAdmin: false,
+            approvedBy: null,
+            approvedAt: null,
+            createdBy: "Self registration"
+        });
+        await user.save();
+        try {
+            const admins = await User.find({
+                roles: "ADMIN",
+                status: "ACTIVE"
+            });
+            const adminEmails = admins.map((admin) => admin.email);
+            if (adminEmails.length) {
+                await sendEmail({
+                    to: adminEmails,
+                    subject: "New Employee Registration Request",
+                    html: `
+                        <h2>New Employee Registration Request</h2>
+                        <p>
+                            A new employee has submitted a registration request and is awaiting approval.
+                        </p>
+                        <p>
+                            <strong>Name:</strong>
+                            ${employee.name}
+                        </p>
+                        <p>
+                            <strong>Employee Code:</strong>
+                            ${employee.employeeCode}
+                        </p>
+                        <p>
+                            <strong>Department:</strong>
+                            ${employee.department}
+                        </p>
+                        <p>
+                            <strong>Designation:</strong>
+                            ${employee.designation}
+                        </p>
+                        <p>
+                            Please review the request from the dashboard.
+                        </p>
+                        <p>
+                            <a href="http://localhost:4200/dashboard">
+                                Open Admin Dashboard
+                            </a>
+                        </p>
+                        <p>
+                            Regards,
+                            <br />
+                            HMS System
+                        </p>
+                    `
+                });
+            }
+        } catch (emailError) {
+            console.error("Admin notification email error:", emailError);
+        }
+
+        return res.status(201).json({
+            message: "Registration request successful. Wait for admin approval.",
+
+            user: {
+                email: user.email,
+                roles: user.roles
+            },
+            employee: {
+                employeeCode: employee.employeeCode,
+                name: employee.name,
+                department: employee.department,
+                designation: employee.designation
+            }
+        });
+    }
+    catch (err) {
+        console.error("Employee self registration error:", err);
+
+        return res.status(500).json({
+            message: "Server error during employee self registration"
+        });
+    }
+}
+// Get current authenticated user + profile (used after a page refresh)
+exports.me = async (req, res) => {
+
+    try {
+        const user = await User.findOne({
+            employeeCode: req.user.employeeCode
+        }).select(
+            "-passwordHash -resetPasswordTokenHash -resetPasswordTokenExpiry -__v"
+        );
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+        const employee = await Employee.findOne({
+            employeeCode: user.employeeCode
+        }).select("-__v");
+
+        if (!employee) {
+            return res.status(404).json({
+                message: "Employee profile not found"
+            });
+        }
+
+        const profile = buildEmployeeProfile(employee);
+        return res.status(200).json({
+            message: "User retrieved successfully",
+            user: {
+                employeeCode:user.employeeCode,
+                email: user.email,
+                roles: user.roles,
+                mustChangePassword: user.mustChangePassword,
+                lastLoginAt: user.lastLoginAt,
+                profile
+            }
+        });
+    }
+    catch (err) {
+        console.error("Error during me: ", err);
+        return res.status(500).json({
+            message: "Server error while fetching current user"
+        });
+    }
+}
 // Login
 exports.login = async (req, res) => {
 
@@ -77,7 +232,6 @@ exports.login = async (req, res) => {
             token,
             user: {
                 id: user._id,
-                username: user.username,
                 email: user.email,
                 roles: user.roles,
                 mustChangePassword: user.mustChangePassword,
@@ -93,7 +247,6 @@ exports.login = async (req, res) => {
         });
     }
 }
-
 // Change password
 exports.changePassword = async (req, res) => {
 
@@ -155,17 +308,13 @@ exports.changePassword = async (req, res) => {
         });
     }
 }
-
 // Forgot Password
 exports.forgotPassword = async (req, res) => {
-
     try {
         const { email } = req.body;
-
         const user = await User.findOne({
             email
         });
-
         if (
             !user ||
             String(user.status) !== "ACTIVE"
@@ -175,10 +324,8 @@ exports.forgotPassword = async (req, res) => {
                     "If the email exists, a reset link has been sent"
             });
         }
-
         const resetPasswordToken = crypto.randomBytes(32).toString("hex");
         const resetPasswordTokenExpiry = new Date(Date.now() + 15 * 60 * 1000);
-
         const resetPasswordTokenHash =
             crypto
                 .createHash("sha256")
@@ -187,13 +334,8 @@ exports.forgotPassword = async (req, res) => {
 
         user.resetPasswordTokenHash = resetPasswordTokenHash;
         user.resetPasswordTokenExpiry = resetPasswordTokenExpiry;
-
         await user.save();
-
-        // DEV ONLY: print the raw reset link so you can test the reset-password
-        // page in the browser without relying on the email. The raw token is
-        // never stored (only its hash), so this is the only place to capture it.
-        // Remove or guard out before deploying to production.
+      
         if (process.env.NODE_ENV !== "production") {
             console.log(
                 "\n[DEV] Reset link for " + user.email + ":\n" +
@@ -206,26 +348,19 @@ exports.forgotPassword = async (req, res) => {
         try {
             await sendEmail({
                 to: user.email,
-
                 subject: "HMS Password Reset Request",
-
                 html: `
                   <h2>HMS Password Reset</h2>
-        
                   <p>
                     Use the link below to reset your password.
                   </p>
-        
                   <p>
                     <a href="${process.env.FRONTEND_URL || "http://localhost:4200"}/reset-password?token=${resetPasswordToken}">
                       Reset Password
                     </a>
                   </p>
-
                   <p>This reset link expires in 15 minutes.</p>
-
                   <p>If you did not request this, ignore this email.</p>
-        
                   <p>
                     Regards,
                     <br />
@@ -236,11 +371,9 @@ exports.forgotPassword = async (req, res) => {
         } catch (emailError) {
             console.error("Email sending error:", emailError);
         }
-
         res.status(200).json({
             message: "If the email exists, a reset link has been sent."
         });
-
     }
     catch (err) {
         console.error("Error during forgot password: ", err);
@@ -249,10 +382,8 @@ exports.forgotPassword = async (req, res) => {
         });
     }
 }
-
 // Reset password
 exports.resetPassword = async (req, res) => {
-
     try {
         const {
             resetToken,
@@ -265,49 +396,41 @@ exports.resetPassword = async (req, res) => {
                 message: "Passwords do not match!!"
             });
         }
-
-        const hashedToken =
+        const hashedResetToken =
             crypto
                 .createHash("sha256")
                 .update(resetToken)
                 .digest("hex");
 
         const user = await User.findOne({
-            resetPasswordTokenHash: hashedToken,
+            resetPasswordTokenHash: hashedResetToken,
             resetPasswordTokenExpiry: {
                 $gt: new Date()
             }
         });
-
         if (!user){
             return res.status(400).json({
                 message: "Invalid or expired token"
             });
         }
-
         if (String(user.status) !== "ACTIVE"){
             return res.status(400).json({
                 message: "Invalid or expired token"
             })
         }
-
-        const isSamePassword = Boolean(await bcrypt.compare(newPassword, user.passwordHash));
-        if (isSamePassword){
+        const samePrevPassword = Boolean(await bcrypt.compare(newPassword, user.passwordHash));
+        if (samePrevPassword){
             return res.status(400).json({
                 message: "New password cannot be the same as current password"
             });
         }
 
-        const newHash = await bcrypt.hash(newPassword, 10);
-
-        user.passwordHash = newHash;
-
+        const newPasswordHash = await bcrypt.hash(newPassword, 10);
+        user.passwordHash = newPasswordHash;
         user.resetPasswordTokenHash = null;
         user.resetPasswordTokenExpiry = null;
         user.mustChangePassword = false;
-
         await user.save();
-
         res.status(200).json({
             message: "Password reset successful"
         })
@@ -320,7 +443,6 @@ exports.resetPassword = async (req, res) => {
         });
     }
 }
-
 // Logout
 exports.logout = (req, res) => {
     res.status(200).json({
@@ -328,193 +450,4 @@ exports.logout = (req, res) => {
     });
 }
 
-// Get current authenticated user + profile (used after a page refresh)
-exports.me = async (req, res) => {
 
-    try {
-        const user = await User.findOne({
-            employeeCode: req.user.employeeCode
-        }).select(
-            "-passwordHash -resetPasswordTokenHash -resetPasswordTokenExpiry -__v"
-        );
-
-        if (!user) {
-            return res.status(404).json({
-                message: "User not found"
-            });
-        }
-
-        const employee = await Employee.findOne({
-            employeeCode: user.employeeCode
-        }).select("-__v");
-
-        if (!employee) {
-            return res.status(404).json({
-                message: "Employee profile not found"
-            });
-        }
-
-        const profile = buildEmployeeProfile(employee);
-
-        return res.status(200).json({
-            message: "User retrieved successfully",
-            user: {
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                roles: user.roles,
-                mustChangePassword: user.mustChangePassword,
-                lastLoginAt: user.lastLoginAt,
-                profile
-            }
-        });
-    }
-    catch (err) {
-        console.error("Error during me: ", err);
-        return res.status(500).json({
-            message: "Server error while fetching current user"
-        });
-    }
-}
-
-// Employee self registration
-exports.selfRegister = async (req, res) => {
-
-    const { username, email, password, designation } = req.body;
-
-    try {
-        // Prevent self-registration as ADMIN or OWNER
-        if (restrictedSelfRegisterDesignations.has(designation)) {
-            return res.status(403).json({
-                message:
-                    "Invalid designation. Cannot create admin or owner accounts."
-            });
-        }
-
-        const uniquenessResult = await validateUniqueEmployeeFields(req.body);
-
-        if (!uniquenessResult.success) {
-            return res.status(uniquenessResult.status).json({
-                message: uniquenessResult.message
-            });
-        }
-
-        // Hash password
-        const passwordHash = await bcrypt.hash(password, 10);
-
-        // Build employee data
-        const employeeData = buildEmployeeData(req.body);
-
-        // Create employee
-        const employee = new Employee(employeeData);
-        await employee.save();
-
-        // Create user
-        const user = new User({
-            username,
-            email,
-            passwordHash,
-            roles: ["STAFF"],
-            employeeCode: employee.employeeCode,
-            status: "PENDING",
-            mustChangePassword: false,
-            createdByAdmin: false,
-            approvedBy: null,
-            approvedAt: null,
-            createdBy: "Self registration"
-        });
-
-        await user.save();
-
-        // Send approval request email to admin(s)
-        try {
-            // Find all active admin users
-            const admins = await User.find({
-                roles: "ADMIN",
-                status: "ACTIVE"
-            });
-
-            // Extract admin emails
-            const adminEmails = admins.map((admin) => admin.email);
-
-            // Send email to all admins
-            if (adminEmails.length) {
-                await sendEmail({
-                    to: adminEmails,
-
-                    subject: "New Employee Registration Request",
-
-                    html: `
-                        <h2>New Employee Registration Request</h2>
-
-                        <p>
-                            A new employee has submitted a registration request and is awaiting approval.
-                        </p>
-
-                        <p>
-                            <strong>Name:</strong>
-                            ${employee.name}
-                        </p>
-
-                        <p>
-                            <strong>Employee Code:</strong>
-                            ${employee.employeeCode}
-                        </p>
-
-                        <p>
-                            <strong>Department:</strong>
-                            ${employee.department}
-                        </p>
-
-                        <p>
-                            <strong>Designation:</strong>
-                            ${employee.designation}
-                        </p>
-
-                        <p>
-                            Please review the request from the admin dashboard.
-                        </p>
-
-                        <p>
-                            <a href="http://localhost:4200/dashboard">
-                                Open Admin Dashboard
-                            </a>
-                        </p>
-
-                        <p>
-                            Regards,
-                            <br />
-                            HMS System
-                        </p>
-                    `
-                });
-            }
-        } catch (emailError) {
-            console.error("Admin notification email error:", emailError);
-        }
-
-        return res.status(201).json({
-            message: "Registration request successful. Wait for admin approval.",
-
-            user: {
-                username: user.username,
-                email: user.email,
-                roles: user.roles
-            },
-
-            employee: {
-                employeeCode: employee.employeeCode,
-                name: employee.name,
-                department: employee.department,
-                designation: employee.designation
-            }
-        });
-    }
-    catch (err) {
-        console.error("Employee self registration error:", err);
-
-        return res.status(500).json({
-            message: "Server error during employee self registration"
-        });
-    }
-}

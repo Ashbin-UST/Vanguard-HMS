@@ -42,26 +42,18 @@ const specializationFields = new Set([
 
 const employeeCreationValidation = [
 
-    body("username")
-        .notEmpty()
-        .withMessage("Username is required"),
-
     body("name")
         .notEmpty()
         .withMessage("Name is required"),
-
     body("phone")
     .matches(/^(\+\d{1,3} )?\d{10}$/)
     .withMessage("Phone must be 10 digits, optionally prefixed with a country code and a space (e.g. +91 1234567890 or 1234567890)"),
-
     body("email")
         .isEmail()
         .withMessage("Valid email is required"),
-
     body("department")
         .isIn([...allowedDepartmentTypes])
         .withMessage("Valid department is required"),
-
     body("designation")
         .isIn([...allowedDesignationTypes])
         .withMessage("Valid designation is required"),
@@ -104,7 +96,6 @@ const employeeCodeValidation = [
         .notEmpty()
         .withMessage("Employee Code is required")
 ];
-
 router.post(
     "/create-employee",
     employeeCreationValidation,

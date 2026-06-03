@@ -6,13 +6,7 @@ const checkAppointmentValidity = require("../utils/checkAppointmentValidity");
 const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
 
-// Active (non-cancelled) appointment statuses
 const ACTIVE_STATUSES = ["BOOKED", "COMPLETED"];
-
-/**
- * Enriches a list of plain appointment objects with patient and doctor
- * display details so the frontend never has to issue N extra lookups.
- */
 const enrichAppointments = async (appointments) => {
     if (!appointments.length) {
         return [];

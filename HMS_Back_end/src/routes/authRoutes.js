@@ -41,9 +41,7 @@ const specializationFields = new Set([
 
 const selfRegisterValidation = [
 
-    body("username")
-        .notEmpty()
-        .withMessage("Username is required"),
+
 
     body("name")
         .notEmpty()

@@ -1,11 +1,9 @@
 require("dotenv").config();
-
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const mongoose = require("mongoose");
-
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const ownerRoutes = require("./routes/ownerRoutes");
@@ -13,6 +11,7 @@ const patientRoutes = require("./routes/patientRoutes");
 const appointmentRoutes = require("./routes/appointmentRoutes");
 const employeeRoutes = require("./routes/employeeRoutes");
 const nodeRoutes = require("./routes/nodeRoutes");
+const patientAuthRoutes = require("./routes/mobile-app/patientAuthRoutes");
 
 const app = express();
 
@@ -41,6 +40,7 @@ app.use("/api/patients", patientRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/employees", employeeRoutes);
 app.use("/api/nodes", nodeRoutes);
+app.use("/api/patient-auth",patientAuthRoutes);
 
 // Default route
 app.get("/", (req, res) => res.json({

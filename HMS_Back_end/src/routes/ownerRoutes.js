@@ -11,9 +11,7 @@ router.use(auth, authorizeRoles("OWNER"));
 
 const adminCreationValidation = [
 
-    body("username")
-        .notEmpty()
-        .withMessage("Username is required"),
+  
 
     body("name")
         .notEmpty()
