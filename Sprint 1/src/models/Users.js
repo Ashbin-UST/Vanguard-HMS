@@ -22,8 +22,8 @@ const userSchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ["ACTIVE", "INACTIVE", "PENDING", "REJECTED"],
-            default: "PENDING"
+            enum: ["ACTIVE", "INACTIVE"],
+            default: "ACTIVE"
         },
         roles: [{
             type: String,
@@ -34,42 +34,25 @@ const userSchema = new mongoose.Schema(
             type: String,
             required: true
         },
-        mustChangePassword: {
-            type: Boolean,
-            default: false
-        },
-        createdByAdmin: {
-            type: Boolean,
-            default: false
-        },
-        approvedBy: {
-            type: String,
-            default: null
-        },
-        approvedAt: {
-            type: Date,
-            default: null
-        },
-        createdBy: {
-            type: String,
-            default: null
-        },
-        resetPasswordTokenHash: {
-            type: String,
-            default: null
-        },
-        resetPasswordTokenExpiry:{
-            type: Date,
-            default: null
-        },
         lastLoginAt: {
             type: Date,
             default: null
+        },
+        isVerified: {
+            type: Boolean,
+            default: false
+        },
+        verificationToken: {
+            type: String
+        },
+        verificationTokenExpiry: {
+            type: Date
         }
     },
     {
         timestamps: {
-            createdAt: 'created_at', updatedAt: 'updated_at'
+            createdAt: "created_at",
+            updatedAt: "updated_at"
         }
     }
 );

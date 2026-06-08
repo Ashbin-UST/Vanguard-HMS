@@ -25,7 +25,11 @@
             <input id="register-full-name-2" type="text" formControlName="name" class="form-input"
               placeholder="John Doe" />
             @if (registerForm.get('name')?.invalid && registerForm.get('name')?.touched) {
-            <p class="form-error">Name is required</p>
+              @if (registerForm.get('name')?.hasError('name')) {
+              <p class="form-error">Enter a valid name (2–50 letters, spaces, hyphens, apostrophes or periods)</p>
+              } @else {
+              <p class="form-error">Name is required</p>
+              }
             }
           </div>
 

@@ -228,11 +228,15 @@ export class AppointmentsListComponent implements OnInit {
       confirmText: 'Cancel It',
       cancelText: 'Keep',
       type: 'danger',
+      showInput: true,
+      inputLabel: 'Cancellation Reason',
+      inputPlaceholder: 'Reason for cancelling this appointment',
     });
     if (!result.confirmed) {
       return;
     }
-    this.appointmentService.cancelAppointment(a.appointmentId).subscribe({
+    const reason = (result.inputValue ?? '').trim();
+    this.appointmentService.cancelAppointment(a.appointmentId, reason).subscribe({
       next: (res) => {
         this.toast.success(res.message || 'Appointment cancelled.');
         this.load();

@@ -1,5 +1,12 @@
 const { body, param } = require("express-validator");
-const { PHONE_REGEX } = require("./employeeValidation");
+const {
+    nameValidator,
+    phoneValidator,
+    emailValidator,
+} = require("./sharedValidators");
+
+const EMERGENCY_PHONE_MESSAGE =
+    "Emergency contact number must include a country code followed by exactly 10 digits";
 
 const allowedGenders = new Set([
     "Male",
@@ -8,19 +15,11 @@ const allowedGenders = new Set([
 
 // Validates all required fields for creating a new patient record
 const createPatientValidation = [
-    body("name")
-        .notEmpty()
-        .withMessage("Patient name is required"),
+    nameValidator("name", "Patient name"),
 
-    body("phone")
-        .matches(PHONE_REGEX)
-        .withMessage(
-            "Phone must be 10 digits, optionally prefixed with a country code and a space (e.g. +91 1234567890 or 1234567890)"
-        ),
+    phoneValidator("phone"),
 
-    body("email")
-        .isEmail()
-        .withMessage("Valid email is required"),
+    emailValidator("email"),
 
     body("gender")
         .isIn([...allowedGenders])
@@ -47,19 +46,13 @@ const createPatientValidation = [
         .notEmpty()
         .withMessage("Post code is required"),
 
-    body("emergencyContact.contactName")
-        .notEmpty()
-        .withMessage("Emergency contact name is required"),
+    nameValidator("emergencyContact.contactName", "Emergency contact name"),
 
     body("emergencyContact.relationship")
         .notEmpty()
         .withMessage("Relationship is required"),
 
-    body("emergencyContact.contactNumber")
-        .matches(PHONE_REGEX)
-        .withMessage(
-            "Emergency contact number must include a country code followed by exactly 10 digits"
-        )
+    phoneValidator("emergencyContact.contactNumber", { message: EMERGENCY_PHONE_MESSAGE })
 ];
 
 // Validates the UHID param and all optional body fields for patient updates
@@ -68,22 +61,11 @@ const updatePatientValidation = [
         .notEmpty()
         .withMessage("UHID is required"),
 
-    body("name")
-        .optional()
-        .notEmpty()
-        .withMessage("Patient name cannot be empty"),
+    nameValidator("name", "Patient name", { optional: true }),
 
-    body("phone")
-        .optional()
-        .matches(PHONE_REGEX)
-        .withMessage(
-            "Phone must be 10 digits, optionally prefixed with a country code and a space (e.g. +91 1234567890 or 1234567890)"
-        ),
+    phoneValidator("phone", { optional: true }),
 
-    body("email")
-        .optional()
-        .isEmail()
-        .withMessage("Valid email is required"),
+    emailValidator("email", { optional: true }),
 
     body("gender")
         .optional()
@@ -101,12 +83,7 @@ const updatePatientValidation = [
         .isIn(["ACTIVE", "INACTIVE"])
         .withMessage("Valid status is required"),
 
-    body("emergencyContact.contactNumber")
-        .optional()
-        .matches(PHONE_REGEX)
-        .withMessage(
-            "Emergency contact number must include a country code followed by exactly 10 digits"
-        )
+    phoneValidator("emergencyContact.contactNumber", { optional: true, message: EMERGENCY_PHONE_MESSAGE })
 ];
 
 // Validates the UHID URL parameter

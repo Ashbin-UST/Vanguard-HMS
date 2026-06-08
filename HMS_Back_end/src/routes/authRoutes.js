@@ -4,19 +4,23 @@ const { body } = require("express-validator");
 const validate = require("../middlewares/validate");
 const auth = require("../middlewares/authMiddleware");
 const controller = require("../controllers/authController");
-const { employeeBaseValidators } = require("../validators/employeeValidation");
+const {
+  employeeBaseValidators,
+  joiningDateValidator,
+} = require("../validators/employeeValidation");
+const { emailValidator } = require("../validators/sharedValidators");
 const { passwordStrengthValidator } = require("../validators/passwordValidator");
 
 // Full employee field set plus a password strength check
 const selfRegisterValidation = [
   ...employeeBaseValidators,
   passwordStrengthValidator("password"),
-  body("joiningDate").isISO8601().toDate().withMessage("Valid joining date is required"),
+  joiningDateValidator(),
 ];
 
 // Credentials validation for login
 const loginValidation = [
-  body("email").isEmail().withMessage("Valid email is required"),
+  emailValidator("email"),
   body("password").notEmpty().withMessage("Password is required"),
 ];
 
@@ -35,7 +39,7 @@ const changePasswordValidation = [
 
 // Email presence check for the forgot-password flow
 const forgotPasswordValidation = [
-  body("email").isEmail().withMessage("Valid email is required"),
+  emailValidator("email"),
 ];
 
 // Validates the reset token, new password strength, and confirmation match

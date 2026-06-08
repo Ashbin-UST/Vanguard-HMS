@@ -5,6 +5,16 @@ const validate = require("../middlewares/validate");
 const auth = require("../middlewares/authMiddleware");
 const authorizeRoles = require("../middlewares/authorizeRolesMiddleware");
 const controller = require("../controllers/ownerController");
+const {
+    nameValidator,
+    phoneValidator,
+    emailValidator,
+} = require("../validators/sharedValidators");
+const {
+    usernameValidator,
+    qualificationValidator,
+    joiningDateValidator,
+} = require("../validators/employeeValidation");
 
 // All the routes require authentication and authorization as OWNER
 router.use(auth, authorizeRoles("OWNER"));
@@ -12,21 +22,13 @@ router.use(auth, authorizeRoles("OWNER"));
 // Admin creation fields
 const adminCreationValidation = [
 
-    body("username")
-        .notEmpty()
-        .withMessage("Username is required"),
+    usernameValidator(),
 
-    body("name")
-        .notEmpty()
-        .withMessage("Name is required"),
+    nameValidator("name", "Name"),
 
-    body("phone")
-        .matches(/^(\+\d{1,3} )?\d{10}$/)
-        .withMessage("Phone must be 10 digits, optionally prefixed with a country code and a space (e.g. +91 1234567890 or 1234567890)"),
+    phoneValidator("phone"),
 
-    body("email")
-        .isEmail()
-        .withMessage("Valid email is required"),
+    emailValidator("email"),
 
     body("department")
         .equals("Administration")
@@ -36,14 +38,9 @@ const adminCreationValidation = [
         .equals("ADMIN")
         .withMessage("Designation must be ADMIN"),
 
-    body("joiningDate")
-        .isISO8601()
-        .toDate()
-        .withMessage("Valid joining date is required"),
+    joiningDateValidator(),
 
-    body("qualification")
-        .isArray({ min: 1 })
-        .withMessage("At least one qualification is required")
+    qualificationValidator()
 ];
 
 // Validates the employeeCode URL parameter
@@ -51,6 +48,12 @@ const employeeCodeValidation = [
     param("employeeCode")
         .notEmpty()
         .withMessage("Employee Code is required")
+];
+
+// employeeCode param plus an optional name (validated only when an update includes it)
+const adminUpdateValidation = [
+    ...employeeCodeValidation,
+    nameValidator("name", "Name", { optional: true })
 ];
 
 // Admin management routes
@@ -68,7 +71,7 @@ router.get(
 
 router.put(
     "/update-admin/:employeeCode",
-    employeeCodeValidation,
+    adminUpdateValidation,
     validate,
     controller.updateAdmin
 );

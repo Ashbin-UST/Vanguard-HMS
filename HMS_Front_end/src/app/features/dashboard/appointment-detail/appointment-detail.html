@@ -42,6 +42,12 @@
               <span class="detail-label">Time Slot</span>
               <span class="detail-value">{{ a.timeSlot }}</span>
             </div>
+            @if (a.cancellationReason) {
+              <div class="detail">
+                <span class="detail-label">Cancellation Reason</span>
+                <span class="detail-value">{{ a.cancellationReason }}</span>
+              </div>
+            }
           </div>
 
           <h4 class="section-title">Patient</h4>

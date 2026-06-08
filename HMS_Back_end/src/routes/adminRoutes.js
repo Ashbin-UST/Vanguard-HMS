@@ -1,11 +1,15 @@
 const express = require("express");
 const router = express.Router();
-const { body, param } = require("express-validator");
+const { param } = require("express-validator");
 const validate = require("../middlewares/validate");
 const auth = require("../middlewares/authMiddleware");
 const authorizeRoles = require("../middlewares/authorizeRolesMiddleware");
 const controller = require("../controllers/adminController");
-const { employeeBaseValidators } = require("../validators/employeeValidation");
+const {
+  employeeBaseValidators,
+  joiningDateValidator,
+} = require("../validators/employeeValidation");
+const { nameValidator } = require("../validators/sharedValidators");
 
 // All the routes require authentication and admin-level authorization
 router.use(auth, authorizeRoles("OWNER", "ADMIN"));
@@ -13,12 +17,18 @@ router.use(auth, authorizeRoles("OWNER", "ADMIN"));
 // Full employee field set plus joining date
 const employeeCreationValidation = [
   ...employeeBaseValidators,
-  body("joiningDate").notEmpty().withMessage("Joining date is required"),
+  joiningDateValidator(),
 ];
 
 // Validates the employeeCode URL parameter
 const employeeCodeValidation = [
   param("employeeCode").notEmpty().withMessage("Employee Code is required"),
+];
+
+// employeeCode param plus an optional name (validated only when an update includes it)
+const employeeUpdateValidation = [
+  ...employeeCodeValidation,
+  nameValidator("name", "Name", { optional: true }),
 ];
 
 // Validates the requestId URL parameter
@@ -61,7 +71,7 @@ router.put(
 
 router.put(
   "/update-employee/:employeeCode",
-  employeeCodeValidation,
+  employeeUpdateValidation,
   validate,
   controller.updateEmployee,
 );

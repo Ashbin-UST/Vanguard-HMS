@@ -27,6 +27,12 @@ export const PHONE_PATTERN = /^(\+\d{1,3} )?\d{10}$/;
 export const PASSWORD_PATTERN =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/;
 
+// Name must start with a letter (any language), then letters, spaces, hyphens,
+// apostrophes and periods. Allows "Jean-Luc", "O'Brien", "Dr. John", "José".
+export const NAME_PATTERN = /^\p{L}[\p{L} .'-]*$/u;
+export const NAME_MIN_LENGTH = 2;
+export const NAME_MAX_LENGTH = 50;
+
 // Appointment time slot in HH:mm-HH:mm form (matches backend route regex).
 export const TIME_SLOT_PATTERN =
   /^([01]\d|2[0-3]):([0-5]\d)-([01]\d|2[0-3]):([0-5]\d)$/;
@@ -112,6 +118,25 @@ export const phoneValidator: ValidatorFn = (
     return null;
   }
   return PHONE_PATTERN.test(value) ? null : { phone: true };
+};
+
+/**
+ * Name format validator (mirrors the backend nameValidator). Accepts letters,
+ * spaces, hyphens, apostrophes and periods; 2–50 characters; must start with a
+ * letter. Empty values pass (required/notBlank handle emptiness).
+ * Error: { name: true }
+ */
+export const nameValidator: ValidatorFn = (
+  control: AbstractControl,
+): ValidationErrors | null => {
+  const value = (control.value ?? '').toString().trim();
+  if (!value) {
+    return null;
+  }
+  if (value.length < NAME_MIN_LENGTH || value.length > NAME_MAX_LENGTH) {
+    return { name: true };
+  }
+  return NAME_PATTERN.test(value) ? null : { name: true };
 };
 
 // Strong password. Error: { weakPassword: true }

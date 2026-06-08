@@ -29,6 +29,9 @@ const appointmentSchema = new mongoose.Schema({
         enum: ["BOOKED", "CANCELED", "COMPLETED"],
         default: "BOOKED"
     },
+    cancellationReason: {
+        type: String
+    },
     createdByEmployeeId: {
         type: String,
         ref: "Employee"

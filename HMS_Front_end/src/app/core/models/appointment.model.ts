@@ -39,6 +39,7 @@ export interface Appointment {
   appointmentDate: string;
   timeSlot: string;
   status: AppointmentStatus;
+  cancellationReason?: string;
   createdByEmployeeId?: string;
   // Present on list / detail responses (null if the referenced doc is gone).
   patient?: AppointmentPatientRef | null;

@@ -248,6 +248,7 @@ exports.cancelAppointment = async (req, res) => {
 
     try {
         const { appointmentId } = req.params;
+        const { cancellationReason } = req.body;
 
         const appointment = await Appointment.findOne({ appointmentId });
 
@@ -270,6 +271,7 @@ exports.cancelAppointment = async (req, res) => {
         }
 
         appointment.status = "CANCELED";
+        appointment.cancellationReason = cancellationReason;
         await appointment.save();
 
         // Fetch patient and doctor in parallel to build the cancellation email
@@ -285,7 +287,8 @@ exports.cancelAppointment = async (req, res) => {
                         patientName: patient.name,
                         doctorName: doctor?.name,
                         appointmentDate: appointment.appointmentDate,
-                        timeSlot: appointment.timeSlot
+                        timeSlot: appointment.timeSlot,
+                        cancellationReason
                     })
                 });
             }
@@ -300,7 +303,7 @@ exports.cancelAppointment = async (req, res) => {
             action: "APPOINTMENT_CANCELED",
             targetType: "APPOINTMENT",
             targetId: appointment.appointmentId,
-            message: `Appointment ${appointment.appointmentId} was cancelled`
+            message: `Appointment ${appointment.appointmentId} was cancelled. Reason: ${cancellationReason}`
         });
 
         return res.status(200).json({

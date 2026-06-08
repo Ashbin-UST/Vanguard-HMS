@@ -49,8 +49,9 @@
           {{ modalService.modalState().config.cancelText }}
         </button>
         <button
-          [class]="'btn btn-' + (modalService.modalState().config.type === 'danger' ? 'danger' : 
+          [class]="'btn btn-' + (modalService.modalState().config.type === 'danger' ? 'danger' :
                                   modalService.modalState().config.type === 'success' ? 'success' : 'primary')"
+          [disabled]="modalService.modalState().config.showInput && !inputValue().trim()"
           (click)="onConfirm()"
         >
           {{ modalService.modalState().config.confirmText }}
