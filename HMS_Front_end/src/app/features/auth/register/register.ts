@@ -28,8 +28,10 @@ import {
   passwordMatchValidator,
   nonNegative,
   slotTimeOrder,
+  slotsNoConflict,
   notBlank,
   nameValidator,
+  medicalRegistrationValidator,
 } from '../../../core/validators/app-validators';
 import { PasswordInputComponent } from '../../../shared/ui/password-input/password-input';
 import { AvailabilitySlotsFormComponent } from '../../../shared/ui/availability-slots-form/availability-slots-form';
@@ -79,7 +81,7 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
         medicalRegistrationNumber: [''],
         specialization: [''],
         consultationFee: [null, nonNegative],
-        availabilitySlots: this.fb.array([]),
+        availabilitySlots: this.fb.array([], { validators: slotsNoConflict }),
         password: ['', [Validators.required, Validators.minLength(8), passwordComplexity]],
         confirmPassword: ['', Validators.required],
       },
@@ -189,7 +191,9 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
     const fee = this.registerForm.get('consultationFee');
 
     medReg?.setValidators(
-      this.showMedicalFields ? [Validators.required] : [],
+      this.showMedicalFields
+        ? [Validators.required, medicalRegistrationValidator]
+        : [],
     );
     spec?.setValidators(
       this.showSpecialization ? [Validators.required] : [],

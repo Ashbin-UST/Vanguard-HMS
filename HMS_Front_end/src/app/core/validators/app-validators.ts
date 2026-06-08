@@ -33,6 +33,9 @@ export const NAME_PATTERN = /^\p{L}[\p{L} .'-]*$/u;
 export const NAME_MIN_LENGTH = 2;
 export const NAME_MAX_LENGTH = 50;
 
+// Medical registration number: "MED-" then digits and hyphens (e.g. MED-12345).
+export const MED_REG_PATTERN = /^MED-[0-9-]+$/;
+
 // Appointment time slot in HH:mm-HH:mm form (matches backend route regex).
 export const TIME_SLOT_PATTERN =
   /^([01]\d|2[0-3]):([0-5]\d)-([01]\d|2[0-3]):([0-5]\d)$/;
@@ -137,6 +140,21 @@ export const nameValidator: ValidatorFn = (
     return { name: true };
   }
   return NAME_PATTERN.test(value) ? null : { name: true };
+};
+
+/**
+ * Medical registration number format (mirrors the backend MED_REG_REGEX).
+ * Must be "MED-" followed by digits and hyphens (e.g. MED-12345). Empty values
+ * pass (required handles emptiness). Error: { medicalRegistration: true }
+ */
+export const medicalRegistrationValidator: ValidatorFn = (
+  control: AbstractControl,
+): ValidationErrors | null => {
+  const value = (control.value ?? '').toString().trim();
+  if (!value) {
+    return null;
+  }
+  return MED_REG_PATTERN.test(value) ? null : { medicalRegistration: true };
 };
 
 // Strong password. Error: { weakPassword: true }
@@ -249,6 +267,58 @@ export const slotTimeOrder: ValidatorFn = (
     return null;
   }
   return start < end ? null : { slotTimeOrder: true };
+};
+
+/**
+ * Availability-slot conflict validator (apply at the FormArray level, mirrors
+ * the backend slot validation). Flags duplicate slots and time ranges that
+ * overlap within the same day. Per-slot start<end is handled separately by
+ * slotTimeOrder. Error on the array: { slotConflict: <message> }
+ */
+export const slotsNoConflict: ValidatorFn = (
+  control: AbstractControl,
+): ValidationErrors | null => {
+  const slots = (control.value ?? []) as Array<{
+    day?: string;
+    startTime?: string;
+    endTime?: string;
+  }>;
+  const seen = new Set<string>();
+  const byDay: Record<
+    string,
+    Array<{ start: number; end: number; startTime: string; endTime: string }>
+  > = {};
+
+  for (const slot of slots) {
+    const day = (slot.day ?? '').toString().toUpperCase();
+    const start = timeToMinutes(slot.startTime);
+    const end = timeToMinutes(slot.endTime);
+    // Skip incomplete or per-slot-invalid rows (slotTimeOrder reports those).
+    if (!day || start === null || end === null || start >= end) {
+      continue;
+    }
+
+    const key = `${day}-${slot.startTime}-${slot.endTime}`;
+    if (seen.has(key)) {
+      return { slotConflict: `Duplicate slot: ${day} ${slot.startTime}–${slot.endTime}` };
+    }
+    seen.add(key);
+
+    for (const e of byDay[day] ?? []) {
+      if (start < e.end && end > e.start) {
+        return {
+          slotConflict: `Overlapping slots on ${day}: ${slot.startTime}–${slot.endTime} overlaps with ${e.startTime}–${e.endTime}`,
+        };
+      }
+    }
+    (byDay[day] ??= []).push({
+      start,
+      end,
+      startTime: slot.startTime!,
+      endTime: slot.endTime!,
+    });
+  }
+  return null;
 };
 
 /**

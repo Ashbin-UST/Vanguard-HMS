@@ -32,4 +32,8 @@
   <p class="form-error slot-error">Start time must be before end time</p>
   }
   }
+
+  @if (formArray.errors?.['slotConflict']; as slotConflict) {
+  <p class="form-error slot-error">{{ slotConflict }}</p>
+  }
 </div>

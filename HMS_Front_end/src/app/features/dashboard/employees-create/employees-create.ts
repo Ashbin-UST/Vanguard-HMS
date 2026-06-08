@@ -35,6 +35,8 @@ import {
   nameValidator,
   nonNegative,
   slotTimeOrder,
+  slotsNoConflict,
+  medicalRegistrationValidator,
 } from '../../../core/validators/app-validators';
 
 /**
@@ -95,7 +97,7 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
       medicalRegistrationNumber: [''],
       specialization: [''],
       consultationFee: [null, nonNegative],
-      availabilitySlots: this.fb.array([]),
+      availabilitySlots: this.fb.array([], { validators: slotsNoConflict }),
     });
   }
 
@@ -283,7 +285,9 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
     const spec = this.form.get('specialization');
     const fee = this.form.get('consultationFee');
 
-    med?.setValidators(this.showMedical ? [Validators.required] : []);
+    med?.setValidators(
+      this.showMedical ? [Validators.required, medicalRegistrationValidator] : [],
+    );
     spec?.setValidators(this.showSpecialization ? [Validators.required] : []);
     fee?.setValidators(
       this.isDoctor ? [Validators.required, nonNegative] : [nonNegative],

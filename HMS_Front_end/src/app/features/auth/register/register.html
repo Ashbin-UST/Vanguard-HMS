@@ -108,10 +108,14 @@
           <div class="form-group">
             <label class="form-label" for="register-medical-registration-no-9">Medical Registration No *</label>
             <input id="register-medical-registration-no-9" type="text" formControlName="medicalRegistrationNumber"
-              class="form-input" placeholder="MED123456" />
+              class="form-input" placeholder="MED-12345" />
             @if (registerForm.get('medicalRegistrationNumber')?.invalid &&
             registerForm.get('medicalRegistrationNumber')?.touched) {
-            <p class="form-error">Medical registration number is required</p>
+              @if (registerForm.get('medicalRegistrationNumber')?.hasError('medicalRegistration')) {
+              <p class="form-error">Must start with 'MED-' followed by numbers and hyphens (e.g. MED-12345)</p>
+              } @else {
+              <p class="form-error">Medical registration number is required</p>
+              }
             }
           </div>
           }
