@@ -7,7 +7,6 @@ const buildEmployeeProfile = (employee) => {
         employeeCode: employee.employeeCode,
         name: employee.name,
         phone: employee.phone,
-        email: employee.email,
         department: employee.department,
         designation: employee.designation,
         joiningDate: employee.joiningDate,

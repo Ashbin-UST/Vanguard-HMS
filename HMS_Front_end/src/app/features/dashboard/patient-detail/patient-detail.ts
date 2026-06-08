@@ -21,6 +21,7 @@ import {
   phoneValidator,
   noFutureDate,
   notBlank,
+  nameValidator,
   todayIsoDate,
 } from '../../../core/validators/app-validators';
 
@@ -64,7 +65,7 @@ export class PatientDetailComponent
   todayIso = todayIsoDate();
 
   form: FormGroup = this.fb.group({
-    name: ['', [Validators.required, notBlank]],
+    name: ['', [Validators.required, notBlank, nameValidator]],
     email: ['', [Validators.required, Validators.email]],
     phone: ['', [Validators.required, phoneValidator]],
     gender: ['', Validators.required],
@@ -77,7 +78,7 @@ export class PatientDetailComponent
       postCode: ['', [Validators.required, notBlank]],
     }),
     emergencyContact: this.fb.group({
-      contactName: ['', [Validators.required, notBlank]],
+      contactName: ['', [Validators.required, notBlank, nameValidator]],
       relationship: ['', [Validators.required, notBlank]],
       contactNumber: ['', [Validators.required, phoneValidator]],
     }),

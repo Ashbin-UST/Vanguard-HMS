@@ -32,6 +32,7 @@ import {
 import {
   phoneValidator,
   notBlank,
+  nameValidator,
   nonNegative,
   slotTimeOrder,
 } from '../../../core/validators/app-validators';
@@ -84,7 +85,7 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
   constructor() {
     this.form = this.fb.group({
       username: ['', [Validators.required, notBlank]],
-      name: ['', [Validators.required, notBlank]],
+      name: ['', [Validators.required, notBlank, nameValidator]],
       email: ['', [Validators.required, Validators.email]],
       phone: ['', [Validators.required, phoneValidator]],
       department: ['', Validators.required],

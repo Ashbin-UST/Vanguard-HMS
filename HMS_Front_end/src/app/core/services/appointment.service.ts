@@ -88,10 +88,13 @@ export class AppointmentService {
     );
   }
 
-  cancelAppointment(appointmentId: string): Observable<AppointmentResponse> {
+  cancelAppointment(
+    appointmentId: string,
+    cancellationReason: string,
+  ): Observable<AppointmentResponse> {
     return this.http.put<AppointmentResponse>(
       `${this.apiUrl}/${appointmentId}/cancel`,
-      {},
+      { cancellationReason },
     );
   }
 

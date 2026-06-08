@@ -16,7 +16,11 @@
             <input id="pc-name" type="text" formControlName="name" class="form-input"
                    placeholder="Alice Johnson" />
             @if (form.get('name')?.touched && form.get('name')?.invalid) {
-              <p class="form-error">Name is required</p>
+              @if (form.get('name')?.hasError('name')) {
+                <p class="form-error">Enter a valid name (2–50 letters, spaces, hyphens, apostrophes or periods)</p>
+              } @else {
+                <p class="form-error">Name is required</p>
+              }
             }
           </div>
 
@@ -126,7 +130,11 @@
             <input id="pc-contact-name" type="text" formControlName="contactName" class="form-input"
                    placeholder="Bob Johnson" />
             @if (emergencyCtrl('contactName')?.touched && emergencyCtrl('contactName')?.invalid) {
-              <p class="form-error">Contact name is required</p>
+              @if (emergencyCtrl('contactName')?.hasError('name')) {
+                <p class="form-error">Enter a valid name (2–50 letters, spaces, hyphens, apostrophes or periods)</p>
+              } @else {
+                <p class="form-error">Contact name is required</p>
+              }
             }
           </div>
           <div class="form-group">

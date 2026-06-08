@@ -28,6 +28,8 @@ import {
   passwordMatchValidator,
   nonNegative,
   slotTimeOrder,
+  notBlank,
+  nameValidator,
 } from '../../../core/validators/app-validators';
 import { PasswordInputComponent } from '../../../shared/ui/password-input/password-input';
 import { AvailabilitySlotsFormComponent } from '../../../shared/ui/availability-slots-form/availability-slots-form';
@@ -67,7 +69,7 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
     this.registerForm = this.fb.group(
       {
         username: ['', Validators.required],
-        name: ['', Validators.required],
+        name: ['', [Validators.required, notBlank, nameValidator]],
         email: ['', [Validators.required, Validators.email]],
         phone: ['', [Validators.required, phoneValidator]],
         department: ['', Validators.required],

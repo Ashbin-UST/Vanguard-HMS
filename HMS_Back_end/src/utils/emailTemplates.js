@@ -187,6 +187,7 @@ const appointmentCanceled = ({
   doctorName,
   appointmentDate,
   timeSlot,
+  cancellationReason,
 }) => ({
   subject: "Appointment Cancelled",
   html: wrap(`
@@ -196,6 +197,7 @@ const appointmentCanceled = ({
     <p><strong>Doctor Name:</strong> ${doctorName}</p>
     <p><strong>Appointment Date:</strong> ${formatDate(appointmentDate)}</p>
     <p><strong>Time Slot:</strong> ${timeSlot}</p>
+    ${cancellationReason ? `<p><strong>Reason:</strong> ${cancellationReason}</p>` : ""}
     <p>If you believe this was a mistake, please contact us or visit the hospital.</p>
   `),
 });

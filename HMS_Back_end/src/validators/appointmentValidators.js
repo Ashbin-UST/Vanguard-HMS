@@ -38,8 +38,21 @@ const appointmentIdValidation = [
         .withMessage("Appointment id is required")
 ];
 
+// Validates the appointmentId param plus the required cancellation reason body
+const cancelAppointmentValidation = [
+    param("appointmentId")
+        .notEmpty()
+        .withMessage("Appointment id is required"),
+
+    body("cancellationReason")
+        .trim()
+        .notEmpty()
+        .withMessage("Cancellation reason is required")
+];
+
 module.exports = {
     createAppointmentValidation,
     bookedSlotsValidation,
-    appointmentIdValidation
+    appointmentIdValidation,
+    cancelAppointmentValidation
 };

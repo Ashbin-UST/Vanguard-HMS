@@ -7,7 +7,8 @@ const controller = require("../controllers/appointmentController");
 const {
     createAppointmentValidation,
     bookedSlotsValidation,
-    appointmentIdValidation
+    appointmentIdValidation,
+    cancelAppointmentValidation
 } = require("../validators/appointmentValidators");
 
 // All the routes require authentication
@@ -77,7 +78,7 @@ router.put(
 router.put(
     "/:appointmentId/cancel",
     RECEPTION_LEVEL,
-    appointmentIdValidation,
+    cancelAppointmentValidation,
     validate,
     controller.cancelAppointment
 );
