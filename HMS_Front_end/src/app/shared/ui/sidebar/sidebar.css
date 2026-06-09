@@ -17,7 +17,7 @@
   transition: transform 0.2s ease;
 }
 
-/* Visible when the host is marked open. */
+/* Visible when the host is marked open */
 :host(.open) .sidebar {
   transform: translateX(0);
 }

@@ -15,14 +15,7 @@ import {
   STAFF_DESIGNATIONS,
 } from '../../../core/models/employee.model';
 
-/**
- * Active employees list (OWNER/ADMIN only).
- *
- * - Search by name / employee code / email
- * - Filter by designation
- * - Click a row to view details in a modal
- * - Admin can delete employees; owner can delete admins too
- */
+// Active employees list with search and designation filter (OWNER/ADMIN)
 @Component({
   selector: 'app-employees-list',
   standalone: true,
@@ -63,7 +56,7 @@ export class EmployeesListComponent implements OnInit {
     () => this.authService.getDesignation() === 'OWNER',
   );
 
-  // Combined view = employees + admins (admins visible only to owner).
+  // Combined view = employees + admins (admins visible only to owner)
   rows = computed<EmployeeListItem[]>(() => {
     const term = this.searchTerm().trim().toLowerCase();
     const filter = this.designationFilter();
@@ -134,8 +127,7 @@ export class EmployeesListComponent implements OnInit {
     this.router.navigate(['/dashboard/employees', item.employee.employeeCode, 'edit']);
   }
 
-  // Only staff designations can be edited via the update-employee endpoint.
-  // The backend rejects OWNER and ADMIN updates, so hide the button for those.
+  // Only staff designations are editable; OWNER/ADMIN updates are rejected by the backend
   canEdit(item: EmployeeListItem): boolean {
     return item.employee.designation !== 'OWNER' && item.employee.designation !== 'ADMIN';
   }

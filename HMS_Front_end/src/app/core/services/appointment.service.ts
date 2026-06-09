@@ -42,7 +42,7 @@ export class AppointmentService {
     return this.http.get<AppointmentsResponse>(this.apiUrl, { params });
   }
 
-  // Doctor's own appointments.
+  // Doctor's own appointments
   getMyAppointments(
     page = 1,
     limit = 100,
@@ -60,8 +60,7 @@ export class AppointmentService {
     );
   }
 
-  // Booked slots for a doctor on a date (for slot-conflict rendering).
-  // Pass excludeAppointmentId when editing so the current slot is not shown as blocked.
+  // Booked slots for a doctor on a date; pass excludeAppointmentId when editing
   getBookedSlots(
     doctorEmployeeId: string,
     date: string,

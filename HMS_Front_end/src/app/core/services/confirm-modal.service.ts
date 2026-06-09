@@ -28,8 +28,7 @@ export class ConfirmModalService {
     resolveFn: null
   });
 
-  // Opens modal and returns a Promise
-  // The component awaits the user's choice
+  // Opens the modal and returns a Promise the component awaits
   open(config: ConfirmModalConfig): Promise<{ confirmed: boolean; inputValue?: string }> {
     return new Promise((resolve) => {
       this.modalState.set({

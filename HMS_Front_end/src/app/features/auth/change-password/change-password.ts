@@ -16,16 +16,7 @@ import {
 } from '../../../core/validators/app-validators';
 import { PasswordInputComponent } from '../../../shared/ui/password-input/password-input';
 
-/**
- * Reusable change-password screen.
- *
- * - Forced mode (mustChangePassword === true): the user reached this page right
- *   after a first login with a temporary password. Cancel is hidden and the
- *   user is locked here (logout is blocked in AuthService; dashboard is blocked
- *   by mustChangePasswordGuard) until they successfully change the password.
- * - Voluntary mode: reached from the profile menu; a Cancel button returns to
- *   the dashboard.
- */
+// Change-password screen with forced (first-login) and voluntary modes
 @Component({
   selector: 'app-change-password',
   standalone: true,
@@ -84,8 +75,7 @@ export class ChangePasswordComponent implements OnInit {
           this.toast.success(
             response?.message || 'Password changed successfully.',
           );
-          // Refresh the cached user so mustChangePassword becomes false, then
-          // proceed to the dashboard (already authenticated — no re-login).
+          // Refresh the cached user so mustChangePassword clears, then go to the dashboard
           this.authService.refreshCurrentUser().subscribe({
             next: () => {
               this.loading = false;
@@ -93,7 +83,7 @@ export class ChangePasswordComponent implements OnInit {
               this.router.navigate(['/dashboard/overview']);
             },
             error: () => {
-              // Even if the refresh fails, the password changed; continue.
+              // Even if the refresh fails, the password changed; continue
               this.loading = false;
               this.cdr.markForCheck();
               this.router.navigate(['/dashboard/overview']);

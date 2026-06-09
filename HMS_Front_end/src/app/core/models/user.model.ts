@@ -10,20 +10,20 @@ export interface User {
   profile: EmployeeProfile;
 }
 
-// POST /auth/login response.
+// POST /auth/login response
 export interface LoginResponse {
   message: string;
   token: string;
   user: User;
 }
 
-// GET /auth/me and GET /employees/me response.
+// GET /auth/me and GET /employees/me response
 export interface MeResponse {
   message: string;
   user: User;
 }
 
-// Re-export commonly used role types so consumers can import from one place.
+// Re-export commonly used role types so consumers can import from one place
 export type { Designation, UserRole } from './employee.model';
 
 export function getDesignation(user: User | null): Designation | null {

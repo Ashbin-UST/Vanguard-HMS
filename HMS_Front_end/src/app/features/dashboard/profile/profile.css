@@ -82,7 +82,7 @@
   margin-top: 1.25rem;
 }
 
-/* Make each action button span the row when stacked on mobile. */
+/* Make each action button span the row when stacked on mobile */
 .form-actions .btn {
   width: 100%;
 }
@@ -92,7 +92,7 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
-  /* On wider screens, place the buttons side by side, right-aligned. */
+  /* On wider screens, place the buttons side by side, right-aligned */
   .form-actions {
     flex-direction: row;
     justify-content: flex-end;

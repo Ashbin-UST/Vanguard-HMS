@@ -57,15 +57,13 @@ export class LoginComponent {
             `Welcome back, ${response.user.profile?.name || response.user.username}!`,
           );
 
-          // First-login users (temporary password) must change it before
-          // accessing anything — send them straight to change-password.
+          // First-login users must change their temporary password first
           if (response.user.mustChangePassword) {
             this.router.navigate(['/change-password']);
             return;
           }
 
-          // Honor a returnUrl (e.g. an emailed /dashboard link), else go to the
-          // single dynamic dashboard overview.
+          // Honor a returnUrl if present, else go to the dashboard overview
           const returnUrl =
             this.route.snapshot.queryParamMap.get('returnUrl') ||
             '/dashboard/overview';

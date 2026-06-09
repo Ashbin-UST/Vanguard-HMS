@@ -12,16 +12,7 @@ import {
 
 type Tab = 'registrations' | 'profileChanges';
 
-/**
- * Approvals page (OWNER / ADMIN).
- *
- * Two tabs in one screen:
- *   - Registration Requests: pending self-registered employees. Detail popup
- *     shows the full employee profile with green Approve / red Reject.
- *   - Profile Change Requests: pending employee profile updates. Detail popup
- *     shows employeeCode, name, email and ONLY the changed fields as
- *     old -> new diffs, with the same Approve / Reject buttons.
- */
+// Approvals page (OWNER/ADMIN) with registration and profile-change tabs
 @Component({
   selector: 'app-approvals',
   standalone: true,
@@ -151,7 +142,7 @@ export class ApprovalsComponent implements OnInit {
     this.selectedChange.set(null);
   }
 
-  // Materializes the requestedChanges map into a stable list for the template.
+  // Materializes the requestedChanges map into a stable list for the template
   changeEntries(req: ProfileChangeRequest): { field: string; diff: ChangeValue }[] {
     return Object.entries(req.requestedChanges || {}).map(([field, diff]) => ({
       field,

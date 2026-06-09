@@ -1,24 +1,16 @@
 const { body } = require("express-validator");
 
-// Reusable express-validator builders for fields common to BOTH employees and
-// patients (name, phone, email). Domain-specific fields stay in their own
-// validator files. Each builder accepts the body path so it can target nested
-// fields (e.g. "emergencyContact.contactName"), and an { optional } flag so the
-// same rule can be reused for partial-update routes.
+// Shared express-validator builders for employee/patient fields
 
 // ---- name ----------------------------------------------------------------
 
-// Allowed name format: must start with a letter (any language), then letters,
-// spaces, hyphens, apostrophes and periods. Covers names like "Jean-Luc",
-// "O'Brien", "Dr. John" and accented names such as "José".
+// Name: letters, spaces, hyphens, apostrophes, periods
 const NAME_REGEX = /^\p{L}[\p{L} .'-]*$/u;
 
 const NAME_MIN_LENGTH = 2;
 const NAME_MAX_LENGTH = 50;
 
-// `field`    - body path to validate (e.g. "name", "emergencyContact.contactName")
-// `label`    - used in the error messages (e.g. "Patient name")
-// `optional` - when true, validation is skipped if the field is absent (for updates)
+// Name validation chain
 const nameValidator = (field = "name", label = "Name", { optional = false } = {}) => {
   const chain = body(field);
   if (optional) {
@@ -39,16 +31,13 @@ const nameValidator = (field = "name", label = "Name", { optional = false } = {}
 
 // ---- phone ---------------------------------------------------------------
 
-// Optional country code (+ then 1-3 digits) and a space, then exactly 10 digits.
-// Accepts "+91 1234567890" or "1234567890".
+// Phone: optional country code, then 10 digits
 const PHONE_REGEX = /^(\+\d{1,3} )?\d{10}$/;
 
 const PHONE_DEFAULT_MESSAGE =
   "Phone must be 10 digits, optionally prefixed with a country code and a space (e.g. +91 1234567890 or 1234567890)";
 
-// `field`    - body path to validate (e.g. "phone", "emergencyContact.contactNumber")
-// `optional` - skip when the field is absent (for updates)
-// `message`  - override the default error message
+// Phone validation chain
 const phoneValidator = (
   field = "phone",
   { optional = false, message = PHONE_DEFAULT_MESSAGE } = {},
@@ -62,7 +51,7 @@ const phoneValidator = (
 
 // ---- email ---------------------------------------------------------------
 
-// `optional` - skip when the field is absent (for updates)
+// Email validation chain
 const emailValidator = (field = "email", { optional = false } = {}) => {
   const chain = body(field);
   if (optional) {

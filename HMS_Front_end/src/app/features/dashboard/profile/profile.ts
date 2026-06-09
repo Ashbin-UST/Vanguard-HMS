@@ -21,14 +21,7 @@ import { EmployeeProfile } from '../../../core/models/employee.model';
 
 const DRAFT_KEY = 'draft:profile';
 
-/**
- * Single profile page used by every designation.
- *
- * Shows the read-only employee profile (name, email, department, designation,
- * etc.) and a small editor for the two self-editable fields — phone and
- * qualification. Submitting opens a ProfileChangeRequest that must be approved
- * by an admin before the changes are applied.
- */
+// Profile page; edits to phone/qualification open a ProfileChangeRequest for approval
 @Component({
   selector: 'app-profile',
   standalone: true,
@@ -53,7 +46,7 @@ export class ProfileComponent implements OnInit, CanComponentDeactivate {
   saving = signal(false);
   submittedOk = false;
 
-  // OWNER and ADMIN update their profile directly; staff go through approval.
+  // OWNER and ADMIN update their profile directly; staff go through approval
   isPrivileged = computed(() => this.authService.isSuperUser());
 
   profileForm: FormGroup;
@@ -67,7 +60,7 @@ export class ProfileComponent implements OnInit, CanComponentDeactivate {
   }
 
   ngOnInit(): void {
-    // Pre-fill from the cached user; refresh from server for the latest values.
+    // Pre-fill from the cached user; refresh from server for the latest values
     const cached = this.authService.getCurrentUser()?.profile;
     if (cached) {
       this.profile.set(cached);
@@ -88,7 +81,7 @@ export class ProfileComponent implements OnInit, CanComponentDeactivate {
       },
     });
 
-    // Restore in-progress edits (passwords would be filtered, but there are none).
+    // Restore in-progress edits (passwords would be filtered, but there are none)
     const draft = this.formDraft.get(DRAFT_KEY);
     if (draft) {
       this.profileForm.patchValue(draft);
@@ -101,7 +94,7 @@ export class ProfileComponent implements OnInit, CanComponentDeactivate {
   }
 
   private applyToForm(p: EmployeeProfile): void {
-    // Only populate if the user hasn't already typed something (no draft).
+    // Only populate if the user hasn't already typed something (no draft)
     if (this.profileForm.dirty) {
       return;
     }
@@ -147,8 +140,7 @@ export class ProfileComponent implements OnInit, CanComponentDeactivate {
         );
         this.profileForm.markAsPristine();
 
-        // For owner/admin the change is applied immediately — refresh the
-        // displayed profile (and cached user) so the card shows new values.
+        // Owner/admin changes apply immediately, so refresh the displayed profile
         if (this.isPrivileged()) {
           this.employeeService.getMe().subscribe({
             next: (r) => this.profile.set(r.user.profile),
@@ -169,7 +161,7 @@ export class ProfileComponent implements OnInit, CanComponentDeactivate {
     });
   }
 
-  // Voluntary password-change navigation.
+  // Voluntary password-change navigation
   goChangePassword(): void {
     this.router.navigate(['/change-password']);
   }

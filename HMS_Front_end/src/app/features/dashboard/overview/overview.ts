@@ -12,19 +12,7 @@ import { AuditLog } from '../../../core/models/audit.model';
 import { Appointment } from '../../../core/models/appointment.model';
 import { todayIsoDate } from '../../../core/validators/app-validators';
 
-/**
- * Single dashboard landing.
- *
- * Renders a different set of cards based on the logged-in user's designation:
- *   - OWNER / ADMIN: active employee count, pending requests count,
- *     patient count, booked appointments count, recent activity feed.
- *   - RECEPTIONIST: patient count, booked appointments count,
- *     quick links to create patient / book appointment.
- *   - DOCTOR: today's / upcoming appointment counts, quick link to "My
- *     Appointments". No patient/admin metrics — doctors don't see those.
- *   - Other staff: a simple greeting card. They have no extra menu items by
- *     default (sidebar shows only Overview + Profile).
- */
+// Dashboard landing; renders cards based on the user's designation
 @Component({
   selector: 'app-overview',
   standalone: true,
@@ -43,7 +31,7 @@ export class OverviewComponent implements OnInit {
   activeEmployees = signal<number | null>(null);
   pendingApprovals = signal<number | null>(null);
   totalPatients = signal<number | null>(null);
-  // All booked appointments (shown to owner/admin/receptionist).
+  // All booked appointments (shown to owner/admin/receptionist)
   bookedAppointments = signal<number | null>(null);
 
   // Recent activity (audit log feed)
@@ -86,11 +74,7 @@ export class OverviewComponent implements OnInit {
   private loadAdminOverview(): void {
     this.loadingAudit.set(true);
 
-    // The Employees page shows STAFF for admins, and STAFF + admins for the
-    // owner. Mirror that here so the "Active Employees" count matches the list
-    // exactly (and isn't undercounted when only an admin exists). Admins are
-    // only fetched for the owner; for a non-owner this resolves to an empty
-    // list so nothing is double-counted.
+    // Count STAFF for admins, STAFF + admins for the owner, to match the Employees list
     const adminsForOwner =
       this.designation === 'OWNER'
         ? this.ownerService
@@ -160,7 +144,7 @@ export class OverviewComponent implements OnInit {
     }).subscribe((res) => {
       this.myAppointmentsToday.set(res.todayList.total || 0);
 
-      // Upcoming = booked AFTER today.
+      // Upcoming = booked AFTER today
       const upcoming = (res.all.appointments as Appointment[]).filter((a) => {
         const d = new Date(a.appointmentDate);
         d.setHours(0, 0, 0, 0);
@@ -175,7 +159,7 @@ export class OverviewComponent implements OnInit {
 
   trackByAudit = (_: number, log: AuditLog) => log.auditId;
 
-  // Short action label for the activity feed.
+  // Short action label for the activity feed
   actionLabel(action: string): string {
     return action
       .replaceAll('_', ' ')

@@ -4,8 +4,7 @@
   background-color: #f8fafc;
 }
 
-/* The sidebar host wraps <app-sidebar>. On desktop it is docked at a fixed
-   width; the inner .sidebar is position:fixed so this just reserves space. */
+/* Sidebar host; docked at a fixed width on desktop */
 .sidebar-host {
   display: block;
 }
@@ -19,7 +18,7 @@
   transition: margin-left 0.2s ease;
 }
 
-/* Desktop: when collapsed, drop the offset so content uses full width. */
+/* Desktop: when collapsed, drop the offset so content uses full width */
 .dashboard-layout.sidebar-collapsed .dashboard-main {
   margin-left: 0;
 }
@@ -75,7 +74,7 @@
   flex: 1;
 }
 
-/* Backdrop behind the mobile sidebar overlay. */
+/* Backdrop behind the mobile sidebar overlay */
 .sidebar-backdrop {
   position: fixed;
   inset: 0;
@@ -92,7 +91,7 @@
 /* ---- Desktop collapse: hide the docked sidebar when toggled off ---- */
 @media (min-width: 769px) {
   .dashboard-layout.sidebar-collapsed .sidebar-host {
-    /* The inner .sidebar is position:fixed and slides out via its own rule. */
+    /* The inner .sidebar is position:fixed and slides out via its own rule */
     width: 0;
   }
 }

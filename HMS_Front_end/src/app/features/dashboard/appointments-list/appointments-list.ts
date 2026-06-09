@@ -15,15 +15,7 @@ import { todayIsoDate } from '../../../core/validators/app-validators';
 
 type DoctorTab = 'today' | 'upcoming' | 'completed';
 
-/**
- * Appointments list — role-aware.
- *
- *   OWNER / ADMIN / RECEPTIONIST: see ALL appointments with status + date
- *     filters. Can cancel BOOKED appointments. + Book Appointment button.
- *   DOCTOR: sees only their own appointments via /appointments/my, split into
- *     Today / Upcoming / Completed tabs. Can mark BOOKED appointments as
- *     completed.
- */
+// Role-aware appointments list (reception sees all; doctor sees own by tab)
 @Component({
   selector: 'app-appointments-list',
   standalone: true,
@@ -70,7 +62,7 @@ export class AppointmentsListComponent implements OnInit {
     );
   });
 
-  // For the doctor view, slice the fetched list by tab.
+  // For the doctor view, slice the fetched list by tab
   visibleAppointments = computed<Appointment[]>(() => {
     if (!this.isDoctor()) {
       return this.appointments();
@@ -113,13 +105,12 @@ export class AppointmentsListComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Allow the overview cards (and any deep link) to preselect a doctor tab
-    // via ?tab=today|upcoming|completed.
+    // Preselect a doctor tab from ?tab=today|upcoming|completed
     const tab = this.route.snapshot.queryParamMap.get('tab');
     if (tab === 'today' || tab === 'upcoming' || tab === 'completed') {
       this.doctorTab.set(tab);
     }
-    // Reception/admin status filter deep link via ?status=BOOKED etc.
+    // Reception/admin status filter deep link via ?status=BOOKED etc
     const status = this.route.snapshot.queryParamMap.get('status');
     if (status) {
       this.statusFilter.set(status);
@@ -131,7 +122,7 @@ export class AppointmentsListComponent implements OnInit {
     this.loading.set(true);
 
     if (this.isDoctor()) {
-      // Pull a large window of the doctor's appointments and slice client-side.
+      // Pull a large window of the doctor's appointments and slice client-side
       this.appointmentService.getMyAppointments(1, 200).subscribe({
         next: (res) => {
           this.appointments.set(res.appointments || []);
@@ -168,9 +159,7 @@ export class AppointmentsListComponent implements OnInit {
     this.doctorTab.set(tab);
   }
 
-  // An appointment can only be completed once its scheduled start (day +
-  // slot start time) has passed. Mirrors the backend guard so the button
-  // doesn't appear for future appointments.
+  // Completable only once the scheduled start has passed (mirrors the backend guard)
   canComplete(a: Appointment): boolean {
     if (a.status !== 'BOOKED') {
       return false;

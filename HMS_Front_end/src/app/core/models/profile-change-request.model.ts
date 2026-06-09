@@ -1,12 +1,12 @@
 export type ProfileChangeStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
-// A single field diff: old value -> new value.
+// A single field diff: old value -> new value
 export interface ChangeValue {
   old?: any;
   new?: any;
 }
 
-// Map of fieldName -> { old, new }. Serialized from a Mongoose Map.
+// Map of fieldName -> { old, new }. Serialized from a Mongoose Map
 export interface RequestedChanges {
   [field: string]: ChangeValue;
 }
@@ -23,7 +23,7 @@ export interface ProfileChangeRequest {
   created_at: string;
 }
 
-// GET /admin/profile-change-requests response.
+// GET /admin/profile-change-requests response
 export interface ProfileChangeRequestsResponse {
   message: string;
   total: number;

@@ -34,7 +34,7 @@ export class ResetPasswordComponent implements OnInit {
   errorMessage = '';
   passwordReset = false;
   submitted = false;
-  // Set when the backend rejects because the new password equals the old one.
+  // Set when the backend rejects because the new password equals the old one
   sameAsCurrent = false;
   token = '';
 
@@ -47,8 +47,7 @@ export class ResetPasswordComponent implements OnInit {
       { validators: passwordMatchValidator('newPassword', 'confirmPassword') },
     );
 
-    // Clear the server-side "same as current" error once the user edits the
-    // new password again.
+    // Clear the server-side "same as current" error once the user edits the password
     this.resetPasswordForm.get('newPassword')?.valueChanges.subscribe(() => {
       this.sameAsCurrent = false;
     });
@@ -76,7 +75,7 @@ export class ResetPasswordComponent implements OnInit {
 
     const { newPassword, confirmPassword } = this.resetPasswordForm.value;
 
-    // Backend expects { resetToken, newPassword, confirmPassword }.
+    // Backend expects { resetToken, newPassword, confirmPassword }
     this.authService
       .resetPassword(this.token, newPassword, confirmPassword)
       .subscribe({
@@ -93,8 +92,7 @@ export class ResetPasswordComponent implements OnInit {
           this.cdr.markForCheck();
           const msg = error.error?.message || '';
 
-          // The backend rejects a new password equal to the current one; show
-          // it under the new-password field rather than just as a toast.
+          // Show the "same as current" rejection under the new-password field
           if (/same as current/i.test(msg)) {
             this.sameAsCurrent = true;
             this.toast.error(msg);

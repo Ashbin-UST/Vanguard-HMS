@@ -7,7 +7,7 @@ import { CreateEmployeePayload, EmployeeListItem, UpdateEmployeePayload } from '
 import { AuditLogsResponse } from '../models/audit.model';
 import { ProfileChangeRequestsResponse } from '../models/profile-change-request.model';
 
-// GET /admin/employees and /admin/pending-employees response shape.
+// GET /admin/employees and /admin/pending-employees response shape
 export interface EmployeesResponse {
   totalEmployees: number;
   employees: EmployeeListItem[];

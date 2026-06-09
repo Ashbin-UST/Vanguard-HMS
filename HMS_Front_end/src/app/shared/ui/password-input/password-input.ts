@@ -7,17 +7,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
-/**
- * Password input with a built-in show/hide (eye) toggle.
- *
- * Implements ControlValueAccessor so it drops straight into reactive forms via
- * formControlName, exactly like a native <input>. The toggle flips the field
- * between type="password" and type="text" so users can verify what they typed.
- *
- * Deliberately used ONLY for primary password fields (login password, new
- * password, current password). Confirm-password fields intentionally do NOT
- * use this — the user must retype the password blind to confirm it.
- */
+// Password input with a show/hide toggle; used only for primary password fields
 @Component({
   selector: 'app-password-input',
   standalone: true,

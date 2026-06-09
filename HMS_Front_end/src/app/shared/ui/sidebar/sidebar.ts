@@ -13,18 +13,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { NodeService } from '../../../core/services/node.service';
 import { SidebarNode } from '../../../core/models/node.model';
 
-/**
- * Dynamic sidebar.
- *
- * Menu items are loaded from GET /nodes/my-nodes (already filtered by the
- * logged-in user's designation). Overview and Profile are ALWAYS shown as
- * guaranteed defaults even if the backend returns zero nodes, so a freshly
- * seeded (or unseeded) database still gives every user those two items and
- * nothing they shouldn't see.
- *
- * The footer shows a round avatar, username, designation, and a click-to-open
- * dropdown containing a red Logout action with an icon.
- */
+// Dynamic sidebar; menu items load from /nodes/my-nodes with Overview and Profile as defaults
 @Component({
   selector: 'app-sidebar',
   standalone: true,
@@ -36,17 +25,16 @@ export class SidebarComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly nodeService = inject(NodeService);
 
-  // Emitted when a navigation link is activated, so a responsive parent can
-  // collapse the sidebar overlay on mobile.
+  // Emitted when a nav link is activated so the parent can collapse the mobile overlay
   @Output() navigate = new EventEmitter<void>();
 
-  // Emitted when the user clicks the sidebar's own toggle button.
+  // Emitted when the user clicks the sidebar's own toggle button
   @Output() sidebarToggled = new EventEmitter<void>();
 
   title = 'HMS';
   subtitle = 'Hospital Management';
 
-  // Guaranteed default items shown to everyone, in this order.
+  // Guaranteed default items shown to everyone, in this order
   private readonly defaultNodes: SidebarNode[] = [
     {
       nodeId: 'default-overview',
@@ -64,10 +52,10 @@ export class SidebarComponent implements OnInit {
     },
   ];
 
-  // Backend-provided nodes (everything except the guaranteed defaults).
+  // Backend-provided nodes (everything except the guaranteed defaults)
   private readonly backendNodes = signal<SidebarNode[]>([]);
 
-  // Final rendered list: defaults first, then backend nodes, de-duplicated.
+  // Final rendered list: defaults first, then backend nodes, de-duplicated
   menuItems = computed<SidebarNode[]>(() => {
     const seen = new Set<string>();
     const combined: SidebarNode[] = [];
@@ -90,19 +78,19 @@ export class SidebarComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.nodeService.getMyNodes().subscribe({
-      next: (res) => {
-        // Drop any backend node that collides with a default path.
+    this.nodeService.loadMyNodes().subscribe({
+      next: (nodes) => {
+        // Drop any backend node that collides with a default path
         const defaultPaths = new Set(
           this.defaultNodes.map((n) => n.path.toLowerCase()),
         );
-        const filtered = (res.nodes || []).filter(
+        const filtered = nodes.filter(
           (n) => !defaultPaths.has(n.path.toLowerCase()),
         );
         this.backendNodes.set(filtered);
       },
       error: () => {
-        // On failure, defaults still render so the user is never stranded.
+        // On failure, defaults still render so the user is never stranded
         this.backendNodes.set([]);
       },
     });
@@ -116,7 +104,7 @@ export class SidebarComponent implements OnInit {
     this.sidebarToggled.emit();
   }
 
-  // Called when a nav link is tapped; lets the parent close the mobile overlay.
+  // Called when a nav link is tapped; lets the parent close the mobile overlay
   onNavigate(): void {
     this.navigate.emit();
   }
@@ -147,10 +135,10 @@ export class SidebarComponent implements OnInit {
 
   // --- Icons --------------------------------------------------------------
 
-  // Cache so we don't recreate identical markup on every change detection.
+  // Cache so we don't recreate identical markup on every change detection
   private readonly iconCache = new Map<string, string>();
 
-  // Inline 24x24 stroke icons keyed by the node's `icon` field (with aliases).
+  // Inline 24x24 stroke icons keyed by the node's `icon` field (with aliases)
   private readonly icons: Record<string, string> = {
     overview:
       '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>',

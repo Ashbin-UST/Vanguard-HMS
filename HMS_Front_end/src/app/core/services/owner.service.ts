@@ -5,7 +5,7 @@ import { environment } from '../../../environments/environment';
 import { ApiMessage } from '../models/api-response.model';
 import { CreateEmployeePayload, EmployeeListItem } from '../models/employee.model';
 
-// GET /owner/admins response shape.
+// GET /owner/admins response shape
 export interface AdminsResponse {
   totalAdmins: number;
   admins: EmployeeListItem[];

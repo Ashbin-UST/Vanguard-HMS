@@ -8,10 +8,7 @@ import { ToastService } from '../../../core/services/toast.service';
 import { ConfirmModalService } from '../../../core/services/confirm-modal.service';
 import { Appointment } from '../../../core/models/appointment.model';
 
-/**
- * Appointment detail page. Reception staff can cancel BOOKED appointments;
- * the assigned doctor can mark theirs as COMPLETED.
- */
+// Appointment detail; reception can cancel BOOKED, the doctor can complete their own
 @Component({
   selector: 'app-appointment-detail',
   standalone: true,
@@ -66,7 +63,7 @@ export class AppointmentDetailComponent implements OnInit {
     ) {
       return false;
     }
-    // Only completable once the scheduled start (day + slot start) has passed.
+    // Only completable once the scheduled start (day + slot start) has passed
     const slotStart = (a.timeSlot || '').split('-')[0];
     const [h, m] = slotStart.split(':').map(Number);
     const scheduled = new Date(a.appointmentDate);

@@ -32,10 +32,10 @@ import {
 
 const DRAFT_KEY_CREATE = 'draft:appointment-book';
 
-// Slot length in minutes — kept consistent with the backend HH:mm-HH:mm format.
+// Slot length in minutes — kept consistent with the backend HH:mm-HH:mm format
 const SLOT_MINUTES = 30;
 
-// JS Date.getDay() (0=Sunday) -> backend WeekDay enum.
+// JS Date.getDay() (0=Sunday) -> backend WeekDay enum
 const DAY_MAP: Record<number, WeekDay> = {
   0: 'SUNDAY',
   1: 'MONDAY',
@@ -46,15 +46,7 @@ const DAY_MAP: Record<number, WeekDay> = {
   6: 'SATURDAY',
 };
 
-/**
- * Appointment booking / editing (OWNER / ADMIN / RECEPTIONIST).
- *
- * Operates in two modes driven by route data `{ mode: 'edit' }`:
- *   - create (default): books a new appointment via POST
- *   - edit: pre-populates form from an existing BOOKED appointment and
- *     updates it via PUT; the original slot is excluded from the
- *     "booked" list so it shows as selectable again.
- */
+// Appointment booking/editing (OWNER/ADMIN/RECEPTIONIST) with create and edit modes
 @Component({
   selector: 'app-appointment-book',
   standalone: true,
@@ -87,16 +79,14 @@ export class AppointmentBookComponent
     timeSlot: ['', Validators.required],
   });
 
-  // Rejects an appointment date earlier than the selected doctor's joining
-  // date. Bound as an arrow fn so it can read doctorJoinIso(). Error:
-  // { beforeJoining: true }
+  // Rejects an appointment date earlier than the selected doctor's joining date
   private readonly beforeJoiningValidator = (control: AbstractControl): ValidationErrors | null => {
     const value = control.value;
     const joinIso = this.doctorJoinIso();
     if (!value || !joinIso) {
       return null;
     }
-    // yyyy-mm-dd strings compare correctly lexicographically.
+    // yyyy-mm-dd strings compare correctly lexicographically
     return String(value) < joinIso ? { beforeJoining: true } : null;
   };
 
@@ -104,19 +94,19 @@ export class AppointmentBookComponent
   loading = false;
   submittedOk = false;
 
-  // 'create' | 'edit' — set from route data in ngOnInit.
+  // 'create' | 'edit' — set from route data in ngOnInit
   mode: 'create' | 'edit' = 'create';
-  // appointmentId being edited (edit mode only).
+  // appointmentId being edited (edit mode only)
   editAppointmentId: string | null = null;
 
-  // Slot to restore after async booked-slots load (edit mode only).
+  // Slot to restore after async booked-slots load (edit mode only)
   private pendingTimeSlot: string | null = null;
 
-  // Date-picker minimum: today, raised to the doctor's joining date when later.
+  // Date-picker minimum: today, raised to the doctor's joining date when later
   minDate = signal(this.todayIso);
-  // The selected doctor's joining date as yyyy-mm-dd (null if none/unset).
+  // The selected doctor's joining date as yyyy-mm-dd (null if none/unset)
   private readonly doctorJoinIso = signal<string | null>(null);
-  // Friendly joining date for the error message (e.g. "Jun 25, 2026").
+  // Friendly joining date for the error message (e.g. "Jun 25, 2026")
   doctorJoinDisplay = signal('');
 
   // Searchable options + display fields
@@ -128,8 +118,7 @@ export class AppointmentBookComponent
   bookedSlots = signal<string[]>([]);
   loadingSlots = signal(false);
 
-  // Adapter properties so SearchableSelectComponent can read `label` /
-  // `sublabel` keys regardless of the underlying object shape.
+  // Adapter options exposing label/sublabel for SearchableSelectComponent
   patientOptions = signal<any[]>([]);
   doctorOptions = signal<any[]>([]);
 
@@ -176,7 +165,7 @@ export class AppointmentBookComponent
       error: () => this.toast.error('Failed to load patients.'),
     });
 
-    // Debounced server-side patient search.
+    // Debounced server-side patient search
     this.patientSearch$.pipe(debounceTime(300)).subscribe((term) => {
       if (!term || term.trim().length === 0) {
         this.patientService.getPatients(1, 25).subscribe({
@@ -189,12 +178,12 @@ export class AppointmentBookComponent
       });
     });
 
-    // Attach the joining-date validator to the date control.
+    // Attach the joining-date validator to the date control
     this.form
       .get('appointmentDate')!
       .addValidators(this.beforeJoiningValidator);
 
-    // Recompute slots whenever the doctor or date changes.
+    // Recompute slots whenever the doctor or date changes
     this.form.get('doctorEmployeeId')!.valueChanges.subscribe(() => {
       this.updateDoctorJoining();
       this.refreshSlots();
@@ -203,7 +192,7 @@ export class AppointmentBookComponent
       this.refreshSlots(),
     );
 
-    // Draft restore + auto-save (create mode only).
+    // Draft restore + auto-save (create mode only)
     if (this.mode === 'create') {
       const draft = this.formDraft.get(DRAFT_KEY_CREATE);
       if (draft) {
@@ -217,8 +206,7 @@ export class AppointmentBookComponent
     }
   }
 
-  // Loads and patches the form for edit mode. Called after doctors list is
-  // available so that doctor joining date and slot generation work correctly.
+  // Loads and patches the form for edit mode (after the doctors list is available)
   private loadForEdit(id: string): void {
     this.loading = true;
     this.appointmentService.getAppointmentById(id).subscribe({
@@ -231,8 +219,7 @@ export class AppointmentBookComponent
           return;
         }
 
-        // Ensure the appointment's patient appears in the dropdown even if
-        // it was not in the initial 25-result page load.
+        // Ensure the appointment's patient appears in the dropdown
         if (a.patient) {
           const alreadyListed = this.patientOptions().some(
             (o) => o.value === a.patientId,
@@ -249,8 +236,7 @@ export class AppointmentBookComponent
           }
         }
 
-        // Set values without emitting so valueChanges subscriptions don't
-        // fire multiple times and race with each other.
+        // Set values without emitting to avoid racing valueChanges subscriptions
         this.form.get('patientId')!.setValue(a.patientId, { emitEvent: false });
         this.form.get('doctorEmployeeId')!.setValue(a.doctorEmployeeId, { emitEvent: false });
         this.form.get('appointmentDate')!.setValue(
@@ -260,7 +246,7 @@ export class AppointmentBookComponent
 
         this.updateDoctorJoining();
 
-        // refreshSlots clears the timeSlot; restore it once booked-slots loads.
+        // refreshSlots clears the timeSlot; restore it once booked-slots loads
         this.pendingTimeSlot = a.timeSlot;
         this.refreshSlots();
         this.loading = false;
@@ -286,8 +272,7 @@ export class AppointmentBookComponent
 
   onPatientSearch = (term: string) => this.patientSearch$.next(term);
 
-  // Updates the joining-date state (min date, display text, validity) for the
-  // currently selected doctor.
+  // Updates joining-date state (min date, display, validity) for the selected doctor
   private updateDoctorJoining(): void {
     const doctorId = this.form.get('doctorEmployeeId')!.value;
     const doctor = this.doctors().find((d) => d.employeeCode === doctorId);
@@ -322,11 +307,11 @@ export class AppointmentBookComponent
       this.minDate.set(this.todayIso);
     }
 
-    // Re-validate the date against the new doctor's joining date.
+    // Re-validate the date against the new doctor's joining date
     this.form.get('appointmentDate')!.updateValueAndValidity();
   }
 
-  // Formats a Date as yyyy-mm-dd in local time.
+  // Formats a Date as yyyy-mm-dd in local time
   private toIso(d: Date): string {
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
@@ -337,7 +322,7 @@ export class AppointmentBookComponent
     const doctorId = this.form.get('doctorEmployeeId')!.value;
     const date = this.form.get('appointmentDate')!.value;
 
-    // Reset slot when inputs change.
+    // Reset slot when inputs change
     this.form.patchValue({ timeSlot: '' }, { emitEvent: false });
     this.availableSlots.set([]);
     this.bookedSlots.set([]);
@@ -346,7 +331,7 @@ export class AppointmentBookComponent
       return;
     }
 
-    // 1. Derive candidate slots from the doctor's availability for the weekday.
+    // 1. Derive candidate slots from the doctor's availability for the weekday
     const doctor = this.doctors().find((d) => d.employeeCode === doctorId);
     if (!doctor) {
       return;
@@ -357,7 +342,7 @@ export class AppointmentBookComponent
     );
     const candidate = this.expandSlots(dayWindows);
 
-    // For today, hide slots whose start time has already passed.
+    // For today, hide slots whose start time has already passed
     const now = new Date();
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
     const filtered =
@@ -373,9 +358,7 @@ export class AppointmentBookComponent
       return;
     }
 
-    // 2. Fetch currently booked slots for that doctor + date.
-    // In edit mode, exclude the current appointment so its original slot
-    // remains selectable.
+    // 2. Fetch booked slots for that doctor/date (excluding the current appointment in edit mode)
     this.loadingSlots.set(true);
     this.appointmentService
       .getBookedSlots(
@@ -387,7 +370,7 @@ export class AppointmentBookComponent
         next: (res) => {
           this.bookedSlots.set(res.bookedSlots || []);
           this.loadingSlots.set(false);
-          // Restore the pre-selected slot after slots finish loading (edit mode).
+          // Restore the pre-selected slot after slots finish loading (edit mode)
           if (this.pendingTimeSlot) {
             this.form.patchValue(
               { timeSlot: this.pendingTimeSlot },
@@ -403,8 +386,7 @@ export class AppointmentBookComponent
       });
   }
 
-  // Expands availability windows (e.g. 09:00–17:00) into SLOT_MINUTES chunks
-  // formatted as "HH:mm-HH:mm" exactly as the backend stores them.
+  // Expands availability windows into SLOT_MINUTES "HH:mm-HH:mm" chunks
   private expandSlots(windows: AvailabilitySlot[]): string[] {
     const out: string[] = [];
     for (const w of windows) {
@@ -434,7 +416,7 @@ export class AppointmentBookComponent
     return this.form.dirty && !this.submittedOk;
   }
 
-  // Selected doctor — used to show a fee summary.
+  // Selected doctor — used to show a fee summary
   get selectedDoctor(): DoctorOption | null {
     const id = this.form.get('doctorEmployeeId')!.value;
     return this.doctors().find((d) => d.employeeCode === id) || null;
@@ -492,7 +474,7 @@ export class AppointmentBookComponent
           this.toast.error(
             err.error?.message || 'Failed to book appointment.',
           );
-          // Refresh slots in case a race produced the conflict.
+          // Refresh slots in case a race produced the conflict
           this.refreshSlots();
         },
       });

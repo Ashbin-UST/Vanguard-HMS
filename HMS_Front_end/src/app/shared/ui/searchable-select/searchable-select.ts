@@ -14,19 +14,7 @@ import {
   NG_VALUE_ACCESSOR,
 } from '@angular/forms';
 
-/**
- * Generic searchable single-select dropdown.
- *
- * - Implements ControlValueAccessor so it works with Angular reactive/template
- *   forms (formControlName / ngModel). The stored value is the option's
- *   identifier (valueKey), never the free text.
- * - Filtering is client-side over the provided options across labelKey and
- *   sublabelKey, so it scales fine for the doctor list and for patient lists
- *   the parent pre-fetches; the parent can also push fresh options as the user
- *   searches (e.g. server-side patient search) by binding [options].
- * - Prevents invalid entries: the user can only pick an existing option; typing
- *   never becomes the value.
- */
+// Generic searchable single-select dropdown (ControlValueAccessor) that stores the option id
 @Component({
   selector: 'app-searchable-select',
   standalone: true,
@@ -44,7 +32,7 @@ import {
 export class SearchableSelectComponent implements ControlValueAccessor {
   private readonly host = inject(ElementRef);
 
-  // The list of selectable options.
+  // The list of selectable options
   @Input() set options(value: any[]) {
     this._options.set(value || []);
   }
@@ -53,7 +41,7 @@ export class SearchableSelectComponent implements ControlValueAccessor {
   }
   private readonly _options = signal<any[]>([]);
 
-  // Property names used to read each option's value, primary and secondary text.
+  // Property names used to read each option's value, primary and secondary text
   @Input() valueKey = 'id';
   @Input() labelKey = 'name';
   @Input() sublabelKey?: string;
@@ -63,7 +51,7 @@ export class SearchableSelectComponent implements ControlValueAccessor {
   @Input() emptyText = 'No results found';
   @Input() disabled = false;
 
-  // Emits the raw search term so a parent can do server-side search if desired.
+  // Emits the raw search term so a parent can do server-side search if desired
   @Input() onSearch?: (term: string) => void;
 
   isOpen = signal(false);
@@ -74,7 +62,7 @@ export class SearchableSelectComponent implements ControlValueAccessor {
   private onChange: (value: any) => void = () => {};
   private onTouched: () => void = () => {};
 
-  // Filtered options based on the current search term.
+  // Filtered options based on the current search term
   filteredOptions = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
     const opts = this._options();
@@ -90,7 +78,7 @@ export class SearchableSelectComponent implements ControlValueAccessor {
     });
   });
 
-  // The currently selected option object (for displaying its label).
+  // The currently selected option object (for displaying its label)
   selectedOption = computed(() => {
     const val = this.selectedValue();
     if (val === null || val === undefined) {
@@ -208,7 +196,7 @@ export class SearchableSelectComponent implements ControlValueAccessor {
     }
   }
 
-  // Close when clicking outside the component.
+  // Close when clicking outside the component
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     if (this.isOpen() && !this.host.nativeElement.contains(event.target)) {

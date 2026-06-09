@@ -39,18 +39,7 @@ import {
   medicalRegistrationValidator,
 } from '../../../core/validators/app-validators';
 
-/**
- * Reusable employee form — handles create (staff / admin) and edit modes.
- *
- *   route data { mode: 'staff' } — POST /admin/create-employee
- *   route data { mode: 'admin' } — POST /owner/create-admin  (OWNER only)
- *   route data { mode: 'edit'  } — PUT  /admin/update-employee/:code
- *     route param :code — employeeCode of the employee to edit
- *
- * No password field — the backend generates and emails a temporary password on
- * creation. In edit mode username and email are shown read-only because they
- * are not updatable via the employee-update endpoint.
- */
+// Reusable employee form for create (staff/admin) and edit modes
 @Component({
   selector: 'app-create-employee',
   standalone: true,
@@ -238,13 +227,7 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
     this.onDesignationChange();
   }
 
-  /**
-   * Rebuilds the Designation options for the currently selected department.
-   *
-   * - Administration's ADMIN option is only offered when an OWNER is acting.
-   * - When `autoFill` is true, the designation is set to the first valid option
-   *   if the current value isn't valid for the chosen department.
-   */
+  // Rebuilds the Designation options for the selected department (ADMIN only for OWNER)
   private refreshDesignationsForDepartment(autoFill: boolean): void {
     const dept = this.form.get('department')?.value as Department | '';
 
@@ -309,10 +292,7 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
     return this.form.dirty && !this.submittedOk;
   }
 
-  // Extracts and parses the fields that are common to both create and update
-  // payloads. Qualification is split from a comma-separated string; conditional
-  // fields (medical, specialization, doctor-only) are included only when the
-  // current designation requires them.
+  // Builds the payload fields shared by create and update
   private buildCommonPayload(raw: Record<string, unknown>): UpdateEmployeePayload {
     const payload: UpdateEmployeePayload = {
       name: raw['name'] as string,

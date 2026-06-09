@@ -17,7 +17,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const toastService = inject(ToastService);
   const router = inject(Router);
 
-  // Attach the bearer token to every outgoing request.
+  // Attach the bearer token to every outgoing request
   const token = authService.getToken();
   if (token) {
     req = req.clone({

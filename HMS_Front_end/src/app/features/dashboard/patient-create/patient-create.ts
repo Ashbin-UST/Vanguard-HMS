@@ -23,12 +23,7 @@ import {
 
 const DRAFT_KEY = 'draft:patient-create';
 
-/**
- * Patient creation form (OWNER / ADMIN / RECEPTIONIST).
- *
- * The DOB field cannot be a future date — picker is clamped with [max] and the
- * validator runs on typed values too, showing the red error inline.
- */
+// Patient creation form (OWNER/ADMIN/RECEPTIONIST); DOB cannot be a future date
 @Component({
   selector: 'app-patient-create',
   standalone: true,
@@ -104,7 +99,7 @@ export class PatientCreateComponent
         this.submittedOk = true;
         this.formDraft.clear(DRAFT_KEY);
         this.toast.success(res.message || 'Patient created.');
-        // Navigate to the new patient's detail page if UHID was returned.
+        // Navigate to the new patient's detail page if UHID was returned
         if (res.patient?.UHID) {
           this.router.navigate(['/dashboard/patients', res.patient.UHID]);
         } else {
@@ -123,7 +118,7 @@ export class PatientCreateComponent
     this.router.navigate(['/dashboard/patients']);
   }
 
-  // Template helpers for nested form access.
+  // Template helpers for nested form access
   addressCtrl(name: string) {
     return this.form.get(['address', name]);
   }

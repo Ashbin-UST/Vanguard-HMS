@@ -9,8 +9,7 @@ import { authInterceptor } from './core/interceptors/auth.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    // Angular 21 defaults to zoneless change detection; the app is fully
-    // signal-based, so no Zone.js is required.
+    // Angular 21 defaults to zoneless change detection (no Zone.js needed)
     provideZonelessChangeDetection(),
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor])),

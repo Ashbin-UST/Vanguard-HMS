@@ -56,7 +56,7 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
   registerForm: FormGroup;
   loading = false;
   submitted = false;
-  // Gates password validation messages until the submit button is clicked.
+  // Gates password validation messages until the submit button is clicked
   attempted = false;
 
   designations: Designation[] = [...STAFF_DESIGNATIONS];
@@ -90,22 +90,21 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
   }
 
   ngOnInit(): void {
-    // Restore a saved draft (password fields are never stored).
+    // Restore a saved draft (password fields are never stored)
     const draft = this.formDraft.get(DRAFT_KEY);
     if (draft) {
-      // availabilitySlots is a FormArray; rebuild it before patching.
+      // availabilitySlots is a FormArray; rebuild it before patching
       const slots = Array.isArray(draft['availabilitySlots'])
         ? draft['availabilitySlots']
         : [];
       slots.forEach(() => this.addSlot());
       this.registerForm.patchValue(draft);
-      // Rebuild the designation list for the restored department, then refresh
-      // the conditional (medical/fee) fields for the restored designation.
+      // Rebuild the designation list and conditional fields for the restored values
       this.refreshDesignationsForDepartment(false);
       this.onDesignationChange();
     }
 
-    // Auto-save on every change (sanitized of password fields).
+    // Auto-save on every change (sanitized of password fields)
     this.registerForm.valueChanges.subscribe(() => {
       if (!this.submitted) {
         this.formDraft.save(DRAFT_KEY, this.registerForm.getRawValue());
@@ -134,20 +133,13 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
     this.availabilitySlots.removeAt(index);
   }
 
-  // Called when the Department dropdown changes. Narrows the Designation list
-  // to the ones valid for that department and auto-fills a sensible default.
+  // Narrows the Designation list to the chosen department and auto-fills a default
   onDepartmentChange(): void {
     this.refreshDesignationsForDepartment(true);
     this.onDesignationChange();
   }
 
-  /**
-   * Rebuilds the Designation options for the currently selected department.
-   * Self-registration can never be ADMIN/OWNER, so ADMIN is always excluded
-   * (the Administration department therefore falls back to all staff roles).
-   * When `autoFill` is true and the current designation isn't valid for the
-   * chosen department, it's set to the first valid option (still editable).
-   */
+  // Rebuilds the Designation options for the selected department (ADMIN always excluded)
   private refreshDesignationsForDepartment(autoFill: boolean): void {
     const dept = this.registerForm.get('department')?.value as Department | '';
 
@@ -156,12 +148,12 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
       return;
     }
 
-    // Exclude ADMIN — never self-registerable.
+    // Exclude ADMIN — never self-registerable
     let allowed: Designation[] = [
       ...(DEPARTMENT_DESIGNATIONS[dept] || STAFF_DESIGNATIONS),
     ].filter((d) => d !== 'ADMIN');
 
-    // Fallback so the dropdown is never empty (e.g. Administration).
+    // Fallback so the dropdown is never empty (e.g. Administration)
     if (allowed.length === 0) {
       allowed = [...STAFF_DESIGNATIONS];
     }
@@ -185,7 +177,7 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
     this.showSpecialization =
       SPECIALIZATION_DESIGNATIONS.includes(designation);
 
-    // Apply/clear conditional validators.
+    // Apply/clear conditional validators
     const medReg = this.registerForm.get('medicalRegistrationNumber');
     const spec = this.registerForm.get('specialization');
     const fee = this.registerForm.get('consultationFee');
@@ -200,7 +192,7 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
     );
     fee?.setValidators(this.isDoctor ? [Validators.required] : []);
 
-    // Doctors need at least one availability slot.
+    // Doctors need at least one availability slot
     if (this.isDoctor && this.availabilitySlots.length === 0) {
       this.addSlot();
     }
@@ -230,7 +222,7 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
 
     const raw = this.registerForm.getRawValue();
 
-    // Build the backend payload, omitting empty optional fields.
+    // Build the backend payload, omitting empty optional fields
     const payload: any = {
       username: raw.username,
       name: raw.name,
@@ -276,7 +268,7 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
     });
   }
 
-  // Accepts comma-separated text and converts to a trimmed string array.
+  // Accepts comma-separated text and converts to a trimmed string array
   private toQualificationArray(value: string | string[]): string[] {
     if (Array.isArray(value)) {
       return value;

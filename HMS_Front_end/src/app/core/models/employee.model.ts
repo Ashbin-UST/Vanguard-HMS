@@ -1,4 +1,4 @@
-// Designations are the real roles in this system (stored on the employee).
+// Designations are the real roles in this system (stored on the employee)
 export type Designation =
   | 'OWNER'
   | 'ADMIN'
@@ -9,7 +9,7 @@ export type Designation =
   | 'LAB_TECH'
   | 'PHARMACIST';
 
-// Departments exactly match the backend enum.
+// Departments exactly match the backend enum
 export type Department =
   | 'OPD'
   | 'IPD'
@@ -32,7 +32,7 @@ export type WeekDay =
   | 'SATURDAY'
   | 'SUNDAY';
 
-// A single availability window for a doctor.
+// A single availability window for a doctor
 export interface AvailabilitySlot {
   day: WeekDay;
   startTime: string; // HH:mm
@@ -64,7 +64,7 @@ export interface EmployeeListItem {
   lastLoginAt?: string | null;
 }
 
-// Payload to create an employee (admin) / admin (owner).
+// Payload to create an employee (admin) / admin (owner)
 export interface CreateEmployeePayload {
   username: string;
   name: string;
@@ -80,7 +80,7 @@ export interface CreateEmployeePayload {
   availabilitySlots?: AvailabilitySlot[];
 }
 
-// Payload to update an existing employee (admin / owner actors only).
+// Payload to update an existing employee (admin / owner actors only)
 export interface UpdateEmployeePayload {
   name?: string;
   phone?: string;
@@ -104,7 +104,7 @@ export const DEPARTMENTS: Department[] = [
   'Billing',
 ];
 
-// Designations a user may self-register / be created as (never OWNER/ADMIN here).
+// Designations a user may self-register / be created as (never OWNER/ADMIN here)
 export const STAFF_DESIGNATIONS: Designation[] = [
   'DOCTOR',
   'RECEPTIONIST',
@@ -124,31 +124,20 @@ export const WEEK_DAYS: WeekDay[] = [
   'SUNDAY',
 ];
 
-// Designations that require a medical registration number.
+// Designations that require a medical registration number
 export const MEDICAL_DESIGNATIONS: Designation[] = [
   'DOCTOR',
   'NURSE',
   'PHARMACIST',
 ];
 
-// Designations that carry a specialization.
+// Designations that carry a specialization
 export const SPECIALIZATION_DESIGNATIONS: Designation[] = [
   'DOCTOR',
   'LAB_TECH',
 ];
 
-/**
- * Which staff designations are valid for each department.
- *
- * - Single-designation departments (Reception, Lab, Pharmacy, Billing) map to
- *   exactly one designation, which the create/register forms auto-fill.
- * - Clinical departments (OPD, IPD) allow DOCTOR or NURSE — the form narrows
- *   the dropdown to these and lets the user pick.
- * - Administration maps to ADMIN, but only an OWNER may actually create an
- *   admin; the forms handle that conditionally.
- *
- * OWNER is never a selectable designation here.
- */
+// Valid staff designations for each department
 export const DEPARTMENT_DESIGNATIONS: Record<Department, Designation[]> = {
   Reception: ['RECEPTIONIST'],
   Lab: ['LAB_TECH'],

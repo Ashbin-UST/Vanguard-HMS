@@ -25,13 +25,7 @@ import {
   todayIsoDate,
 } from '../../../core/validators/app-validators';
 
-/**
- * Patient detail page.
- *
- * Read-only by default. Clicking Edit reveals the same form used for create,
- * pre-filled with the patient's data; saving calls PUT /patients/:UHID. DOB
- * enforces the no-future-date rule with the same picker clamp + validator.
- */
+// Patient detail; read-only by default, Edit reveals the create form pre-filled
 @Component({
   selector: 'app-patient-detail',
   standalone: true,
@@ -101,7 +95,7 @@ export class PatientDetailComponent
       next: (res) => {
         this.patient.set(res.patient);
         this.applyToForm(res.patient);
-        // Restore any in-progress edits.
+        // Restore any in-progress edits
         const draft = this.formDraft.get(this.draftKey);
         if (draft) {
           this.form.patchValue(draft);

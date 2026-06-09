@@ -28,7 +28,7 @@ export interface AuditLog {
   created_at: string;
 }
 
-// GET /admin/audit-logs response.
+// GET /admin/audit-logs response
 export interface AuditLogsResponse {
   message: string;
   total: number;

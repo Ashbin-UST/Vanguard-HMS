@@ -8,13 +8,7 @@ import { ToastService } from '../../../core/services/toast.service';
 import { ConfirmModalService } from '../../../core/services/confirm-modal.service';
 import { EmployeeListItem } from '../../../core/models/employee.model';
 
-/**
- * Admin management (OWNER only).
- *
- * Lists all admin accounts. Owner can create new admins (route opens the
- * create-employee form in admin mode) and delete existing admins via the
- * row's detail modal. The route guard restricts access to OWNER.
- */
+// Admin management list (OWNER only)
 @Component({
   selector: 'app-admins',
   standalone: true,

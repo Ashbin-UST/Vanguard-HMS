@@ -28,7 +28,7 @@ export interface Patient {
   createdByEmployeeId?: string;
 }
 
-// Payload for creating a patient.
+// Payload for creating a patient
 export interface CreatePatientPayload {
   name: string;
   phone: string;
@@ -40,7 +40,7 @@ export interface CreatePatientPayload {
   status?: PatientStatus;
 }
 
-// GET /patients response.
+// GET /patients response
 export interface PatientsResponse {
   message: string;
   total: number;
@@ -50,14 +50,14 @@ export interface PatientsResponse {
   patients: Patient[];
 }
 
-// GET /patients/search response.
+// GET /patients/search response
 export interface PatientSearchResponse {
   message: string;
   total: number;
   patients: Patient[];
 }
 
-// Single-patient response (create / get / update).
+// Single-patient response (create / get / update)
 export interface PatientResponse {
   message: string;
   patient: Patient;

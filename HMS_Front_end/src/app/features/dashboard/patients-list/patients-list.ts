@@ -12,13 +12,7 @@ import {
   PATIENT_STATUSES,
 } from '../../../core/models/patient.model';
 
-/**
- * Patients list (OWNER / ADMIN / RECEPTIONIST).
- *
- * - Paginated list with status + gender filters
- * - Debounced search that uses the server's /patients/search endpoint
- * - Click a row to open the patient detail page
- */
+// Patients list (OWNER/ADMIN/RECEPTIONIST) with filters and debounced search
 @Component({
   selector: 'app-patients-list',
   standalone: true,
@@ -53,7 +47,7 @@ export class PatientsListComponent implements OnInit {
 
   searching = computed(() => this.searchTerm().trim().length > 0);
 
-  // Debounce search input.
+  // Debounce search input
   private readonly searchSubject = new Subject<string>();
 
   ngOnInit(): void {

@@ -4,20 +4,7 @@ import { designationGuard } from './core/guards/role.guard';
 import { mustChangePasswordGuard } from './core/guards/must-change-password.guard';
 import { unsavedChangesGuard } from './core/guards/unsaved-changes.guard';
 
-/**
- * Application routes.
- *
- * Public routes: /, /login, /register, /forgot-password, /reset-password.
- *
- * Authenticated, password-change gate: /change-password (authGuard only — we
- * deliberately do NOT apply mustChangePasswordGuard here, that would loop).
- *
- * Authenticated dashboard tree: every /dashboard/* route runs through
- * authGuard + mustChangePasswordGuard, plus designationGuard where access is
- * limited. OWNER and ADMIN are superusers (handled inside the guard) and pass
- * every designation check. Forms that should warn on unsaved changes use
- * unsavedChangesGuard via canDeactivate.
- */
+// Application routes (public, gated change-password, and the authenticated dashboard tree)
 export const routes: Routes = [
   // --- Public routes ------------------------------------------------------
   {
@@ -52,8 +39,7 @@ export const routes: Routes = [
       ),
   },
 
-  // --- Authenticated, gated change-password ------------------------------
-  // Reachable both voluntarily and as the forced first-login destination.
+  // --- Authenticated change-password (voluntary or forced first-login) ----
   {
     path: 'change-password',
     canActivate: [authGuard],
@@ -70,7 +56,7 @@ export const routes: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'overview' },
 
-      // Available to every authenticated user (defaults rendered by sidebar).
+      // Available to every authenticated user (defaults rendered by sidebar)
       {
         path: 'overview',
         loadComponent: () =>
@@ -127,10 +113,7 @@ export const routes: Routes = [
           ),
       },
 
-      // Admins management: OWNER only (ADMIN does NOT pass — only OWNER)
-      // The designationGuard does NOT have a built-in "only OWNER" mode,
-      // because its superuser bypass treats both OWNER and ADMIN equally.
-      // For the OWNER-exclusive tree we use the dedicated guard below.
+      // Admins management: OWNER only (uses the dedicated ownerOnlyGuard below)
       {
         path: 'admins',
         canActivate: [ownerOnlyGuard()],
@@ -178,8 +161,7 @@ export const routes: Routes = [
           ),
       },
 
-      // Appointments: OWNER + ADMIN + RECEPTIONIST + DOCTOR
-      // (Doctors auto-scoped to their own via /appointments/my in the list)
+      // Appointments: OWNER + ADMIN + RECEPTIONIST + DOCTOR (doctors auto-scoped to their own)
       {
         path: 'appointments',
         canActivate: [designationGuard(['RECEPTIONIST', 'DOCTOR'])],
@@ -241,7 +223,7 @@ function ownerOnlyGuard(): CanActivateFn {
       return true;
     }
 
-    // Authenticated but not OWNER → bounce to overview.
+    // Authenticated but not OWNER → bounce to overview
     return router.createUrlTree(['/dashboard/overview']);
   };
 }

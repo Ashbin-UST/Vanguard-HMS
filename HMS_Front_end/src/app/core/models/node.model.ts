@@ -7,7 +7,7 @@ export interface SidebarNode {
   allowedDesignations: Designation[];
 }
 
-// GET /nodes/my-nodes response.
+// GET /nodes/my-nodes response
 export interface MyNodesResponse {
   totalNodes: number;
   nodes: SidebarNode[];
