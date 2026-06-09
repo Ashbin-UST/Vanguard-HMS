@@ -1,5 +1,6 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 
 const Counter = require("../models/Counter");
 const Employee = require("../models/Employees");
@@ -68,9 +69,11 @@ const seedOwner = async () => {
       console.log("Skipped owner user");
     } else {
       const ownerPassword = process.env.OWNER_PASS?.trim();
+      if (!ownerPassword) {
+        throw new Error("OWNER_PASS env variable is not set");
+      }
       const passwordHash = await bcrypt.hash(ownerPassword, 10);
-      user.passwordHash = passwordHash;
-      await User.create(OWNER_USER);
+      await User.create({ ...OWNER_USER, passwordHash });
       console.log("Created owner user");
     }
 
