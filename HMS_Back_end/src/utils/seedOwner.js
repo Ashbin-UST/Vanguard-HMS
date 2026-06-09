@@ -80,6 +80,7 @@ const seedOwner = async () => {
     console.log("Seeding complete");
   } catch (err) {
     console.error("Seeding error:", err);
+    process.exitCode = 1;
   } finally {
     await mongoose.disconnect();
     console.log("MongoDB disconnected");
