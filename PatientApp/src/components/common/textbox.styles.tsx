@@ -2,7 +2,7 @@ import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
   container: {
-    width: "100%",
+    alignSelf: "stretch",
     marginBottom: 15,
   },
   label: {
@@ -30,5 +30,15 @@ export const styles = StyleSheet.create({
     paddingVertical: 12,
     color: "#111",
     fontSize: 16,
+  },
+  inputWrapperError: {
+    borderColor: "#ef4444",
+  },
+  errorText: {
+    color: "#ef4444",
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 2,
+    flexShrink: 1,
   },
 });

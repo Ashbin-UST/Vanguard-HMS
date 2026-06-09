@@ -5,24 +5,32 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   Alert,
-  ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { pwStyles as styles } from "@/styles/password.style";
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function ForgotPassword() {
   const router = useRouter();
   const [email, setEmail] = useState("");
+  const [touched, setTouched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  const emailError = !email.trim()
+    ? "Required"
+    : !EMAIL_REGEX.test(email.trim())
+    ? "Enter a valid email address"
+    : undefined;
+
   const handleSubmit = async () => {
-    if (!email.trim()) {
-      Alert.alert("Validation", "Please enter your email");
-      return;
-    }
+    setTouched(true);
+    if (emailError) return;
+
     setSubmitting(true);
     try {
       const res = await forgotPassword(email.trim());
@@ -37,7 +45,7 @@ export default function ForgotPassword() {
   };
 
   return (
-    <ScrollView style={styles.scrollView} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+    <KeyboardAwareScrollView style={styles.scrollView} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled" enableOnAndroid extraScrollHeight={20}>
       <SafeAreaView edges={["top"]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={24} color="#1f2937" />
@@ -54,9 +62,11 @@ export default function ForgotPassword() {
             placeholder="you@email.com"
             value={email}
             onChangeText={setEmail}
+            onBlur={() => setTouched(true)}
             icon="mail-outline"
             autoCapitalize="none"
             keyboardType="email-address"
+            error={touched ? emailError : undefined}
           />
 
           <TouchableOpacity
@@ -75,6 +85,6 @@ export default function ForgotPassword() {
           </TouchableOpacity>
         </View>
       </SafeAreaView>
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }

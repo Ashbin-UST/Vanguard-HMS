@@ -4,13 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BottomTabInset } from "@/constants/theme";
 import {
@@ -40,7 +40,6 @@ const toMinutes = (hhmm: string) => {
 };
 const fromMinutes = (mins: number) => `${pad(Math.floor(mins / 60))}:${pad(mins % 60)}`;
 
-// Split a doctor's availability window into selectable one-hour slots.
 function buildHourlySlots(startTime: string, endTime: string) {
   const start = toMinutes(startTime);
   const end = toMinutes(endTime);
@@ -57,6 +56,13 @@ function weekdayOf(dateStr: string): string | null {
   const date = new Date(y, m - 1, d);
   if (Number.isNaN(date.getTime())) return null;
   return WEEKDAYS[date.getDay()];
+}
+
+function isRealDate(dateStr: string): boolean {
+  if (!DATE_REGEX.test(dateStr)) return false;
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
 }
 
 export type AppointmentFormProps = {
@@ -85,6 +91,10 @@ export default function AppointmentForm({
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
+  const [touched, setTouched] = useState({ doctor: false, date: false, timeSlot: false });
+  const touch = (field: keyof typeof touched) =>
+    setTouched((prev) => ({ ...prev, [field]: true }));
+
   useEffect(() => {
     (async () => {
       try {
@@ -103,7 +113,6 @@ export default function AppointmentForm({
     [doctors, doctorCode],
   );
 
-  // All hourly slots offered by the selected doctor on the selected weekday
   const candidateSlots = useMemo(() => {
     if (!selectedDoctor || !date) return [];
     const weekday = weekdayOf(date);
@@ -114,7 +123,6 @@ export default function AppointmentForm({
     return windows.flatMap((w) => buildHourlySlots(w.startTime, w.endTime));
   }, [selectedDoctor, date]);
 
-  // Refresh booked slots whenever a valid doctor + date is selected
   useEffect(() => {
     if (!doctorCode || !DATE_REGEX.test(date)) {
       setBookedSlots([]);
@@ -137,15 +145,26 @@ export default function AppointmentForm({
   const onSelectDoctor = (code: string) => {
     setDoctorCode(code);
     setDoctorOpen(false);
-    // Reset slot when the doctor changes (unless it's the prefilled edit slot)
     if (code !== initialDoctorCode) setSelectedSlot("");
   };
 
+  const errors = {
+    doctor: !doctorCode ? "Please select a doctor" : undefined,
+    date: !date
+      ? "Required"
+      : !DATE_REGEX.test(date)
+      ? "Use YYYY-MM-DD format"
+      : !isRealDate(date)
+      ? "Enter a valid calendar date"
+      : undefined,
+    timeSlot: candidateSlots.length > 0 && !selectedSlot
+      ? "Please select a time slot"
+      : undefined,
+  };
+
   const handleSubmit = async () => {
-    if (!doctorCode) return Alert.alert("Validation", "Please select a doctor");
-    if (!DATE_REGEX.test(date))
-      return Alert.alert("Validation", "Enter a date as YYYY-MM-DD");
-    if (!selectedSlot) return Alert.alert("Validation", "Please select a time slot");
+    setTouched({ doctor: true, date: true, timeSlot: true });
+    if (Object.values(errors).some(Boolean)) return;
 
     setSubmitting(true);
     try {
@@ -176,11 +195,13 @@ export default function AppointmentForm({
   }
 
   return (
-    <ScrollView
+    <KeyboardAwareScrollView
       style={styles.scrollView}
       contentContainerStyle={[styles.container, { paddingBottom: BottomTabInset + 24 }]}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
+      enableOnAndroid
+      extraScrollHeight={20}
     >
       <SafeAreaView edges={["top"]}>
         <View style={styles.headerRow}>
@@ -195,8 +216,14 @@ export default function AppointmentForm({
         {/* Doctor picker */}
         <Text style={styles.fieldLabel}>Doctor</Text>
         <TouchableOpacity
-          style={styles.dropdownTrigger}
-          onPress={() => setDoctorOpen(!doctorOpen)}
+          style={[
+            styles.dropdownTrigger,
+            touched.doctor && errors.doctor ? styles.dropdownTriggerError : undefined,
+          ]}
+          onPress={() => {
+            touch("doctor");
+            setDoctorOpen(!doctorOpen);
+          }}
           activeOpacity={0.8}
         >
           <Text style={selectedDoctor ? styles.dropdownValue : styles.dropdownPlaceholder}>
@@ -208,6 +235,9 @@ export default function AppointmentForm({
           </Text>
           <Ionicons name={doctorOpen ? "chevron-up" : "chevron-down"} size={18} color="#6b7280" />
         </TouchableOpacity>
+        {touched.doctor && errors.doctor ? (
+          <Text style={styles.errorText}>{errors.doctor}</Text>
+        ) : null}
 
         {doctorOpen && (
           <View style={styles.dropdownList}>
@@ -233,13 +263,17 @@ export default function AppointmentForm({
         {/* Date */}
         <Text style={[styles.fieldLabel, { marginTop: 18 }]}>Date</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, touched.date && errors.date ? styles.inputError : undefined]}
           value={date}
           onChangeText={setDate}
+          onBlur={() => touch("date")}
           placeholder="YYYY-MM-DD"
           placeholderTextColor="#9ca3af"
           autoCapitalize="none"
         />
+        {touched.date && errors.date ? (
+          <Text style={styles.errorText}>{errors.date}</Text>
+        ) : null}
 
         {/* Time slots */}
         <Text style={[styles.fieldLabel, { marginTop: 18 }]}>Time slot</Text>
@@ -250,35 +284,43 @@ export default function AppointmentForm({
             Dr. {selectedDoctor.name} is not available on this day. Try another date.
           </Text>
         ) : (
-          <View style={styles.slotsWrap}>
-            {candidateSlots.map((slot) => {
-              const isBooked = bookedSlots.includes(slot) && slot !== initialTimeSlot;
-              const isActive = selectedSlot === slot;
-              return (
-                <TouchableOpacity
-                  key={slot}
-                  style={[
-                    styles.slot,
-                    isActive && styles.slotActive,
-                    isBooked && styles.slotBooked,
-                  ]}
-                  disabled={isBooked}
-                  onPress={() => setSelectedSlot(slot)}
-                  activeOpacity={0.8}
-                >
-                  <Text
+          <>
+            <View style={styles.slotsWrap}>
+              {candidateSlots.map((slot) => {
+                const isBooked = bookedSlots.includes(slot) && slot !== initialTimeSlot;
+                const isActive = selectedSlot === slot;
+                return (
+                  <TouchableOpacity
+                    key={slot}
                     style={[
-                      styles.slotText,
-                      isActive && styles.slotTextActive,
-                      isBooked && styles.slotTextBooked,
+                      styles.slot,
+                      isActive && styles.slotActive,
+                      isBooked && styles.slotBooked,
                     ]}
+                    disabled={isBooked}
+                    onPress={() => {
+                      setSelectedSlot(slot);
+                      touch("timeSlot");
+                    }}
+                    activeOpacity={0.8}
                   >
-                    {slot}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+                    <Text
+                      style={[
+                        styles.slotText,
+                        isActive && styles.slotTextActive,
+                        isBooked && styles.slotTextBooked,
+                      ]}
+                    >
+                      {slot}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            {touched.timeSlot && errors.timeSlot ? (
+              <Text style={styles.errorText}>{errors.timeSlot}</Text>
+            ) : null}
+          </>
         )}
 
         <TouchableOpacity
@@ -296,7 +338,7 @@ export default function AppointmentForm({
           </Text>
         </TouchableOpacity>
       </SafeAreaView>
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }
 
@@ -318,6 +360,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 13,
+  },
+  dropdownTriggerError: {
+    borderColor: "#ef4444",
   },
   dropdownValue: { fontSize: 15, color: "#1f2937", fontWeight: "500", flex: 1 },
   dropdownPlaceholder: { fontSize: 15, color: "#9ca3af", flex: 1 },
@@ -342,6 +387,16 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     fontSize: 15,
     color: "#1f2937",
+  },
+  inputError: {
+    borderColor: "#ef4444",
+  },
+  errorText: {
+    color: "#ef4444",
+    fontSize: 12,
+    marginTop: 4,
+    marginBottom: 4,
+    marginLeft: 2,
   },
   hint: { fontSize: 14, color: "#9ca3af", paddingVertical: 8 },
   slotsWrap: { flexDirection: "row", flexWrap: "wrap", gap: 10 },

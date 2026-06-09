@@ -21,4 +21,5 @@ export const pwStyles = StyleSheet.create({
   disabled: { opacity: 0.6 },
   primaryButtonText: { color: "#fff", fontSize: 16, fontWeight: "700" },
   link: { color: TEAL, fontWeight: "600", fontSize: 14, textAlign: "center" },
+  fieldError: { color: "#ef4444", fontSize: 12, marginTop: 4, marginBottom: 6, marginLeft: 2 },
 });

@@ -5,30 +5,53 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   Alert,
-  ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { pwStyles as styles } from "@/styles/password.style";
+
+const PASSWORD_RULES = [
+  { test: (p: string) => p.length >= 8, msg: "at least 8 characters" },
+  { test: (p: string) => /[A-Z]/.test(p), msg: "an uppercase letter" },
+  { test: (p: string) => /[a-z]/.test(p), msg: "a lowercase letter" },
+  { test: (p: string) => /\d/.test(p), msg: "a number" },
+  { test: (p: string) => /[^A-Za-z0-9]/.test(p), msg: "a special character" },
+];
 
 export default function ResetPassword() {
   const router = useRouter();
   const [resetToken, setResetToken] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [touched, setTouched] = useState({ resetToken: false, newPassword: false, confirmPassword: false });
   const [submitting, setSubmitting] = useState(false);
 
+  const touch = (field: keyof typeof touched) =>
+    setTouched((prev) => ({ ...prev, [field]: true }));
+
+  const newPasswordError = (() => {
+    if (!newPassword) return "Required";
+    const missing = PASSWORD_RULES.filter((r) => !r.test(newPassword)).map((r) => r.msg);
+    return missing.length ? `Needs ${missing.join(", ")}` : undefined;
+  })();
+
+  const errors = {
+    resetToken: !resetToken.trim() ? "Required" : undefined,
+    newPassword: newPasswordError,
+    confirmPassword: !confirmPassword
+      ? "Required"
+      : confirmPassword !== newPassword
+      ? "Passwords do not match"
+      : undefined,
+  };
+
   const handleSubmit = async () => {
-    if (!resetToken.trim() || !newPassword || !confirmPassword) {
-      Alert.alert("Validation", "Please fill in all fields");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      Alert.alert("Validation", "Passwords do not match");
-      return;
-    }
+    setTouched({ resetToken: true, newPassword: true, confirmPassword: true });
+    if (Object.values(errors).some(Boolean)) return;
+
     setSubmitting(true);
     try {
       await resetPassword(resetToken.trim(), newPassword, confirmPassword);
@@ -43,7 +66,7 @@ export default function ResetPassword() {
   };
 
   return (
-    <ScrollView style={styles.scrollView} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+    <KeyboardAwareScrollView style={styles.scrollView} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled" enableOnAndroid extraScrollHeight={20}>
       <SafeAreaView edges={["top"]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={24} color="#1f2937" />
@@ -60,24 +83,30 @@ export default function ResetPassword() {
             placeholder="Paste your reset code"
             value={resetToken}
             onChangeText={setResetToken}
+            onBlur={() => touch("resetToken")}
             icon="key-outline"
             autoCapitalize="none"
+            error={touched.resetToken ? errors.resetToken : undefined}
           />
           <Textbox
             label="New password"
             placeholder="Create a new password"
             value={newPassword}
             onChangeText={setNewPassword}
+            onBlur={() => touch("newPassword")}
             icon="lock-closed-outline"
             secureTextEntry
+            error={touched.newPassword ? errors.newPassword : undefined}
           />
           <Textbox
             label="Confirm password"
             placeholder="Re-enter new password"
             value={confirmPassword}
             onChangeText={setConfirmPassword}
+            onBlur={() => touch("confirmPassword")}
             icon="lock-closed-outline"
             secureTextEntry
+            error={touched.confirmPassword ? errors.confirmPassword : undefined}
           />
 
           <TouchableOpacity
@@ -92,6 +121,6 @@ export default function ResetPassword() {
           </TouchableOpacity>
         </View>
       </SafeAreaView>
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }

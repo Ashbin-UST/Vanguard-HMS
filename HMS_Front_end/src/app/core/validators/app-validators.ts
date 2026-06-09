@@ -311,7 +311,8 @@ export const slotsNoConflict: ValidatorFn = (
         };
       }
     }
-    (byDay[day] ??= []).push({
+    byDay[day] ??= [];
+    byDay[day].push({
       start,
       end,
       startTime: slot.startTime!,

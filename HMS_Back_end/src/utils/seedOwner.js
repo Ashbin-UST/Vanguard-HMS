@@ -19,7 +19,6 @@ const OWNER_EMPLOYEE = {
 const OWNER_USER = {
   username: "owner",
   email: "owner@hospital.com",
-  passwordHash: "$2b$10$e6k.k8k6B2v0Nm7OjeL4yOoVeX9dx7pQv8kvrb4N/Nk6JR1J7J5oa",
   status: "ACTIVE",
   roles: ["OWNER"],
   employeeCode: "EMP-000001",
@@ -68,6 +67,9 @@ const seedOwner = async () => {
     if (userExists) {
       console.log("Skipped owner user");
     } else {
+      const ownerPassword = process.env.OWNER_PASS?.trim();
+      const passwordHash = await bcrypt.hash(ownerPassword, 10);
+      user.passwordHash = passwordHash;
       await User.create(OWNER_USER);
       console.log("Created owner user");
     }

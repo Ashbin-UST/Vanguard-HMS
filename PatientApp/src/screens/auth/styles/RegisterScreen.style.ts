@@ -32,7 +32,7 @@ export const styles = StyleSheet.create({
     color: "#9ca3af",
   },
   formBox: {
-    width: "100%",
+    alignSelf: "stretch",
   },
   sectionLabel: {
     fontSize: 13,
@@ -111,5 +111,42 @@ export const styles = StyleSheet.create({
     fontWeight: "700",
     marginLeft: 6,
     fontSize: 14,
+  },
+  fieldError: {
+    color: "#ef4444",
+    fontSize: 12,
+    marginTop: 4,
+    marginBottom: 8,
+    marginLeft: 2,
+  },
+  pickerOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.45)",
+  },
+  pickerSheet: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    paddingBottom: 32,
+  },
+  pickerHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#e5e7eb",
+  },
+  pickerTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#1f2937",
+  },
+  pickerDone: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#2e9466",
   },
 });

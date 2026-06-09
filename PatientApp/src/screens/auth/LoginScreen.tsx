@@ -5,17 +5,20 @@ import { useEffect, useRef, useState } from "react";
 import {
   Alert,
   Animated,
-  ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useAuthStore } from "../../store/AuthStore";
 import { styles } from "./styles/LoginScreen.style";
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [touched, setTouched] = useState({ email: false, password: false });
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
   const { login } = useAuthStore();
@@ -28,6 +31,7 @@ const LoginScreen = () => {
     if (!isFocused) {
       slideAnim.setValue(30);
       opacityAnim.setValue(0);
+      setTouched({ email: false, password: false });
       return;
     }
     Animated.parallel([
@@ -36,11 +40,22 @@ const LoginScreen = () => {
     ]).start();
   }, [isFocused, slideAnim, opacityAnim]);
 
+  const errors = {
+    email: !email.trim()
+      ? "Required"
+      : !EMAIL_REGEX.test(email.trim())
+      ? "Enter a valid email address"
+      : undefined,
+    password: !password ? "Required" : undefined,
+  };
+
+  const touch = (field: keyof typeof touched) =>
+    setTouched((prev) => ({ ...prev, [field]: true }));
+
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert("Validation Error", "Please enter your email and password");
-      return;
-    }
+    setTouched({ email: true, password: true });
+    if (Object.values(errors).some(Boolean)) return;
+
     setSubmitting(true);
     try {
       const data = await loginPatient(email.trim(), password);
@@ -54,10 +69,12 @@ const LoginScreen = () => {
   };
 
   return (
-    <ScrollView
+    <KeyboardAwareScrollView
       style={styles.scrollView}
       contentContainerStyle={styles.container}
       keyboardShouldPersistTaps="handled"
+      enableOnAndroid
+      extraScrollHeight={20}
     >
       <View style={styles.brandSection}>
         <Text style={styles.appName}>MediCare+</Text>
@@ -77,9 +94,11 @@ const LoginScreen = () => {
             placeholder="you@email.com"
             value={email}
             onChangeText={setEmail}
+            onBlur={() => touch("email")}
             autoCapitalize="none"
             icon="mail-outline"
             keyboardType="email-address"
+            error={touched.email ? errors.email : undefined}
           />
         </View>
 
@@ -90,7 +109,9 @@ const LoginScreen = () => {
             value={password}
             icon="lock-closed-outline"
             onChangeText={setPassword}
+            onBlur={() => touch("password")}
             secureTextEntry
+            error={touched.password ? errors.password : undefined}
           />
         </View>
 
@@ -119,7 +140,7 @@ const LoginScreen = () => {
           </TouchableOpacity>
         </View>
       </Animated.View>
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 };
 

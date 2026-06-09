@@ -9,9 +9,11 @@ const scripts = [
 
 const runScript = (script) =>
   new Promise((resolve, reject) => {
-    const child = spawn("node", [script], {
-      stdio: "inherit",
-      shell: true
+    // Use the absolute path of the running Node binary (process.execPath) and
+    // avoid shell:true so the command is not resolved through the PATH env var,
+    // which may include writable directories (sonar javascript:S4036).
+    const child = spawn(process.execPath, [script], {
+      stdio: "inherit"
     });
 
     child.on("close", (code) => {

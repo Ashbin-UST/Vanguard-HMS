@@ -1,3 +1,4 @@
+import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { Textbox } from "@/components/common/textbox";
 import { registerPatient } from "@/services/authService";
 import { useIsFocused, useRouter } from "expo-router";
@@ -5,18 +6,21 @@ import { useEffect, useRef, useState } from "react";
 import {
   Alert,
   Animated,
-  ScrollView,
+  Modal,
+  Platform,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { styles } from "./styles/RegisterScreen.style";
 
 type Gender = "Male" | "Female";
 
-// Backend rules we mirror client-side to fail fast with a friendly message.
 const PHONE_REGEX = /^(\+\d{1,3} )?\d{10}$/;
 const DOB_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+const NAME_REGEX = /^[a-zA-Z]+([ '-][a-zA-Z]+)*$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_RULES = [
   { test: (p: string) => p.length >= 8, msg: "at least 8 characters" },
   { test: (p: string) => /[A-Z]/.test(p), msg: "an uppercase letter" },
@@ -25,9 +29,42 @@ const PASSWORD_RULES = [
   { test: (p: string) => /[^A-Za-z0-9]/.test(p), msg: "a special character" },
 ];
 
+const ALL_FIELDS = [
+  "name", "dob", "phone", "email", "password", "gender",
+  "houseName", "houseNumber", "city", "postCode",
+  "contactName", "relationship", "contactNumber",
+] as const;
+type Field = (typeof ALL_FIELDS)[number];
+
+function isRealDate(s: string): boolean {
+  if (!DOB_REGEX.test(s)) return false;
+  const [y, m, d] = s.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
+}
+
+function formatDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+const MAX_DOB = new Date();
+MAX_DOB.setHours(0, 0, 0, 0);
+
+const MIN_DOB = new Date();
+MIN_DOB.setFullYear(MIN_DOB.getFullYear() - 120);
+
 const RegisterScreen = () => {
   const [name, setName] = useState("");
   const [dob, setDob] = useState("");
+  const [dobPickerDate, setDobPickerDate] = useState<Date>(() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 25);
+    return d;
+  });
+  const [showDobPicker, setShowDobPicker] = useState(false);
   const [gender, setGender] = useState<Gender | "">("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -42,6 +79,7 @@ const RegisterScreen = () => {
   const [relationship, setRelationship] = useState("");
   const [contactNumber, setContactNumber] = useState("");
 
+  const [touched, setTouched] = useState<Partial<Record<Field, boolean>>>({});
   const [submitting, setSubmitting] = useState(false);
 
   const router = useRouter();
@@ -54,6 +92,7 @@ const RegisterScreen = () => {
     if (!isFocused) {
       slideAnim.setValue(30);
       opacityAnim.setValue(0);
+      setTouched({});
       return;
     }
     Animated.parallel([
@@ -62,39 +101,74 @@ const RegisterScreen = () => {
     ]).start();
   }, [isFocused, slideAnim, opacityAnim]);
 
-  const validate = (): string | null => {
-    if (
-      !name ||
-      !dob ||
-      !gender ||
-      !phone ||
-      !email ||
-      !password ||
-      !houseName ||
-      !houseNumber ||
-      !city ||
-      !postCode ||
-      !contactName ||
-      !relationship ||
-      !contactNumber
-    ) {
-      return "Please fill in all fields";
+  const touch = (field: Field) =>
+    setTouched((prev) => ({ ...prev, [field]: true }));
+
+  const onDobChange = (_: DateTimePickerEvent, selected?: Date) => {
+    if (Platform.OS === "android") {
+      setShowDobPicker(false);
+      touch("dob");
     }
-    if (!DOB_REGEX.test(dob)) return "Date of birth must be in YYYY-MM-DD format";
-    if (!PHONE_REGEX.test(phone)) return "Phone must be 10 digits (optionally a +country code)";
-    if (!PHONE_REGEX.test(contactNumber))
-      return "Emergency contact number must be 10 digits (optionally a +country code)";
-    const missing = PASSWORD_RULES.filter((r) => !r.test(password)).map((r) => r.msg);
-    if (missing.length) return `Password needs ${missing.join(", ")}`;
-    return null;
+    if (selected) {
+      setDobPickerDate(selected);
+      setDob(formatDate(selected));
+    }
   };
 
+  const passwordError = (() => {
+    if (!password) return "Required";
+    const missing = PASSWORD_RULES.filter((r) => !r.test(password)).map((r) => r.msg);
+    return missing.length ? `Needs ${missing.join(", ")}` : undefined;
+  })();
+
+  const dobError = (() => {
+    if (!dob) return "Required";
+    if (!isRealDate(dob)) return "Enter a valid calendar date";
+    const [y, m, d] = dob.split("-").map(Number);
+    const dobLocal = new Date(y, m - 1, d);
+    if (dobLocal >= MAX_DOB) return "Date of birth cannot be a future date";
+    return undefined;
+  })();
+
+  const errors: Record<Field, string | undefined> = {
+    name: !name.trim()
+      ? "Required"
+      : !NAME_REGEX.test(name.trim())
+      ? "Only letters, spaces, hyphens, and apostrophes"
+      : undefined,
+    dob: dobError,
+    phone: !phone
+      ? "Required"
+      : !PHONE_REGEX.test(phone)
+      ? "10 digits, optional +country code (e.g. +91 9876543210)"
+      : undefined,
+    email: !email.trim()
+      ? "Required"
+      : !EMAIL_REGEX.test(email.trim())
+      ? "Enter a valid email address"
+      : undefined,
+    password: passwordError,
+    gender: !gender ? "Please select a gender" : undefined,
+    houseName: !houseName.trim() ? "Required" : undefined,
+    houseNumber: !houseNumber.trim() ? "Required" : undefined,
+    city: !city.trim() ? "Required" : undefined,
+    postCode: !postCode.trim() ? "Required" : undefined,
+    contactName: !contactName.trim() ? "Required" : undefined,
+    relationship: !relationship.trim() ? "Required" : undefined,
+    contactNumber: !contactNumber
+      ? "Required"
+      : !PHONE_REGEX.test(contactNumber)
+      ? "10 digits, optional +country code"
+      : undefined,
+  };
+
+  const err = (field: Field) => (touched[field] ? errors[field] : undefined);
+
   const handleRegister = async () => {
-    const error = validate();
-    if (error) {
-      Alert.alert("Validation Error", error);
-      return;
-    }
+    const allTouched = Object.fromEntries(ALL_FIELDS.map((f) => [f, true])) as Record<Field, boolean>;
+    setTouched(allTouched);
+
+    if (Object.values(errors).some(Boolean)) return;
 
     setSubmitting(true);
     try {
@@ -119,193 +193,266 @@ const RegisterScreen = () => {
       });
       Alert.alert("Registered", "Your account has been created. You can now log in.");
       router.replace("/login");
-    } catch (err: any) {
-      Alert.alert("Registration Failed", err.message || "Something went wrong");
+    } catch (e: any) {
+      Alert.alert("Registration Failed", e.message || "Something went wrong");
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <ScrollView
-      style={styles.scrollView}
-      contentContainerStyle={styles.container}
-      keyboardShouldPersistTaps="handled"
-    >
-      <View style={styles.brandSection}>
-        <Text style={styles.appName}>MediCare+</Text>
-        <Text style={styles.heroText}>Create your account</Text>
-        <Text style={styles.subtitle}>Join to book appointments and track your care</Text>
-      </View>
-
-      <Animated.View
-        style={[
-          styles.formBox,
-          { transform: [{ translateY: slideAnim }], opacity: opacityAnim },
-        ]}
+    <>
+      <KeyboardAwareScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+        enableOnAndroid
+        extraScrollHeight={20}
       >
-        <Text style={styles.sectionLabel}>Personal details</Text>
-
-        <Textbox
-          label="Full name"
-          placeholder="Arjun Sharma"
-          value={name}
-          icon="person-outline"
-          onChangeText={setName}
-        />
-
-        <View style={styles.halfRow}>
-          <View style={styles.halfField}>
-            <Textbox
-              label="Date of birth"
-              placeholder="YYYY-MM-DD"
-              value={dob}
-              icon="calendar-outline"
-              onChangeText={setDob}
-            />
-          </View>
-          <View style={styles.halfField}>
-            <Textbox
-              label="Phone number"
-              placeholder="9876543210"
-              value={phone}
-              icon="call-outline"
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
-            />
-          </View>
+        <View style={styles.brandSection}>
+          <Text style={styles.appName}>MediCare+</Text>
+          <Text style={styles.heroText}>Create your account</Text>
+          <Text style={styles.subtitle}>Join to book appointments and track your care</Text>
         </View>
 
-        <Text style={styles.fieldLabel}>Gender</Text>
-        <View style={styles.genderRow}>
-          {(["Male", "Female"] as Gender[]).map((g) => (
-            <TouchableOpacity
-              key={g}
-              style={[styles.genderOption, gender === g && styles.genderOptionActive]}
-              onPress={() => setGender(g)}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.genderText, gender === g && styles.genderTextActive]}>
-                {g}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <Textbox
-          label="Email"
-          placeholder="arjun@email.com"
-          value={email}
-          icon="mail-outline"
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-        />
-
-        <Textbox
-          label="Password"
-          placeholder="Create a password"
-          value={password}
-          icon="lock-closed-outline"
-          onChangeText={setPassword}
-          secureTextEntry
-        />
-
-        <Text style={styles.sectionLabel}>Address</Text>
-
-        <View style={styles.halfRow}>
-          <View style={styles.halfField}>
-            <Textbox
-              label="House name"
-              placeholder="Maple Villa"
-              value={houseName}
-              icon="home-outline"
-              onChangeText={setHouseName}
-            />
-          </View>
-          <View style={styles.halfField}>
-            <Textbox
-              label="House number"
-              placeholder="12B"
-              value={houseNumber}
-              icon="business-outline"
-              onChangeText={setHouseNumber}
-            />
-          </View>
-        </View>
-
-        <View style={styles.halfRow}>
-          <View style={styles.halfField}>
-            <Textbox
-              label="City"
-              placeholder="Kochi"
-              value={city}
-              icon="location-outline"
-              onChangeText={setCity}
-            />
-          </View>
-          <View style={styles.halfField}>
-            <Textbox
-              label="Post code"
-              placeholder="682001"
-              value={postCode}
-              icon="navigate-outline"
-              onChangeText={setPostCode}
-            />
-          </View>
-        </View>
-
-        <Text style={styles.sectionLabel}>Emergency contact</Text>
-
-        <Textbox
-          label="Contact name"
-          placeholder="Jane Sharma"
-          value={contactName}
-          icon="person-outline"
-          onChangeText={setContactName}
-        />
-
-        <View style={styles.halfRow}>
-          <View style={styles.halfField}>
-            <Textbox
-              label="Relationship"
-              placeholder="Sister"
-              value={relationship}
-              icon="people-outline"
-              onChangeText={setRelationship}
-            />
-          </View>
-          <View style={styles.halfField}>
-            <Textbox
-              label="Contact number"
-              placeholder="9876543210"
-              value={contactNumber}
-              icon="call-outline"
-              onChangeText={setContactNumber}
-              keyboardType="phone-pad"
-            />
-          </View>
-        </View>
-
-        <TouchableOpacity
-          style={[styles.primaryButton, submitting && styles.primaryButtonDisabled]}
-          onPress={handleRegister}
-          activeOpacity={0.85}
-          disabled={submitting}
+        <Animated.View
+          style={[
+            styles.formBox,
+            { transform: [{ translateY: slideAnim }], opacity: opacityAnim },
+          ]}
         >
-          <Text style={styles.primaryButtonText}>
-            {submitting ? "Creating account…" : "Create account"}
-          </Text>
-        </TouchableOpacity>
+          <Text style={styles.sectionLabel}>Personal details</Text>
 
-        <View style={styles.footerContainer}>
-          <Text style={styles.footerText}>Already have an account?</Text>
-          <TouchableOpacity onPress={() => router.push("/login")}>
-            <Text style={styles.footerLink}>Sign in</Text>
+          <Textbox
+            label="Full name"
+            placeholder="Arjun Sharma"
+            value={name}
+            icon="person-outline"
+            onChangeText={setName}
+            onBlur={() => touch("name")}
+            error={err("name")}
+          />
+
+          {/* DOB — tapping opens native date picker */}
+          <Textbox
+            label="Date of birth"
+            placeholder="Select date of birth"
+            value={dob}
+            icon="calendar-outline"
+            onPress={() => setShowDobPicker(true)}
+            editable={false}
+            error={err("dob")}
+          />
+
+          {/* Phone — full width so all digits stay visible */}
+          <Textbox
+            label="Phone number"
+            placeholder="9876543210"
+            value={phone}
+            icon="call-outline"
+            onChangeText={setPhone}
+            onBlur={() => touch("phone")}
+            keyboardType="phone-pad"
+            error={err("phone")}
+          />
+
+          <Text style={styles.fieldLabel}>Gender</Text>
+          <View style={styles.genderRow}>
+            {(["Male", "Female"] as Gender[]).map((g) => (
+              <TouchableOpacity
+                key={g}
+                style={[styles.genderOption, gender === g && styles.genderOptionActive]}
+                onPress={() => {
+                  setGender(g);
+                  touch("gender");
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.genderText, gender === g && styles.genderTextActive]}>
+                  {g}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          {err("gender") ? (
+            <Text style={styles.fieldError}>{err("gender")}</Text>
+          ) : null}
+
+          <Textbox
+            label="Email"
+            placeholder="arjun@email.com"
+            value={email}
+            icon="mail-outline"
+            onChangeText={setEmail}
+            onBlur={() => touch("email")}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            error={err("email")}
+          />
+
+          <Textbox
+            label="Password"
+            placeholder="Create a password"
+            value={password}
+            icon="lock-closed-outline"
+            onChangeText={setPassword}
+            onBlur={() => touch("password")}
+            secureTextEntry
+            error={err("password")}
+          />
+
+          <Text style={styles.sectionLabel}>Address</Text>
+
+          <View style={styles.halfRow}>
+            <View style={styles.halfField}>
+              <Textbox
+                label="House name"
+                placeholder="Maple Villa"
+                value={houseName}
+                icon="home-outline"
+                onChangeText={setHouseName}
+                onBlur={() => touch("houseName")}
+                error={err("houseName")}
+              />
+            </View>
+            <View style={styles.halfField}>
+              <Textbox
+                label="House number"
+                placeholder="12B"
+                value={houseNumber}
+                icon="business-outline"
+                onChangeText={setHouseNumber}
+                onBlur={() => touch("houseNumber")}
+                error={err("houseNumber")}
+              />
+            </View>
+          </View>
+
+          <View style={styles.halfRow}>
+            <View style={styles.halfField}>
+              <Textbox
+                label="City"
+                placeholder="Kochi"
+                value={city}
+                icon="location-outline"
+                onChangeText={setCity}
+                onBlur={() => touch("city")}
+                error={err("city")}
+              />
+            </View>
+            <View style={styles.halfField}>
+              <Textbox
+                label="Post code"
+                placeholder="682001"
+                value={postCode}
+                icon="navigate-outline"
+                onChangeText={setPostCode}
+                onBlur={() => touch("postCode")}
+                error={err("postCode")}
+              />
+            </View>
+          </View>
+
+          <Text style={styles.sectionLabel}>Emergency contact</Text>
+
+          <Textbox
+            label="Contact name"
+            placeholder="Jane Sharma"
+            value={contactName}
+            icon="person-outline"
+            onChangeText={setContactName}
+            onBlur={() => touch("contactName")}
+            error={err("contactName")}
+          />
+
+          <View style={styles.halfRow}>
+            <View style={styles.halfField}>
+              <Textbox
+                label="Relationship"
+                placeholder="Sister"
+                value={relationship}
+                icon="people-outline"
+                onChangeText={setRelationship}
+                onBlur={() => touch("relationship")}
+                error={err("relationship")}
+              />
+            </View>
+            <View style={styles.halfField}>
+              <Textbox
+                label="Contact number"
+                placeholder="9876543210"
+                value={contactNumber}
+                icon="call-outline"
+                onChangeText={setContactNumber}
+                onBlur={() => touch("contactNumber")}
+                keyboardType="phone-pad"
+                error={err("contactNumber")}
+              />
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.primaryButton, submitting && styles.primaryButtonDisabled]}
+            onPress={handleRegister}
+            activeOpacity={0.85}
+            disabled={submitting}
+          >
+            <Text style={styles.primaryButtonText}>
+              {submitting ? "Creating account…" : "Create account"}
+            </Text>
           </TouchableOpacity>
-        </View>
-      </Animated.View>
-    </ScrollView>
+
+          <View style={styles.footerContainer}>
+            <Text style={styles.footerText}>Already have an account?</Text>
+            <TouchableOpacity onPress={() => router.push("/login")}>
+              <Text style={styles.footerLink}>Sign in</Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+      </KeyboardAwareScrollView>
+
+      {/* Android: DateTimePicker renders as a native dialog */}
+      {Platform.OS === "android" && showDobPicker && (
+        <DateTimePicker
+          value={dobPickerDate}
+          mode="date"
+          display="default"
+          maximumDate={MAX_DOB}
+          minimumDate={MIN_DOB}
+          onChange={onDobChange}
+        />
+      )}
+
+      {/* iOS: DateTimePicker shown in a bottom-sheet modal */}
+      {Platform.OS === "ios" && (
+        <Modal visible={showDobPicker} transparent animationType="slide">
+          <View style={styles.pickerOverlay}>
+            <View style={styles.pickerSheet}>
+              <View style={styles.pickerHeader}>
+                <Text style={styles.pickerTitle}>Date of Birth</Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    setShowDobPicker(false);
+                    touch("dob");
+                  }}
+                >
+                  <Text style={styles.pickerDone}>Done</Text>
+                </TouchableOpacity>
+              </View>
+              <DateTimePicker
+                value={dobPickerDate}
+                mode="date"
+                display="spinner"
+                maximumDate={MAX_DOB}
+                minimumDate={MIN_DOB}
+                onChange={onDobChange}
+                style={{ width: "100%" }}
+              />
+            </View>
+          </View>
+        </Modal>
+      )}
+    </>
   );
 };
 
