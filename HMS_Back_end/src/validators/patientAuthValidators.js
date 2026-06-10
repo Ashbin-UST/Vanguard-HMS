@@ -5,11 +5,10 @@ const {
     emailValidator
 } = require("./sharedValidators");
 const { passwordStrengthValidator } = require("./passwordValidator");
+const { createPatientValidation } = require("./patientValidators");
 
 const EMERGENCY_PHONE_MESSAGE =
     "Emergency contact number must include a country code followed by exactly 10 digits";
-
-const allowedGenders = new Set(["Male", "Female"]);
 
 // Confirms the confirmPassword field matches the given password field
 const matchesPassword = (passwordField) =>
@@ -24,32 +23,12 @@ const matchesPassword = (passwordField) =>
             return true;
         });
 
-// Full patient field set (same as staff-created patients) plus a self-chosen password
+// Self-registration reuses the exact patient field rules used when staff create a
+// patient (createPatientValidation: name/phone/email/gender/dob/address/emergencyContact)
+// and only adds a self-chosen password.
 const patientRegisterValidation = [
-    nameValidator("name", "Patient name"),
-    phoneValidator("phone"),
-    emailValidator("email"),
-    passwordStrengthValidator("password"),
-
-    body("gender")
-        .isIn([...allowedGenders])
-        .withMessage("Valid gender is required"),
-
-    body("dob")
-        .isISO8601()
-        .toDate()
-        .withMessage("Valid date of birth is required"),
-
-    body("address.houseName").notEmpty().withMessage("House name is required"),
-    body("address.houseNumber").notEmpty().withMessage("House number is required"),
-    body("address.city").notEmpty().withMessage("City is required"),
-    body("address.postCode").notEmpty().withMessage("Post code is required"),
-
-    nameValidator("emergencyContact.contactName", "Emergency contact name"),
-    body("emergencyContact.relationship")
-        .notEmpty()
-        .withMessage("Relationship is required"),
-    phoneValidator("emergencyContact.contactNumber", { message: EMERGENCY_PHONE_MESSAGE })
+    ...createPatientValidation,
+    passwordStrengthValidator("password")
 ];
 
 // Email + password presence for login

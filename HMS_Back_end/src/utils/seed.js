@@ -1,37 +1,34 @@
 require("dotenv").config();
 
-const { spawn } = require("node:child_process");
+const mongoose = require("mongoose");
 
-const scripts = [
-  "src/utils/seedNodes.js",
-  "src/utils/seedOwner.js"
-];
+const seedNodes = require("./seedNodes");
+const seedOwner = require("./seedOwner");
 
-const runScript = (script) =>
-  new Promise((resolve, reject) => {
-    const child = spawn("node", [script], {
-      stdio: "inherit",
-      shell: true
-    });
+// Runs all seeders in order on the current connection; throws on the first failure
+const runSeeders = async () => {
+  await seedNodes();
+  await seedOwner();
+};
 
-    child.on("close", (code) => {
-      if (code === 0) {
-        resolve();
-      } else {
-        reject(new Error(`${script} exited with code ${code}`));
-      }
-    });
-  });
-
-(async () => { // NOSONAR - top-level await is unavailable in CommonJS modules
+// Standalone entrypoint for `npm run seed:all` / postinstall: owns its own connection, fails fast
+const runStandalone = async () => { // NOSONAR - top-level await is unavailable in CommonJS modules
   try {
-    for (const script of scripts) {
-      await runScript(script);
-    }
-
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("MongoDB connected for seeding");
+    await runSeeders();
     console.log("All seeders completed");
   } catch (err) {
-    console.error(err);
-    process.exit(1);
+    console.error("Seeding failed:", err);
+    process.exitCode = 1;
+  } finally {
+    await mongoose.disconnect();
+    console.log("MongoDB disconnected");
   }
-})();
+};
+
+if (require.main === module) {
+  runStandalone();
+}
+
+module.exports = runSeeders;

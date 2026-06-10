@@ -54,8 +54,7 @@ const checkOverlap = (start, end, existingSlots, day, startTime, endTime) => {
   }
 };
 
-// Validates one slot's day/time, rejecting duplicates and same-day overlaps.
-// `seen` tracks exact day+time keys; `byDay` accumulates ranges per day.
+// Validates a slot and rejects duplicates or same-day overlaps
 const validateSlot = (slot, seen, byDay) => {
   const day = parseDay(slot?.day);
   const { start, end } = parseTimeRange(slot);

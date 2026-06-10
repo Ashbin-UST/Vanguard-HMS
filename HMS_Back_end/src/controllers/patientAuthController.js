@@ -4,19 +4,10 @@ const crypto = require("node:crypto");
 const Patient = require("../models/Patients");
 const sendEmail = require("../utils/sendEmail");
 const emailTemplates = require("../utils/emailTemplates");
+const { toSafePatient } = require("../utils/toSafePatient");
 require("dotenv").config();
 
 const SALT_ROUNDS = 12;
-
-// Strip sensitive/internal fields before returning a patient to the client
-const toSafePatient = (patient) => {
-    const safe = patient.toObject();
-    delete safe.passwordHash;
-    delete safe.resetPasswordTokenHash;
-    delete safe.resetPasswordTokenExpiry;
-    delete safe.__v;
-    return safe;
-};
 
 // Sign a patient JWT. The `type: "PATIENT"` marker keeps these tokens from
 // being accepted on employee routes (and vice-versa).

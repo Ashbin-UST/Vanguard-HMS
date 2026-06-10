@@ -8,9 +8,7 @@ const checkAppointmentValidity = require("../validators/checkAppointmentValidity
 const enrichAppointments = require("../utils/enrichAppointments");
 const parsePagination = require("../utils/parsePagination");
 const recordAudit = require("../utils/recordAudit");
-
-// Fields hidden from patient-facing responses
-const PATIENT_PROJECTION = "-passwordHash -resetPasswordTokenHash -resetPasswordTokenExpiry -__v";
+const { toSafePatient, PATIENT_SAFE_PROJECTION } = require("../utils/toSafePatient");
 
 // Build an audit actor for a patient (resolveActor assumes an employee, so we
 // construct one directly here).
@@ -26,7 +24,7 @@ exports.getMyProfile = async (req, res) => {
     try {
         const patient = await Patient.findOne({
             UHID: req.patient.patientId
-        }).select(PATIENT_PROJECTION);
+        }).select(PATIENT_SAFE_PROJECTION);
 
         if (!patient) {
             return res.status(404).json({
@@ -91,15 +89,9 @@ exports.updateMyProfile = async (req, res) => {
             message: `Patient ${patient.name} (${patient.UHID}) updated their profile`
         });
 
-        const safePatient = patient.toObject();
-        delete safePatient.passwordHash;
-        delete safePatient.resetPasswordTokenHash;
-        delete safePatient.resetPasswordTokenExpiry;
-        delete safePatient.__v;
-
         return res.status(200).json({
             message: "Profile updated successfully",
-            patient: safePatient
+            patient: toSafePatient(patient)
         });
     }
     catch (err) {

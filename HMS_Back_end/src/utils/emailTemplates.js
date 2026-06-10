@@ -1,11 +1,14 @@
-// Centralized email templates.
+// Centralized email templates
 
-const frontendUrl = () =>
-  (process.env.FRONTEND_URL || "http://localhost:4200").replace(/\/+$/, "");
+const frontendUrl = () => {
+  let url = process.env.FRONTEND_URL || "http://localhost:4200";
+  while (url.endsWith("/")) url = url.slice(0, -1);
+  return url;
+};
 
 const loginUrl = () => `${frontendUrl()}/login`;
 
-// Shared wrapper so every email has a consistent signature/branding.
+// Shared wrapper so every email has a consistent signature/branding
 const wrap = (innerHtml) => `
   ${innerHtml}
   <p>
@@ -21,7 +24,7 @@ const loginButton = (label = "Login to HMS") => `
   </p>
 `;
 
-// Formats a date (Date or ISO string) for display in emails, date-only.
+// Formats a date (Date or ISO string) for display in emails, date-only
 const formatDate = (value) => {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) {
@@ -34,7 +37,7 @@ const formatDate = (value) => {
   });
 };
 
-// Employee account created by an admin/owner — sends login credentials.
+// Employee account created by an admin/owner — sends login credentials
 const employeeCredentials = ({ username, temporaryPassword }) => ({
   subject: "HMS Employee Account Created",
   html: wrap(`
@@ -47,7 +50,7 @@ const employeeCredentials = ({ username, temporaryPassword }) => ({
   `),
 });
 
-// Admin account created by an owner — sends login credentials.
+// Admin account created by an owner — sends login credentials
 const adminCredentials = ({ username, temporaryPassword }) => ({
   subject: "HMS Admin Account Created",
   html: wrap(`
@@ -60,7 +63,7 @@ const adminCredentials = ({ username, temporaryPassword }) => ({
   `),
 });
 
-// Patient account created — sends login credentials.
+// Patient account created — sends login credentials
 const patientCredentials = ({ email, temporaryPassword }) => ({
   subject: "HMS Patient Account Created",
   html: wrap(`
@@ -73,7 +76,7 @@ const patientCredentials = ({ email, temporaryPassword }) => ({
   `),
 });
 
-// Self-registered employee was approved by an admin.
+// Self-registered employee was approved by an admin
 const accountApproved = () => ({
   subject: "HMS Employee Account Approved",
   html: wrap(`
@@ -83,7 +86,7 @@ const accountApproved = () => ({
   `),
 });
 
-// Self-registered employee was rejected by an admin.
+// Self-registered employee was rejected by an admin
 const accountRejected = () => ({
   subject: "HMS Employee Account Registration Rejected",
   html: wrap(`
@@ -95,7 +98,7 @@ const accountRejected = () => ({
   `),
 });
 
-// Notify admins that a new employee has self-registered and needs review.
+// Notify admins that a new employee has self-registered and needs review
 const registrationRequest = ({ name, employeeCode, department, designation }) => ({
   subject: "New Employee Registration Request",
   html: wrap(`
@@ -110,7 +113,7 @@ const registrationRequest = ({ name, employeeCode, department, designation }) =>
   `),
 });
 
-// Notify admins that an employee requested a profile change.
+// Notify admins that an employee requested a profile change
 const profileChangeRequest = ({ name, employeeCode }) => ({
   subject: "Employee Profile Change Request",
   html: wrap(`

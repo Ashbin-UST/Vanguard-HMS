@@ -1,5 +1,3 @@
-require("dotenv").config();
-const mongoose = require("mongoose");
 const Node = require("../models/Nodes");
 
 // Default sidebar menu items grouped by role
@@ -36,38 +34,26 @@ const DEFAULT_NODES = [
     }
 ];
 
-// Connect, insert missing nodes, then disconnect; safe to re-run (existing paths are skipped)
+// Inserts any missing default nodes; assumes an active mongoose connection and throws on failure
 const seedNodes = async () => {
-    try {
-        await mongoose.connect(process.env.MONGO_URI);
-        console.log("MongoDB connected for seeding");
+    let created = 0;
+    let skipped = 0;
 
-        let created = 0;
-        let skipped = 0;
+    for (const nodeData of DEFAULT_NODES) {
+        const existing = await Node.findOne({ path: nodeData.path });
 
-        for (const nodeData of DEFAULT_NODES) {
-            const existing = await Node.findOne({ path: nodeData.path });
-
-            if (existing) {
-                skipped += 1;
-                console.log(`Skipped (exists): ${nodeData.path}`);
-                continue;
-            }
-
-            // Use save() instead of create() so the pre-save hook assigns nodeId
-            const node = new Node(nodeData);
-            await node.save();
-            created += 1;
-            console.log(`Created: ${node.nodeId} -> ${node.path}`);
+        if (existing) {
+            skipped += 1;
+            continue;
         }
 
-        console.log(`\nSeeding complete. Created: ${created}, Skipped: ${skipped}`);
-    } catch (err) {
-        console.error("Seeding error:", err);
-    } finally {
-        await mongoose.disconnect();
-        console.log("MongoDB disconnected");
+        // Use save() instead of create() so the pre-save hook assigns nodeId
+        const node = new Node(nodeData);
+        await node.save();
+        created += 1;
     }
+
+    console.log(`Nodes seeded. Created: ${created}, Skipped: ${skipped}`);
 };
 
-seedNodes();
+module.exports = seedNodes;
