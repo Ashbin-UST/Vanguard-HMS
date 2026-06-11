@@ -8,6 +8,7 @@ const resolveActor = require("../utils/resolveActor");
 const emailTemplates = require("../utils/emailTemplates");
 const parsePagination = require("../utils/parsePagination");
 const enrichAppointments = require("../utils/enrichAppointments");
+const listAppointments = require("../utils/listAppointments");
 const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/apiResponse");
 const STATUS = require("../constants/statusCodes");
@@ -26,12 +27,7 @@ const paginateAppointments = async (filter, reqQuery, res) => {
 
     // Fetch page and total in parallel, then attach patient/doctor names
     const [appointments, total] = await Promise.all([
-        Appointment.find(filter)
-            .select("-__v")
-            .sort({ appointmentDate: -1, _id: -1 })
-            .skip(skip)
-            .limit(limit)
-            .lean(),
+        listAppointments(filter, skip, limit),
         Appointment.countDocuments(filter)
     ]);
 

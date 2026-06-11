@@ -4,12 +4,13 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-  Alert,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import { ALERT_TITLES, MESSAGES } from "@/constants/messages";
+import { showError, showSuccess } from "@/utils/alerts";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { pwStyles as styles } from "@/styles/password.style";
 
@@ -23,10 +24,10 @@ const PASSWORD_RULES = [
 
 export default function ResetPassword() {
   const router = useRouter();
-  const [resetToken, setResetToken] = useState("");
+  const [resetCode, setResetCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [touched, setTouched] = useState({ resetToken: false, newPassword: false, confirmPassword: false });
+  const [touched, setTouched] = useState({ resetCode: false, newPassword: false, confirmPassword: false });
   const [submitting, setSubmitting] = useState(false);
 
   const touch = (field: keyof typeof touched) =>
@@ -39,7 +40,7 @@ export default function ResetPassword() {
   })();
 
   const errors = {
-    resetToken: !resetToken.trim() ? "Required" : undefined,
+    resetCode: !resetCode.trim() ? "Required" : undefined,
     newPassword: newPasswordError,
     confirmPassword: !confirmPassword
       ? "Required"
@@ -49,24 +50,24 @@ export default function ResetPassword() {
   };
 
   const handleSubmit = async () => {
-    setTouched({ resetToken: true, newPassword: true, confirmPassword: true });
+    setTouched({ resetCode: true, newPassword: true, confirmPassword: true });
     if (Object.values(errors).some(Boolean)) return;
 
     setSubmitting(true);
     try {
-      await resetPassword(resetToken.trim(), newPassword, confirmPassword);
-      Alert.alert("Success", "Your password has been reset. Please log in.", [
+      await resetPassword(resetCode.trim(), newPassword, confirmPassword);
+      showSuccess(MESSAGES.PASSWORD_RESET, ALERT_TITLES.SUCCESS, [
         { text: "OK", onPress: () => router.replace("/login") },
       ]);
-    } catch (err: any) {
-      Alert.alert("Reset Failed", err.message || "Something went wrong");
+    } catch (err) {
+      showError(err, ALERT_TITLES.RESET_FAILED);
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <KeyboardAwareScrollView style={styles.scrollView} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled" enableOnAndroid extraScrollHeight={20}>
+    <KeyboardAwareScrollView style={styles.scrollView} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled" bottomOffset={24}>
       <SafeAreaView edges={["top"]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={24} color="#1f2937" />
@@ -80,13 +81,14 @@ export default function ResetPassword() {
         <View style={styles.form}>
           <Textbox
             label="Reset code"
-            placeholder="Paste your reset code"
-            value={resetToken}
-            onChangeText={setResetToken}
-            onBlur={() => touch("resetToken")}
+            placeholder="Enter the 8-character code"
+            value={resetCode}
+            onChangeText={setResetCode}
+            onBlur={() => touch("resetCode")}
             icon="key-outline"
             autoCapitalize="none"
-            error={touched.resetToken ? errors.resetToken : undefined}
+            autoCorrect={false}
+            error={touched.resetCode ? errors.resetCode : undefined}
           />
           <Textbox
             label="New password"
@@ -95,7 +97,7 @@ export default function ResetPassword() {
             onChangeText={setNewPassword}
             onBlur={() => touch("newPassword")}
             icon="lock-closed-outline"
-            secureTextEntry
+            secureToggle
             error={touched.newPassword ? errors.newPassword : undefined}
           />
           <Textbox

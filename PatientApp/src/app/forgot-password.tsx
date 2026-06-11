@@ -4,12 +4,13 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-  Alert,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import { ALERT_TITLES, MESSAGES } from "@/constants/messages";
+import { showError, showSuccess } from "@/utils/alerts";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { pwStyles as styles } from "@/styles/password.style";
 
@@ -33,19 +34,19 @@ export default function ForgotPassword() {
 
     setSubmitting(true);
     try {
-      const res = await forgotPassword(email.trim());
-      Alert.alert("Check your email", res.message, [
+      await forgotPassword(email.trim());
+      showSuccess(MESSAGES.FORGOT_PASSWORD_SENT, ALERT_TITLES.CHECK_EMAIL, [
         { text: "Enter reset code", onPress: () => router.push("/reset-password") },
       ]);
-    } catch (err: any) {
-      Alert.alert("Error", err.message || "Something went wrong");
+    } catch (err) {
+      showError(err);
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <KeyboardAwareScrollView style={styles.scrollView} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled" enableOnAndroid extraScrollHeight={20}>
+    <KeyboardAwareScrollView style={styles.scrollView} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled" bottomOffset={24}>
       <SafeAreaView edges={["top"]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={24} color="#1f2937" />

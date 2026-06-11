@@ -1,8 +1,11 @@
 import AppTabs from "@/components/app-tabs";
+import ConfirmModal from "@/components/common/ConfirmModal";
 import LoadingScreen from "@/components/loading-screen";
+import { useAuthStore } from "@/store/AuthStore";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 
 export default function AppLayout() {
   const [isLoading, setIsLoading] = useState(true);
@@ -11,7 +14,10 @@ export default function AppLayout() {
     async function prepare() {
       try {
         await SplashScreen.preventAutoHideAsync();
-        await new Promise((resolve) => setTimeout(resolve, 800));
+        await Promise.all([
+          useAuthStore.getState().checkLoginStatus(),
+          new Promise((resolve) => setTimeout(resolve, 800)),
+        ]);
       } catch (error) {
         console.warn(error);
       } finally {
@@ -28,9 +34,12 @@ export default function AppLayout() {
   }
 
   return (
-    <View style={styles.container}>
-      <AppTabs />
-    </View>
+    <KeyboardProvider>
+      <View style={styles.container}>
+        <AppTabs />
+      </View>
+      <ConfirmModal />
+    </KeyboardProvider>
   );
 }
 

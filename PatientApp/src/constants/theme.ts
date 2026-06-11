@@ -30,7 +30,6 @@ export const Colors = {
     background: "#f7faf8",
     backgroundElement: "#f0faf4",
     backgroundSelected: "#d4f1e0",
-    textSecondary: "#5a7d6b",
   },
   dark: {
     // Primary green palette (adjusted for dark mode)
@@ -54,7 +53,6 @@ export const Colors = {
     background: "#0f4a30",
     backgroundElement: "#1e7a50",
     backgroundSelected: "#2e9466",
-    textSecondary: "#a8e3c1",
   },
 } as const;
 
@@ -97,3 +95,11 @@ export const Spacing = {
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
 export const MaxContentWidth = 800;
+
+/**
+ * Bottom padding appended below form content so the last field/button isn't
+ * flush against the screen edge. Lifting fields above the on-screen keyboard
+ * is handled natively by react-native-keyboard-controller's
+ * KeyboardAwareScrollView, so no large scroll headroom is needed here.
+ */
+export const KeyboardScrollPadding = 40;

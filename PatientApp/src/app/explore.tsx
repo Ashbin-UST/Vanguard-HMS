@@ -14,6 +14,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BottomTabInset } from "@/constants/theme";
+import { ALERT_TITLES, MESSAGES } from "@/constants/messages";
+import { showError } from "@/utils/alerts";
+import AppointmentForm from "@/components/appointment/AppointmentForm";
+import { useNavGuard } from "@/store/navGuard";
 import {
   cancelAppointment,
   getMyAppointments,
@@ -26,6 +30,24 @@ const STATUS_COLORS: Record<AppointmentStatus, string> = {
   COMPLETED: "#6b7280",
   CANCELED: "#ef4444",
 };
+
+// BOOKED first, CANCELED last; within a status nearest date and time slot on top
+const STATUS_PRIORITY: Record<AppointmentStatus, number> = {
+  BOOKED: 0,
+  COMPLETED: 1,
+  CANCELED: 2,
+};
+
+function sortAppointments(list: Appointment[]) {
+  return [...list].sort(
+    (a, b) =>
+      STATUS_PRIORITY[a.status] - STATUS_PRIORITY[b.status] ||
+      new Date(a.appointmentDate).getTime() - new Date(b.appointmentDate).getTime() ||
+      a.timeSlot.localeCompare(b.timeSlot),
+  );
+}
+
+type TopTab = "book" | "list";
 
 type Filter = "All" | AppointmentStatus;
 const FILTERS: Filter[] = ["All", "BOOKED", "COMPLETED", "CANCELED"];
@@ -51,6 +73,7 @@ function formatApptDate(iso: string) {
 
 export default function AppointmentsScreen() {
   const router = useRouter();
+  const [tab, setTab] = useState<TopTab>("list");
   const [all, setAll] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<Filter>("All");
@@ -60,12 +83,14 @@ export default function AppointmentsScreen() {
   const [reason, setReason] = useState("");
   const [cancelling, setCancelling] = useState(false);
 
+  const confirmLeave = useNavGuard((s) => s.confirmLeave);
+
   const load = useCallback(async () => {
     try {
       const data = await getMyAppointments();
-      setAll(data.appointments);
-    } catch (err: any) {
-      Alert.alert("Error", err.message || "Could not load appointments");
+      setAll(sortAppointments(data.appointments));
+    } catch (err) {
+      showError(err);
     } finally {
       setLoading(false);
     }
@@ -76,6 +101,21 @@ export default function AppointmentsScreen() {
       load();
     }, [load]),
   );
+
+  // Switching away from a dirty booking form prompts via the shared nav guard
+  // (the embedded form publishes its dirty state through useUnsavedChanges).
+  const switchTab = async (next: TopTab) => {
+    if (next === tab) return;
+    if (!(await confirmLeave())) return;
+    setTab(next);
+  };
+
+  // After a successful booking: jump to the list and refresh it. Direct setTab
+  // on purpose — a completed submit must never trigger the unsaved-changes prompt.
+  const handleBooked = useCallback(() => {
+    setTab("list");
+    load();
+  }, [load]);
 
   const counts = useMemo(
     () => ({
@@ -98,7 +138,7 @@ export default function AppointmentsScreen() {
   const confirmCancel = async () => {
     if (!cancelTarget) return;
     if (!reason.trim()) {
-      Alert.alert("Reason required", "Please enter a reason for cancelling.");
+      Alert.alert(ALERT_TITLES.REASON_REQUIRED, MESSAGES.CANCEL_REASON_REQUIRED);
       return;
     }
     setCancelling(true);
@@ -106,8 +146,8 @@ export default function AppointmentsScreen() {
       await cancelAppointment(cancelTarget.appointmentId, reason.trim());
       setCancelTarget(null);
       await load();
-    } catch (err: any) {
-      Alert.alert("Cancel Failed", err.message || "Something went wrong");
+    } catch (err) {
+      showError(err, ALERT_TITLES.CANCEL_FAILED);
     } finally {
       setCancelling(false);
     }
@@ -126,99 +166,127 @@ export default function AppointmentsScreen() {
   };
 
   return (
-    <ScrollView
-      style={styles.scrollView}
-      contentContainerStyle={[styles.container, { paddingBottom: BottomTabInset + 24 }]}
-      showsVerticalScrollIndicator={false}
-    >
-      <SafeAreaView edges={["top"]}>
-        <Text style={styles.screenTitle}>My Appointments</Text>
+    <View style={styles.root}>
+      <SafeAreaView edges={["top"]} style={styles.header}>
+        <Text style={styles.screenTitle}>Appointments</Text>
 
-        {/* Filter pills */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filtersRow}
-        >
-          {FILTERS.map((f) => (
-            <TouchableOpacity
-              key={f}
-              style={[styles.filterPill, activeFilter === f && styles.filterPillActive]}
-              onPress={() => setActiveFilter(f)}
-              activeOpacity={0.75}
-            >
-              <Text
-                style={[
-                  styles.filterPillText,
-                  activeFilter === f && styles.filterPillTextActive,
-                ]}
-              >
-                {f} ({counts[f]})
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {loading ? (
-          <ActivityIndicator color={TEAL} style={{ marginTop: 40 }} />
-        ) : filtered.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Ionicons name="calendar-outline" size={48} color="#d1d5db" />
-            <Text style={styles.emptyText}>No appointments found</Text>
-          </View>
-        ) : (
-          filtered.map((appt) => (
-            <View key={appt.appointmentId} style={styles.apptCard}>
-              <View style={styles.apptRow}>
-                <View style={styles.apptAvatarBox}>
-                  <Text style={styles.apptAvatarText}>
-                    {getInitials(appt.doctor?.name || "Dr")}
-                  </Text>
-                </View>
-                <View style={styles.apptInfo}>
-                  <Text style={styles.apptDoctor}>
-                    Dr. {appt.doctor?.name || appt.doctorEmployeeId}
-                  </Text>
-                  {appt.doctor?.specialization ? (
-                    <Text style={styles.apptSpecialty}>{appt.doctor.specialization}</Text>
-                  ) : null}
-                  <Text style={styles.apptDatetime}>
-                    {formatApptDate(appt.appointmentDate)} · {appt.timeSlot}
-                  </Text>
-                </View>
-                <Text style={[styles.statusBadge, { color: STATUS_COLORS[appt.status] }]}>
-                  {appt.status}
-                </Text>
-              </View>
-
-              {appt.status === "BOOKED" && (
-                <View style={styles.actionRow}>
-                  <TouchableOpacity
-                    style={styles.cancelButton}
-                    activeOpacity={0.8}
-                    onPress={() => openCancel(appt)}
-                  >
-                    <Text style={styles.cancelButtonText}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.rescheduleButton}
-                    activeOpacity={0.8}
-                    onPress={() => reschedule(appt)}
-                  >
-                    <Text style={styles.rescheduleButtonText}>Reschedule</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-
-              {appt.status === "CANCELED" && appt.cancellationReason ? (
-                <Text style={styles.cancelReason}>
-                  Reason: {appt.cancellationReason}
-                </Text>
-              ) : null}
-            </View>
-          ))
-        )}
+        {/* Top-level tabs: book a new appointment / browse existing ones */}
+        <View style={styles.segmentRow}>
+          <TouchableOpacity
+            style={[styles.segment, tab === "book" && styles.segmentActive]}
+            onPress={() => switchTab("book")}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.segmentText, tab === "book" && styles.segmentTextActive]}>
+              Book Appointment
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.segment, tab === "list" && styles.segmentActive]}
+            onPress={() => switchTab("list")}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.segmentText, tab === "list" && styles.segmentTextActive]}>
+              My Appointments
+            </Text>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
+
+      {tab === "book" ? (
+        <AppointmentForm mode="book" embedded onDone={handleBooked} />
+      ) : (
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[styles.container, { paddingBottom: BottomTabInset + 24 }]}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Filter pills */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filtersRow}
+          >
+            {FILTERS.map((f) => (
+              <TouchableOpacity
+                key={f}
+                style={[styles.filterPill, activeFilter === f && styles.filterPillActive]}
+                onPress={() => setActiveFilter(f)}
+                activeOpacity={0.75}
+              >
+                <Text
+                  style={[
+                    styles.filterPillText,
+                    activeFilter === f && styles.filterPillTextActive,
+                  ]}
+                >
+                  {f} ({counts[f]})
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          {loading ? (
+            <ActivityIndicator color={TEAL} style={{ marginTop: 40 }} />
+          ) : filtered.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="calendar-outline" size={48} color="#d1d5db" />
+              <Text style={styles.emptyText}>No appointments found</Text>
+            </View>
+          ) : (
+            filtered.map((appt) => (
+              <View key={appt.appointmentId} style={styles.apptCard}>
+                <View style={styles.apptRow}>
+                  <View style={styles.apptAvatarBox}>
+                    <Text style={styles.apptAvatarText}>
+                      {getInitials(appt.doctor?.name || "Dr")}
+                    </Text>
+                  </View>
+                  <View style={styles.apptInfo}>
+                    <Text style={styles.apptDoctor}>
+                      Dr. {appt.doctor?.name || appt.doctorEmployeeId}
+                    </Text>
+                    {appt.doctor?.specialization ? (
+                      <Text style={styles.apptSpecialty}>{appt.doctor.specialization}</Text>
+                    ) : null}
+                    <Text style={styles.apptDatetime}>
+                      {formatApptDate(appt.appointmentDate)} · {appt.timeSlot}
+                    </Text>
+                  </View>
+                  <Text style={[styles.statusBadge, { color: STATUS_COLORS[appt.status] }]}>
+                    {appt.status}
+                  </Text>
+                </View>
+
+                {appt.status === "BOOKED" && (
+                  <View style={styles.actionRow}>
+                    <TouchableOpacity
+                      style={styles.cancelButton}
+                      activeOpacity={0.8}
+                      onPress={() => openCancel(appt)}
+                    >
+                      <Text style={styles.cancelButtonText}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.rescheduleButton}
+                      activeOpacity={0.8}
+                      onPress={() => reschedule(appt)}
+                    >
+                      <Text style={styles.rescheduleButtonText}>Reschedule</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {appt.status === "CANCELED" && appt.cancellationReason ? (
+                  <Text style={styles.cancelReason}>
+                    Reason: {appt.cancellationReason}
+                  </Text>
+                ) : null}
+              </View>
+            ))
+          )}
+        </ScrollView>
+      )}
 
       {/* Cancellation reason modal */}
       <Modal
@@ -262,11 +330,13 @@ export default function AppointmentsScreen() {
           </View>
         </View>
       </Modal>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: "#fff" },
+  header: { paddingHorizontal: 20, backgroundColor: "#fff" },
   scrollView: { flex: 1, backgroundColor: "#fff" },
   container: { paddingHorizontal: 20, backgroundColor: "#fff" },
   screenTitle: {
@@ -274,8 +344,25 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#1f2937",
     paddingTop: 20,
-    marginBottom: 20,
+    marginBottom: 12,
   },
+
+  segmentRow: {
+    flexDirection: "row",
+    backgroundColor: "#f3f4f6",
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 16,
+  },
+  segment: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 9,
+    alignItems: "center",
+  },
+  segmentActive: { backgroundColor: TEAL },
+  segmentText: { fontSize: 14, fontWeight: "600", color: "#6b7280" },
+  segmentTextActive: { color: "#fff", fontWeight: "700" },
 
   filtersRow: { gap: 10, paddingRight: 4, marginBottom: 20 },
   filterPill: {

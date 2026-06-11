@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Text, TextInput, TextInputProps, TouchableOpacity, View } from "react-native";
 import { styles } from "./textbox.styles";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -8,9 +9,27 @@ interface TextboxProps extends TextInputProps {
   error?: string;
   /** When provided, the whole field becomes a tap target (used for picker fields). */
   onPress?: () => void;
+  /**
+   * Shows an eye button that toggles the value between hidden dots and plain
+   * text. When set, it controls `secureTextEntry` internally — do not also pass
+   * `secureTextEntry`. Intended for password fields, but NOT confirm-password
+   * fields (which should stay hidden with no reveal affordance).
+   */
+  secureToggle?: boolean;
 }
 
-export function Textbox({ label, icon, error, onPress, ...props }: TextboxProps) {
+export function Textbox({
+  label,
+  icon,
+  error,
+  onPress,
+  secureToggle,
+  secureTextEntry,
+  ...props
+}: TextboxProps) {
+  const [hidden, setHidden] = useState(true);
+  const isSecure = secureToggle ? hidden : secureTextEntry;
+
   const inner = (
     <>
       <Text style={styles.label}>{label}</Text>
@@ -19,8 +38,23 @@ export function Textbox({ label, icon, error, onPress, ...props }: TextboxProps)
         <TextInput
           style={styles.input}
           placeholderTextColor="#8a8a8a"
+          secureTextEntry={isSecure}
           {...props}
         />
+        {secureToggle ? (
+          <TouchableOpacity
+            onPress={() => setHidden((h) => !h)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel={hidden ? "Show password" : "Hide password"}
+          >
+            <Ionicons
+              name={hidden ? "eye-off-outline" : "eye-outline"}
+              size={20}
+              style={styles.eyeIcon}
+            />
+          </TouchableOpacity>
+        ) : null}
       </View>
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
     </>

@@ -1,19 +1,22 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { ALERT_TITLES, MESSAGES } from "@/constants/messages";
+import { errorMessage, showError, showSuccess } from "@/utils/alerts";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthStore } from "@/store/AuthStore";
-import { BottomTabInset } from "@/constants/theme";
+import { BottomTabInset, KeyboardScrollPadding } from "@/constants/theme";
+import { useGuardedRouter } from "@/hooks/useGuardedRouter";
+import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import { getMyProfile, updateMyProfile } from "@/services/patientService";
 import type { Patient } from "@/services/types";
 
@@ -31,6 +34,15 @@ function getInitials(name: string) {
 const ProfileScreen = () => {
   const { logout } = useAuthStore();
   const router = useRouter();
+  const guarded = useGuardedRouter();
+
+  // Clear auth state, then redirect to the login page. Done in the tap handler
+  // (raw router, same call stack as the press) so it fires reliably rather than
+  // relying solely on a layout-level reaction to the auth flag.
+  const handleLogout = async () => {
+    await logout();
+    router.replace("/login");
+  };
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +64,19 @@ const ProfileScreen = () => {
   const [relationship, setRelationship] = useState("");
   const [contactNumber, setContactNumber] = useState("");
 
+  // Snapshot of the editable fields as last loaded/saved, for dirty detection.
+  const initialRef = useRef({
+    email: "",
+    phone: "",
+    houseName: "",
+    houseNumber: "",
+    city: "",
+    postCode: "",
+    contactName: "",
+    relationship: "",
+    contactNumber: "",
+  });
+
   const hydrate = (p: Patient) => {
     setName(p.name || "");
     setGender(p.gender || "");
@@ -66,6 +91,17 @@ const ProfileScreen = () => {
     setContactName(p.emergencyContact?.contactName || "");
     setRelationship(p.emergencyContact?.relationship || "");
     setContactNumber(p.emergencyContact?.contactNumber || "");
+    initialRef.current = {
+      email: p.email || "",
+      phone: p.phone || "",
+      houseName: p.address?.houseName || "",
+      houseNumber: p.address?.houseNumber || "",
+      city: p.address?.city || "",
+      postCode: p.address?.postCode || "",
+      contactName: p.emergencyContact?.contactName || "",
+      relationship: p.emergencyContact?.relationship || "",
+      contactNumber: p.emergencyContact?.contactNumber || "",
+    };
   };
 
   useEffect(() => {
@@ -73,8 +109,8 @@ const ProfileScreen = () => {
       try {
         const data = await getMyProfile();
         hydrate(data.patient);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        setError(errorMessage(err));
       } finally {
         setLoading(false);
       }
@@ -100,13 +136,27 @@ const ProfileScreen = () => {
         },
       });
       hydrate(data.patient);
-      Alert.alert("Saved", "Your profile has been updated.");
-    } catch (err: any) {
-      Alert.alert("Update Failed", err.message || "Something went wrong");
+      showSuccess(MESSAGES.PROFILE_UPDATED, ALERT_TITLES.SAVED);
+    } catch (err) {
+      showError(err, ALERT_TITLES.UPDATE_FAILED);
     } finally {
       setSaving(false);
     }
   };
+
+  // Dirty when any editable field differs from the last loaded/saved snapshot.
+  const init = initialRef.current;
+  const isDirty =
+    email !== init.email ||
+    phone !== init.phone ||
+    houseName !== init.houseName ||
+    houseNumber !== init.houseNumber ||
+    city !== init.city ||
+    postCode !== init.postCode ||
+    contactName !== init.contactName ||
+    relationship !== init.relationship ||
+    contactNumber !== init.contactNumber;
+  useUnsavedChanges(isDirty);
 
   if (loading) {
     return (
@@ -120,7 +170,7 @@ const ProfileScreen = () => {
     return (
       <View style={styles.centered}>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Ionicons name="log-out-outline" size={20} color="#ef4444" />
           <Text style={styles.logoutText}>Log out</Text>
         </TouchableOpacity>
@@ -129,11 +179,15 @@ const ProfileScreen = () => {
   }
 
   return (
-    <ScrollView
+    <KeyboardAwareScrollView
       style={styles.scrollView}
-      contentContainerStyle={[styles.container, { paddingBottom: BottomTabInset + 24 }]}
+      contentContainerStyle={[
+        styles.container,
+        { paddingBottom: BottomTabInset + KeyboardScrollPadding },
+      ]}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
+      bottomOffset={24}
     >
       <SafeAreaView edges={["top"]}>
         {/* Header */}
@@ -186,14 +240,9 @@ const ProfileScreen = () => {
 
           <Text style={styles.subHeading}>Emergency contact</Text>
           <Field label="Contact name" value={contactName} onChange={setContactName} />
-          <View style={styles.halfRow}>
-            <View style={styles.halfField}>
-              <Field label="Relationship" value={relationship} onChange={setRelationship} />
-            </View>
-            <View style={styles.halfField}>
-              <Field label="Contact number" value={contactNumber} onChange={setContactNumber} keyboardType="phone-pad" />
-            </View>
-          </View>
+          <Field label="Relationship" value={relationship} onChange={setRelationship} />
+          {/* Contact number — full width so all digits stay visible */}
+          <Field label="Contact number" value={contactNumber} onChange={setContactNumber} keyboardType="phone-pad" />
         </View>
 
         {/* Save */}
@@ -210,19 +259,19 @@ const ProfileScreen = () => {
         <TouchableOpacity
           style={styles.secondaryButton}
           activeOpacity={0.8}
-          onPress={() => router.push("/change-password")}
+          onPress={() => guarded.push("/change-password")}
         >
           <Ionicons name="lock-closed-outline" size={18} color={TEAL} />
           <Text style={styles.secondaryButtonText}>Change password</Text>
         </TouchableOpacity>
 
         {/* Logout */}
-        <TouchableOpacity style={styles.logoutButton} onPress={logout} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.8}>
           <Ionicons name="log-out-outline" size={20} color="#ef4444" />
           <Text style={styles.logoutText}>Log out</Text>
         </TouchableOpacity>
       </SafeAreaView>
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 };
 

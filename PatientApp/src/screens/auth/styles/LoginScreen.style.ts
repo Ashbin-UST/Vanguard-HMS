@@ -9,7 +9,7 @@ export const styles = StyleSheet.create({
     flexGrow: 1,
     backgroundColor: "#fff",
     paddingHorizontal: 24,
-    paddingBottom: 48,
+    paddingBottom: 140,
   },
   brandSection: {
     paddingTop: 80,
@@ -54,6 +54,9 @@ export const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: "center",
     marginBottom: 20,
+  },
+  primaryButtonDisabled: {
+    opacity: 0.6,
   },
   primaryButtonText: {
     color: "#fff",

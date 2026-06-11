@@ -1,4 +1,5 @@
 import { useAuthStore } from "@/store/AuthStore";
+import { useGuardedRouter } from "@/hooks/useGuardedRouter";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Slot, usePathname, useRouter } from "expo-router";
 import { useEffect } from "react";
@@ -14,6 +15,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const TEAL = "#2e9466";
 
 const AUTH_TABS = [
+  {
+    name: "index",
+    label: "Home",
+    icon: "home-outline" as const,
+    activeIcon: "home" as const,
+    href: "/",
+  },
   {
     name: "login",
     label: "Login",
@@ -54,14 +62,28 @@ const APP_TABS = [
   },
 ];
 
+const PROTECTED_PREFIXES = ["/profile", "/explore"];
+
 export default function AppTabs() {
   const { isLoggedIn, checkLoginStatus } = useAuthStore();
+  const guarded = useGuardedRouter();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
     checkLoginStatus();
   }, [checkLoginStatus]);
+
+  // When the user logs out while on a protected route (e.g. via the Profile
+  // "Log out" button), send them straight to the login page. The bottom tab bar
+  // already reacts to `isLoggedIn`, but the routed content needs an explicit
+  // redirect. Uses the raw router so the unsaved-changes guard never blocks it.
+  useEffect(() => {
+    const onProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
+    if (!isLoggedIn && onProtected) {
+      router.replace("/login");
+    }
+  }, [isLoggedIn, pathname, router]);
 
   const tabs = isLoggedIn ? APP_TABS : AUTH_TABS;
 
@@ -82,7 +104,9 @@ export default function AppTabs() {
             <TouchableOpacity
               key={tab.name}
               style={styles.tabItem}
-              onPress={() => router.replace(tab.href as any)}
+              onPress={() => {
+                if (!isActive) guarded.replace(tab.href as any);
+              }}
               activeOpacity={0.8}
             >
               <View

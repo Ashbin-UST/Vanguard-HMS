@@ -1,10 +1,9 @@
-import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
+import DateTimePicker, { DateTimePickerChangeEvent } from "@react-native-community/datetimepicker";
 import { Textbox } from "@/components/common/textbox";
 import { registerPatient } from "@/services/authService";
 import { useIsFocused, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-  Alert,
   Animated,
   Modal,
   Platform,
@@ -12,7 +11,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import { ALERT_TITLES, MESSAGES } from "@/constants/messages";
+import { showError, showSuccess } from "@/utils/alerts";
+import { useGuardedRouter } from "@/hooks/useGuardedRouter";
+import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import { styles } from "./styles/RegisterScreen.style";
 
 type Gender = "Male" | "Female";
@@ -30,7 +33,7 @@ const PASSWORD_RULES = [
 ];
 
 const ALL_FIELDS = [
-  "name", "dob", "phone", "email", "password", "gender",
+  "name", "dob", "phone", "email", "password", "confirmPassword", "gender",
   "houseName", "houseNumber", "city", "postCode",
   "contactName", "relationship", "contactNumber",
 ] as const;
@@ -69,6 +72,7 @@ const RegisterScreen = () => {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const [houseName, setHouseName] = useState("");
   const [houseNumber, setHouseNumber] = useState("");
@@ -83,7 +87,15 @@ const RegisterScreen = () => {
   const [submitting, setSubmitting] = useState(false);
 
   const router = useRouter();
+  const guarded = useGuardedRouter();
   const isFocused = useIsFocused();
+
+  // Dirty when any field holds input; guards accidental navigation away.
+  const isDirty =
+    !!(name || dob || phone || email || password || confirmPassword ||
+      houseName || houseNumber || city || postCode ||
+      contactName || relationship || contactNumber) || gender !== "";
+  useUnsavedChanges(isDirty);
 
   const slideAnim = useRef(new Animated.Value(30)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
@@ -104,14 +116,19 @@ const RegisterScreen = () => {
   const touch = (field: Field) =>
     setTouched((prev) => ({ ...prev, [field]: true }));
 
-  const onDobChange = (_: DateTimePickerEvent, selected?: Date) => {
+  const onDobValueChange = (_: DateTimePickerChangeEvent, selected: Date) => {
     if (Platform.OS === "android") {
       setShowDobPicker(false);
       touch("dob");
     }
-    if (selected) {
-      setDobPickerDate(selected);
-      setDob(formatDate(selected));
+    setDobPickerDate(selected);
+    setDob(formatDate(selected));
+  };
+
+  const onDobDismiss = () => {
+    if (Platform.OS === "android") {
+      setShowDobPicker(false);
+      touch("dob");
     }
   };
 
@@ -126,7 +143,7 @@ const RegisterScreen = () => {
     if (!isRealDate(dob)) return "Enter a valid calendar date";
     const [y, m, d] = dob.split("-").map(Number);
     const dobLocal = new Date(y, m - 1, d);
-    if (dobLocal >= MAX_DOB) return "Date of birth cannot be a future date";
+    if (dobLocal > MAX_DOB) return "Date of birth cannot be a future date";
     return undefined;
   })();
 
@@ -148,6 +165,11 @@ const RegisterScreen = () => {
       ? "Enter a valid email address"
       : undefined,
     password: passwordError,
+    confirmPassword: !confirmPassword
+      ? "Required"
+      : confirmPassword !== password
+      ? "Passwords do not match"
+      : undefined,
     gender: !gender ? "Please select a gender" : undefined,
     houseName: !houseName.trim() ? "Required" : undefined,
     houseNumber: !houseNumber.trim() ? "Required" : undefined,
@@ -177,6 +199,7 @@ const RegisterScreen = () => {
         phone: phone.trim(),
         email: email.trim(),
         password,
+        confirmPassword,
         gender: gender as Gender,
         dob,
         address: {
@@ -191,10 +214,10 @@ const RegisterScreen = () => {
           contactNumber: contactNumber.trim(),
         },
       });
-      Alert.alert("Registered", "Your account has been created. You can now log in.");
+      showSuccess(MESSAGES.REGISTER_SUCCESS, ALERT_TITLES.REGISTERED);
       router.replace("/login");
-    } catch (e: any) {
-      Alert.alert("Registration Failed", e.message || "Something went wrong");
+    } catch (e) {
+      showError(e, ALERT_TITLES.REGISTRATION_FAILED);
     } finally {
       setSubmitting(false);
     }
@@ -206,8 +229,7 @@ const RegisterScreen = () => {
         style={styles.scrollView}
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
-        enableOnAndroid
-        extraScrollHeight={20}
+        bottomOffset={24}
       >
         <View style={styles.brandSection}>
           <Text style={styles.appName}>MediCare+</Text>
@@ -297,8 +319,19 @@ const RegisterScreen = () => {
             icon="lock-closed-outline"
             onChangeText={setPassword}
             onBlur={() => touch("password")}
-            secureTextEntry
+            secureToggle
             error={err("password")}
+          />
+
+          <Textbox
+            label="Confirm password"
+            placeholder="Re-enter your password"
+            value={confirmPassword}
+            icon="lock-closed-outline"
+            onChangeText={setConfirmPassword}
+            onBlur={() => touch("confirmPassword")}
+            secureTextEntry
+            error={err("confirmPassword")}
           />
 
           <Text style={styles.sectionLabel}>Address</Text>
@@ -365,31 +398,27 @@ const RegisterScreen = () => {
             error={err("contactName")}
           />
 
-          <View style={styles.halfRow}>
-            <View style={styles.halfField}>
-              <Textbox
-                label="Relationship"
-                placeholder="Sister"
-                value={relationship}
-                icon="people-outline"
-                onChangeText={setRelationship}
-                onBlur={() => touch("relationship")}
-                error={err("relationship")}
-              />
-            </View>
-            <View style={styles.halfField}>
-              <Textbox
-                label="Contact number"
-                placeholder="9876543210"
-                value={contactNumber}
-                icon="call-outline"
-                onChangeText={setContactNumber}
-                onBlur={() => touch("contactNumber")}
-                keyboardType="phone-pad"
-                error={err("contactNumber")}
-              />
-            </View>
-          </View>
+          <Textbox
+            label="Relationship"
+            placeholder="Sister"
+            value={relationship}
+            icon="people-outline"
+            onChangeText={setRelationship}
+            onBlur={() => touch("relationship")}
+            error={err("relationship")}
+          />
+
+          {/* Contact number — full width so all digits stay visible */}
+          <Textbox
+            label="Contact number"
+            placeholder="9876543210"
+            value={contactNumber}
+            icon="call-outline"
+            onChangeText={setContactNumber}
+            onBlur={() => touch("contactNumber")}
+            keyboardType="phone-pad"
+            error={err("contactNumber")}
+          />
 
           <TouchableOpacity
             style={[styles.primaryButton, submitting && styles.primaryButtonDisabled]}
@@ -404,7 +433,7 @@ const RegisterScreen = () => {
 
           <View style={styles.footerContainer}>
             <Text style={styles.footerText}>Already have an account?</Text>
-            <TouchableOpacity onPress={() => router.push("/login")}>
+            <TouchableOpacity onPress={() => guarded.push("/login")}>
               <Text style={styles.footerLink}>Sign in</Text>
             </TouchableOpacity>
           </View>
@@ -419,7 +448,8 @@ const RegisterScreen = () => {
           display="default"
           maximumDate={MAX_DOB}
           minimumDate={MIN_DOB}
-          onChange={onDobChange}
+          onValueChange={onDobValueChange}
+          onDismiss={onDobDismiss}
         />
       )}
 
@@ -445,7 +475,8 @@ const RegisterScreen = () => {
                 display="spinner"
                 maximumDate={MAX_DOB}
                 minimumDate={MIN_DOB}
-                onChange={onDobChange}
+                onValueChange={onDobValueChange}
+                onDismiss={onDobDismiss}
                 style={{ width: "100%" }}
               />
             </View>

@@ -24,6 +24,10 @@ export const styles = StyleSheet.create({
     marginRight: 10,
     color: "#8a8a8a",
   },
+  eyeIcon: {
+    marginLeft: 10,
+    color: "#8a8a8a",
+  },
   input: {
     flex: 1,
     minHeight: 48,

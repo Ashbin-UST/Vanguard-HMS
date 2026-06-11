@@ -3,13 +3,14 @@ import { loginPatient } from "@/services/authService";
 import { useIsFocused, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-  Alert,
   Animated,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import { ALERT_TITLES } from "@/constants/messages";
+import { showError } from "@/utils/alerts";
 import { useAuthStore } from "../../store/AuthStore";
 import { styles } from "./styles/LoginScreen.style";
 
@@ -61,8 +62,8 @@ const LoginScreen = () => {
       const data = await loginPatient(email.trim(), password);
       await login(data.token);
       router.replace("/");
-    } catch (err: any) {
-      Alert.alert("Login Failed", err.message || "Something went wrong");
+    } catch (err) {
+      showError(err, ALERT_TITLES.LOGIN_FAILED);
     } finally {
       setSubmitting(false);
     }
@@ -73,8 +74,7 @@ const LoginScreen = () => {
       style={styles.scrollView}
       contentContainerStyle={styles.container}
       keyboardShouldPersistTaps="handled"
-      enableOnAndroid
-      extraScrollHeight={20}
+      bottomOffset={24}
     >
       <View style={styles.brandSection}>
         <Text style={styles.appName}>MediCare+</Text>
@@ -110,7 +110,7 @@ const LoginScreen = () => {
             icon="lock-closed-outline"
             onChangeText={setPassword}
             onBlur={() => touch("password")}
-            secureTextEntry
+            secureToggle
             error={touched.password ? errors.password : undefined}
           />
         </View>
@@ -123,7 +123,7 @@ const LoginScreen = () => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.primaryButton}
+          style={[styles.primaryButton, submitting && styles.primaryButtonDisabled]}
           onPress={handleLogin}
           activeOpacity={0.85}
           disabled={submitting}

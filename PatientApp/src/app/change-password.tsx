@@ -4,12 +4,13 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-  Alert,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import { ALERT_TITLES, MESSAGES } from "@/constants/messages";
+import { showError, showSuccess } from "@/utils/alerts";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { pwStyles as styles } from "@/styles/password.style";
 
@@ -55,18 +56,18 @@ export default function ChangePassword() {
     setSubmitting(true);
     try {
       await changePassword(currentPassword, newPassword, confirmPassword);
-      Alert.alert("Success", "Your password has been changed.", [
+      showSuccess(MESSAGES.PASSWORD_CHANGED, ALERT_TITLES.SUCCESS, [
         { text: "OK", onPress: () => router.back() },
       ]);
-    } catch (err: any) {
-      Alert.alert("Change Failed", err.message || "Something went wrong");
+    } catch (err) {
+      showError(err, ALERT_TITLES.CHANGE_FAILED);
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <KeyboardAwareScrollView style={styles.scrollView} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled" enableOnAndroid extraScrollHeight={20}>
+    <KeyboardAwareScrollView style={styles.scrollView} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled" bottomOffset={24}>
       <SafeAreaView edges={["top"]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={24} color="#1f2937" />
@@ -85,7 +86,7 @@ export default function ChangePassword() {
             onChangeText={setCurrentPassword}
             onBlur={() => touch("currentPassword")}
             icon="lock-closed-outline"
-            secureTextEntry
+            secureToggle
             error={touched.currentPassword ? errors.currentPassword : undefined}
           />
           <Textbox
@@ -95,7 +96,7 @@ export default function ChangePassword() {
             onChangeText={setNewPassword}
             onBlur={() => touch("newPassword")}
             icon="lock-closed-outline"
-            secureTextEntry
+            secureToggle
             error={touched.newPassword ? errors.newPassword : undefined}
           />
           <Textbox

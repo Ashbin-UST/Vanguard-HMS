@@ -74,6 +74,7 @@ export type RegisterPayload = {
   phone: string;
   email: string;
   password: string;
+  confirmPassword: string;
   gender: "Male" | "Female";
   dob: string;
   address: Address;

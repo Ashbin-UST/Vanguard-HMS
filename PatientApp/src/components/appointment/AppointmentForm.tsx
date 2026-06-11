@@ -1,18 +1,24 @@
+import DateTimePicker, { DateTimePickerChangeEvent } from "@react-native-community/datetimepicker";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
+  Modal,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { ALERT_TITLES, MESSAGES } from "@/constants/messages";
+import { showError, showSuccess } from "@/utils/alerts";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { BottomTabInset } from "@/constants/theme";
+import { BottomTabInset, KeyboardScrollPadding } from "@/constants/theme";
+import { useGuardedRouter } from "@/hooks/useGuardedRouter";
+import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import {
   bookAppointment,
   getBookedSlots,
@@ -33,6 +39,9 @@ const WEEKDAYS = [
   "SATURDAY",
 ] as const;
 
+// Slot length in minutes — kept consistent with the Angular web app.
+const SLOT_MINUTES = 30;
+
 const pad = (n: number) => String(n).padStart(2, "0");
 const toMinutes = (hhmm: string) => {
   const [h, m] = hhmm.split(":").map(Number);
@@ -40,12 +49,12 @@ const toMinutes = (hhmm: string) => {
 };
 const fromMinutes = (mins: number) => `${pad(Math.floor(mins / 60))}:${pad(mins % 60)}`;
 
-function buildHourlySlots(startTime: string, endTime: string) {
+function buildSlots(startTime: string, endTime: string) {
   const start = toMinutes(startTime);
   const end = toMinutes(endTime);
   const slots: string[] = [];
-  for (let t = start; t + 60 <= end; t += 60) {
-    slots.push(`${fromMinutes(t)}-${fromMinutes(t + 60)}`);
+  for (let t = start; t + SLOT_MINUTES <= end; t += SLOT_MINUTES) {
+    slots.push(`${fromMinutes(t)}-${fromMinutes(t + SLOT_MINUTES)}`);
   }
   return slots;
 }
@@ -65,12 +74,37 @@ function isRealDate(dateStr: string): boolean {
   return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
 }
 
+function formatDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+// Booking window: today through 6 months ahead.
+const MIN_DATE = new Date();
+MIN_DATE.setHours(0, 0, 0, 0);
+
+const MAX_DATE = new Date();
+MAX_DATE.setHours(0, 0, 0, 0);
+MAX_DATE.setMonth(MAX_DATE.getMonth() + 6);
+
+function isBeyondMax(dateStr: string): boolean {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d).getTime() > MAX_DATE.getTime();
+}
+
 export type AppointmentFormProps = {
   mode: "book" | "edit";
   appointmentId?: string;
   initialDoctorCode?: string;
   initialDate?: string;
   initialTimeSlot?: string;
+  // Rendered inside another screen (e.g. the Appointments tab): no top safe
+  // area inset and no header/back button — the host screen provides those.
+  embedded?: boolean;
+  // Called after a successful submit instead of router.replace("/explore").
+  onDone?: () => void;
 };
 
 export default function AppointmentForm({
@@ -79,14 +113,20 @@ export default function AppointmentForm({
   initialDoctorCode,
   initialDate,
   initialTimeSlot,
+  embedded = false,
+  onDone,
 }: AppointmentFormProps) {
   const router = useRouter();
+  const guarded = useGuardedRouter();
 
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loadingDoctors, setLoadingDoctors] = useState(true);
   const [doctorOpen, setDoctorOpen] = useState(false);
+  const [doctorSearch, setDoctorSearch] = useState("");
   const [doctorCode, setDoctorCode] = useState(initialDoctorCode ?? "");
   const [date, setDate] = useState(initialDate ?? "");
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [datePickerDate, setDatePickerDate] = useState<Date>(() => new Date());
   const [selectedSlot, setSelectedSlot] = useState(initialTimeSlot ?? "");
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -95,13 +135,22 @@ export default function AppointmentForm({
   const touch = (field: keyof typeof touched) =>
     setTouched((prev) => ({ ...prev, [field]: true }));
 
+  // Dirty when the selection has moved away from its initial state.
+  const isDirty =
+    mode === "book"
+      ? Boolean(doctorCode || date || selectedSlot)
+      : doctorCode !== (initialDoctorCode ?? "") ||
+        date !== (initialDate ?? "") ||
+        selectedSlot !== (initialTimeSlot ?? "");
+  useUnsavedChanges(isDirty);
+
   useEffect(() => {
     (async () => {
       try {
         const data = await getDoctors();
         setDoctors(data.doctors);
-      } catch (err: any) {
-        Alert.alert("Error", err.message || "Could not load doctors");
+      } catch (err) {
+        showError(err);
       } finally {
         setLoadingDoctors(false);
       }
@@ -120,8 +169,27 @@ export default function AppointmentForm({
     const windows = (selectedDoctor.availabilitySlots ?? []).filter(
       (w) => w.day === weekday,
     );
-    return windows.flatMap((w) => buildHourlySlots(w.startTime, w.endTime));
+    const slots = windows.flatMap((w) => buildSlots(w.startTime, w.endTime));
+    // Hide slots whose start time already passed when booking for today
+    // (mirrors the web app; the backend rejects them with 409). A passed
+    // initialTimeSlot is intentionally hidden too — saving it would 409 anyway.
+    const now = new Date();
+    if (date !== formatDate(now)) return slots;
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    return slots.filter((slot) => toMinutes(slot.slice(0, 5)) > nowMinutes);
   }, [selectedDoctor, date]);
+
+  // Hide slots already booked by others; keep the slot being edited (RN does not
+  // pass excludeAppointmentId, so the current appointment's own slot would show
+  // as booked otherwise). Cancelled appointments are excluded server-side, so a
+  // freed slot reappears here automatically.
+  const availableSlots = useMemo(
+    () =>
+      candidateSlots.filter(
+        (slot) => !bookedSlots.includes(slot) || slot === initialTimeSlot,
+      ),
+    [candidateSlots, bookedSlots, initialTimeSlot],
+  );
 
   useEffect(() => {
     if (!doctorCode || !DATE_REGEX.test(date)) {
@@ -142,10 +210,49 @@ export default function AppointmentForm({
     };
   }, [doctorCode, date]);
 
+  // Filter doctors by name, specialization, or department for the dropdown search.
+  const filteredDoctors = useMemo(() => {
+    const q = doctorSearch.trim().toLowerCase();
+    if (!q) return doctors;
+    return doctors.filter((d) =>
+      [d.name, d.specialization, d.department]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(q),
+    );
+  }, [doctors, doctorSearch]);
+
   const onSelectDoctor = (code: string) => {
     setDoctorCode(code);
     setDoctorOpen(false);
+    setDoctorSearch("");
     if (code !== initialDoctorCode) setSelectedSlot("");
+  };
+
+  // Collapsing the dropdown without a selection counts as leaving the field, so
+  // the "required" error surfaces. Called from every other control on the form.
+  const blurDoctor = () => {
+    if (doctorOpen) {
+      setDoctorOpen(false);
+      touch("doctor");
+    }
+  };
+
+  const onDateValueChange = (_: DateTimePickerChangeEvent, selected: Date) => {
+    if (Platform.OS === "android") {
+      setShowDatePicker(false);
+      touch("date");
+    }
+    setDatePickerDate(selected);
+    setDate(formatDate(selected));
+  };
+
+  const onDatePickerDismiss = () => {
+    if (Platform.OS === "android") {
+      setShowDatePicker(false);
+      touch("date");
+    }
   };
 
   const errors = {
@@ -156,13 +263,16 @@ export default function AppointmentForm({
       ? "Use YYYY-MM-DD format"
       : !isRealDate(date)
       ? "Enter a valid calendar date"
+      : isBeyondMax(date)
+      ? "Appointments can only be booked up to 6 months in advance"
       : undefined,
-    timeSlot: candidateSlots.length > 0 && !selectedSlot
+    timeSlot: availableSlots.length > 0 && !selectedSlot
       ? "Please select a time slot"
       : undefined,
   };
 
   const handleSubmit = async () => {
+    blurDoctor();
     setTouched({ doctor: true, date: true, timeSlot: true });
     if (Object.values(errors).some(Boolean)) return;
 
@@ -170,16 +280,20 @@ export default function AppointmentForm({
     try {
       if (mode === "book") {
         await bookAppointment(doctorCode, date, selectedSlot);
-        Alert.alert("Booked", "Your appointment has been booked.");
+        showSuccess(MESSAGES.APPOINTMENT_BOOKED, ALERT_TITLES.BOOKED);
       } else {
         await updateAppointment(appointmentId!, doctorCode, date, selectedSlot);
-        Alert.alert("Updated", "Your appointment has been updated.");
+        showSuccess(MESSAGES.APPOINTMENT_UPDATED, ALERT_TITLES.UPDATED);
       }
-      router.replace("/explore");
-    } catch (err: any) {
-      Alert.alert(
-        mode === "book" ? "Booking Failed" : "Update Failed",
-        err.message || "Something went wrong",
+      if (onDone) {
+        onDone();
+      } else {
+        router.replace("/explore");
+      }
+    } catch (err) {
+      showError(
+        err,
+        mode === "book" ? ALERT_TITLES.BOOKING_FAILED : ALERT_TITLES.UPDATE_FAILED,
       );
     } finally {
       setSubmitting(false);
@@ -197,21 +311,32 @@ export default function AppointmentForm({
   return (
     <KeyboardAwareScrollView
       style={styles.scrollView}
-      contentContainerStyle={[styles.container, { paddingBottom: BottomTabInset + 24 }]}
+      contentContainerStyle={[
+        styles.container,
+        embedded && styles.containerEmbedded,
+        { paddingBottom: BottomTabInset + KeyboardScrollPadding },
+      ]}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
-      enableOnAndroid
-      extraScrollHeight={20}
+      bottomOffset={24}
     >
-      <SafeAreaView edges={["top"]}>
-        <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="chevron-back" size={24} color="#1f2937" />
-          </TouchableOpacity>
-          <Text style={styles.title}>
-            {mode === "book" ? "Book appointment" : "Reschedule appointment"}
-          </Text>
-        </View>
+      <SafeAreaView edges={embedded ? [] : ["top"]}>
+        {!embedded && (
+          <View style={styles.headerRow}>
+            <TouchableOpacity
+              onPress={() => {
+                blurDoctor();
+                guarded.back();
+              }}
+              style={styles.backBtn}
+            >
+              <Ionicons name="chevron-back" size={24} color="#1f2937" />
+            </TouchableOpacity>
+            <Text style={styles.title}>
+              {mode === "book" ? "Book appointment" : "Reschedule appointment"}
+            </Text>
+          </View>
+        )}
 
         {/* Doctor picker */}
         <Text style={styles.fieldLabel}>Doctor</Text>
@@ -221,7 +346,9 @@ export default function AppointmentForm({
             touched.doctor && errors.doctor ? styles.dropdownTriggerError : undefined,
           ]}
           onPress={() => {
-            touch("doctor");
+            // Mark touched only when closing the dropdown (leaving the field),
+            // so the "required" error doesn't flash the moment it's opened.
+            if (doctorOpen) touch("doctor");
             setDoctorOpen(!doctorOpen);
           }}
           activeOpacity={0.8}
@@ -241,10 +368,22 @@ export default function AppointmentForm({
 
         {doctorOpen && (
           <View style={styles.dropdownList}>
-            {doctors.length === 0 ? (
-              <Text style={styles.dropdownEmpty}>No doctors available</Text>
+            <View style={styles.dropdownSearch}>
+              <Ionicons name="search-outline" size={16} color="#9ca3af" />
+              <TextInput
+                style={styles.dropdownSearchInput}
+                value={doctorSearch}
+                onChangeText={setDoctorSearch}
+                placeholder="Search by name or specialization..."
+                placeholderTextColor="#9ca3af"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+            {filteredDoctors.length === 0 ? (
+              <Text style={styles.dropdownEmpty}>No results found</Text>
             ) : (
-              doctors.map((d) => (
+              filteredDoctors.map((d) => (
                 <TouchableOpacity
                   key={d.employeeCode}
                   style={styles.dropdownItem}
@@ -260,17 +399,28 @@ export default function AppointmentForm({
           </View>
         )}
 
-        {/* Date */}
+        {/* Date — tapping opens the native date picker */}
         <Text style={[styles.fieldLabel, { marginTop: 18 }]}>Date</Text>
-        <TextInput
-          style={[styles.input, touched.date && errors.date ? styles.inputError : undefined]}
-          value={date}
-          onChangeText={setDate}
-          onBlur={() => touch("date")}
-          placeholder="YYYY-MM-DD"
-          placeholderTextColor="#9ca3af"
-          autoCapitalize="none"
-        />
+        <TouchableOpacity
+          style={[
+            styles.dropdownTrigger,
+            touched.date && errors.date ? styles.dropdownTriggerError : undefined,
+          ]}
+          onPress={() => {
+            blurDoctor();
+            if (date && isRealDate(date)) {
+              const [y, m, d] = date.split("-").map(Number);
+              setDatePickerDate(new Date(y, m - 1, d));
+            }
+            setShowDatePicker(true);
+          }}
+          activeOpacity={0.8}
+        >
+          <Text style={date ? styles.dropdownValue : styles.dropdownPlaceholder}>
+            {date || "Select a date"}
+          </Text>
+          <Ionicons name="calendar-outline" size={18} color="#6b7280" />
+        </TouchableOpacity>
         {touched.date && errors.date ? (
           <Text style={styles.errorText}>{errors.date}</Text>
         ) : null}
@@ -283,34 +433,26 @@ export default function AppointmentForm({
           <Text style={styles.hint}>
             Dr. {selectedDoctor.name} is not available on this day. Try another date.
           </Text>
+        ) : availableSlots.length === 0 ? (
+          <Text style={styles.hint}>
+            All slots for this day are booked. Try another date.
+          </Text>
         ) : (
           <>
             <View style={styles.slotsWrap}>
-              {candidateSlots.map((slot) => {
-                const isBooked = bookedSlots.includes(slot) && slot !== initialTimeSlot;
+              {availableSlots.map((slot) => {
                 const isActive = selectedSlot === slot;
                 return (
                   <TouchableOpacity
                     key={slot}
-                    style={[
-                      styles.slot,
-                      isActive && styles.slotActive,
-                      isBooked && styles.slotBooked,
-                    ]}
-                    disabled={isBooked}
+                    style={[styles.slot, isActive && styles.slotActive]}
                     onPress={() => {
                       setSelectedSlot(slot);
                       touch("timeSlot");
                     }}
                     activeOpacity={0.8}
                   >
-                    <Text
-                      style={[
-                        styles.slotText,
-                        isActive && styles.slotTextActive,
-                        isBooked && styles.slotTextBooked,
-                      ]}
-                    >
+                    <Text style={[styles.slotText, isActive && styles.slotTextActive]}>
                       {slot}
                     </Text>
                   </TouchableOpacity>
@@ -337,6 +479,50 @@ export default function AppointmentForm({
                 : "Save changes"}
           </Text>
         </TouchableOpacity>
+
+        {/* Android: DateTimePicker renders as a native dialog */}
+        {Platform.OS === "android" && showDatePicker && (
+          <DateTimePicker
+            value={datePickerDate}
+            mode="date"
+            display="default"
+            minimumDate={MIN_DATE}
+            maximumDate={MAX_DATE}
+            onValueChange={onDateValueChange}
+            onDismiss={onDatePickerDismiss}
+          />
+        )}
+
+        {/* iOS: DateTimePicker shown in a bottom-sheet modal */}
+        {Platform.OS === "ios" && (
+          <Modal visible={showDatePicker} transparent animationType="slide">
+            <View style={styles.pickerOverlay}>
+              <View style={styles.pickerSheet}>
+                <View style={styles.pickerHeader}>
+                  <Text style={styles.pickerTitle}>Appointment date</Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setShowDatePicker(false);
+                      touch("date");
+                    }}
+                  >
+                    <Text style={styles.pickerDone}>Done</Text>
+                  </TouchableOpacity>
+                </View>
+                <DateTimePicker
+                  value={datePickerDate}
+                  mode="date"
+                  display="spinner"
+                  minimumDate={MIN_DATE}
+                  maximumDate={MAX_DATE}
+                  onValueChange={onDateValueChange}
+                  onDismiss={onDatePickerDismiss}
+                  style={{ width: "100%" }}
+                />
+              </View>
+            </View>
+          </Modal>
+        )}
       </SafeAreaView>
     </KeyboardAwareScrollView>
   );
@@ -345,6 +531,7 @@ export default function AppointmentForm({
 const styles = StyleSheet.create({
   scrollView: { flex: 1, backgroundColor: "#fff" },
   container: { paddingHorizontal: 20, backgroundColor: "#fff" },
+  containerEmbedded: { paddingTop: 8 },
   centered: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" },
   headerRow: { flexDirection: "row", alignItems: "center", paddingTop: 12, marginBottom: 24 },
   backBtn: { marginRight: 8, padding: 4 },
@@ -377,7 +564,22 @@ const styles = StyleSheet.create({
   dropdownItem: { paddingHorizontal: 14, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#f3f4f6" },
   dropdownItemName: { fontSize: 15, fontWeight: "600", color: "#1f2937" },
   dropdownItemMeta: { fontSize: 12, color: "#6b7280", marginTop: 2 },
-  dropdownEmpty: { padding: 14, color: "#9ca3af", fontSize: 14 },
+  dropdownEmpty: { padding: 14, color: "#9ca3af", fontSize: 14, textAlign: "center" },
+  dropdownSearch: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f3f4f6",
+  },
+  dropdownSearchInput: {
+    flex: 1,
+    paddingVertical: 4,
+    fontSize: 14,
+    color: "#1f2937",
+  },
   input: {
     backgroundColor: "#fff",
     borderWidth: 1,
@@ -399,20 +601,24 @@ const styles = StyleSheet.create({
     marginLeft: 2,
   },
   hint: { fontSize: 14, color: "#9ca3af", paddingVertical: 8 },
-  slotsWrap: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  slotsWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    rowGap: 10,
+  },
   slot: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    width: "48%",
+    alignItems: "center",
+    paddingVertical: 12,
     borderRadius: 10,
     borderWidth: 1.5,
     borderColor: "#e5e7eb",
     backgroundColor: "#fff",
   },
   slotActive: { borderColor: TEAL, backgroundColor: "#f0fdf4" },
-  slotBooked: { backgroundColor: "#f3f4f6", borderColor: "#e5e7eb" },
   slotText: { fontSize: 13, fontWeight: "600", color: "#374151" },
   slotTextActive: { color: TEAL },
-  slotTextBooked: { color: "#9ca3af", textDecorationLine: "line-through" },
   submitButton: {
     backgroundColor: TEAL,
     borderRadius: 12,
@@ -422,4 +628,26 @@ const styles = StyleSheet.create({
   },
   submitDisabled: { opacity: 0.6 },
   submitText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  pickerOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.4)",
+  },
+  pickerSheet: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingBottom: 24,
+  },
+  pickerHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f3f4f6",
+  },
+  pickerTitle: { fontSize: 16, fontWeight: "700", color: "#1f2937" },
+  pickerDone: { fontSize: 16, fontWeight: "700", color: TEAL },
 });

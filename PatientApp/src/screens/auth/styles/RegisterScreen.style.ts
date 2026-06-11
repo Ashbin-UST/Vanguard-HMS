@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import { KeyboardScrollPadding } from "@/constants/theme";
 
 export const styles = StyleSheet.create({
   scrollView: {
@@ -9,7 +10,7 @@ export const styles = StyleSheet.create({
     flexGrow: 1,
     backgroundColor: "#fff",
     paddingHorizontal: 24,
-    paddingBottom: 48,
+    paddingBottom: KeyboardScrollPadding,
   },
   brandSection: {
     paddingTop: 64,

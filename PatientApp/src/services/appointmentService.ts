@@ -1,8 +1,9 @@
 import { apiFetch } from "./apiClient";
 import type { Appointment, AppointmentStatus, Doctor } from "./types";
 
-type AppointmentsResponse = {
-  message: string;
+// Payload types describe the `data` field of the API envelope;
+// apiFetch resolves with that payload directly.
+type AppointmentsData = {
   total: number;
   page: number;
   limit: number;
@@ -10,21 +11,21 @@ type AppointmentsResponse = {
   appointments: Appointment[];
 };
 
-type DoctorsResponse = { message: string; total: number; doctors: Doctor[] };
-type BookedSlotsResponse = { message: string; bookedSlots: string[] };
-type AppointmentResponse = { message: string; appointment: Appointment };
+type DoctorsData = { total: number; doctors: Doctor[] };
+type BookedSlotsData = { bookedSlots: string[] };
+type AppointmentData = { appointment: Appointment };
 
 export function getMyAppointments(status?: AppointmentStatus) {
   const query = status ? `?status=${status}&limit=100` : "?limit=100";
-  return apiFetch<AppointmentsResponse>(`/patient/appointments${query}`);
+  return apiFetch<AppointmentsData>(`/patient/appointments${query}`);
 }
 
 export function getDoctors() {
-  return apiFetch<DoctorsResponse>("/patient/doctors");
+  return apiFetch<DoctorsData>("/patient/doctors");
 }
 
 export function getBookedSlots(doctorEmployeeId: string, date: string) {
-  return apiFetch<BookedSlotsResponse>(
+  return apiFetch<BookedSlotsData>(
     `/patient/booked-slots?doctorEmployeeId=${encodeURIComponent(
       doctorEmployeeId,
     )}&date=${encodeURIComponent(date)}`,
@@ -36,7 +37,7 @@ export function bookAppointment(
   appointmentDate: string,
   timeSlot: string,
 ) {
-  return apiFetch<AppointmentResponse>("/patient/appointments", {
+  return apiFetch<AppointmentData>("/patient/appointments", {
     method: "POST",
     body: { doctorEmployeeId, appointmentDate, timeSlot },
   });
@@ -48,7 +49,7 @@ export function updateAppointment(
   appointmentDate: string,
   timeSlot: string,
 ) {
-  return apiFetch<AppointmentResponse>(`/patient/appointments/${appointmentId}`, {
+  return apiFetch<AppointmentData>(`/patient/appointments/${appointmentId}`, {
     method: "PUT",
     body: { doctorEmployeeId, appointmentDate, timeSlot },
   });
@@ -58,7 +59,7 @@ export function cancelAppointment(
   appointmentId: string,
   cancellationReason: string,
 ) {
-  return apiFetch<AppointmentResponse>(
+  return apiFetch<AppointmentData>(
     `/patient/appointments/${appointmentId}/cancel`,
     {
       method: "PUT",
