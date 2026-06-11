@@ -26,7 +26,8 @@ async function cancelDoctorAppointments(employeeCode, doctorName, actor) {
         message: MESSAGES.AUDIT.DOCTOR_DELETED_CANCELLATION(
           appointment.appointmentId,
           doctorName,
-          employeeCode
+          employeeCode,
+          cancellationReason
         ),
       });
     } catch (error_) {

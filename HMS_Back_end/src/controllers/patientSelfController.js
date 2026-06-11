@@ -6,7 +6,6 @@ const sendEmail = require("../utils/sendEmail");
 const emailTemplates = require("../utils/emailTemplates");
 const checkAppointmentValidity = require("../validators/checkAppointmentValidity");
 const enrichAppointments = require("../utils/enrichAppointments");
-const listAppointments = require("../utils/listAppointments");
 const parsePagination = require("../utils/parsePagination");
 const recordAudit = require("../utils/recordAudit");
 const { toSafePatient, PATIENT_SAFE_PROJECTION } = require("../utils/toSafePatient");
@@ -147,7 +146,12 @@ exports.getMyAppointments = async (req, res) => {
     }
 
     const [appointments, total] = await Promise.all([
-        listAppointments(filter, skip, limit),
+        Appointment.find(filter)
+            .select("-__v")
+            .sort({ appointmentDate: -1, _id: -1 })
+            .skip(skip)
+            .limit(limit)
+            .lean(),
         Appointment.countDocuments(filter)
     ]);
 

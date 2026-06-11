@@ -399,6 +399,21 @@ export default function AppointmentForm({
           </View>
         )}
 
+        {/* Consultation fee — read-only, mirrors the web app's fee pill */}
+        {selectedDoctor && (
+          <>
+            <Text style={[styles.fieldLabel, { marginTop: 18 }]}>Consultation fee</Text>
+            <View style={styles.feePill}>
+              <Ionicons name="cash-outline" size={18} color={TEAL} />
+              <Text style={styles.feeText}>
+                {selectedDoctor.consultationFee != null
+                  ? `₹ ${selectedDoctor.consultationFee}`
+                  : "Not set"}
+              </Text>
+            </View>
+          </>
+        )}
+
         {/* Date — tapping opens the native date picker */}
         <Text style={[styles.fieldLabel, { marginTop: 18 }]}>Date</Text>
         <TouchableOpacity
@@ -601,6 +616,19 @@ const styles = StyleSheet.create({
     marginLeft: 2,
   },
   hint: { fontSize: 14, color: "#9ca3af", paddingVertical: 8 },
+  feePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    alignSelf: "flex-start",
+    backgroundColor: "#f0fdf4",
+    borderWidth: 1,
+    borderColor: "#bbf7d0",
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  feeText: { fontSize: 15, fontWeight: "600", color: "#1f2937" },
   slotsWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
