@@ -1,8 +1,4 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
+// App color palette in light and dark mode
 import "@/global.css";
 
 import { Platform } from "react-native";
@@ -60,13 +56,13 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
+    // iOS UIFontDescriptorSystemDesignDefault
     sans: "system-ui",
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
+    // iOS UIFontDescriptorSystemDesignSerif
     serif: "ui-serif",
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
+    // iOS UIFontDescriptorSystemDesignRounded
     rounded: "ui-rounded",
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
+    // iOS UIFontDescriptorSystemDesignMonospaced
     mono: "ui-monospace",
   },
   default: {
@@ -96,10 +92,5 @@ export const Spacing = {
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
 export const MaxContentWidth = 800;
 
-/**
- * Bottom padding appended below form content so the last field/button isn't
- * flush against the screen edge. Lifting fields above the on-screen keyboard
- * is handled natively by react-native-keyboard-controller's
- * KeyboardAwareScrollView, so no large scroll headroom is needed here.
- */
+// Bottom padding below form content; keyboard lift is handled by KeyboardAwareScrollView
 export const KeyboardScrollPadding = 40;

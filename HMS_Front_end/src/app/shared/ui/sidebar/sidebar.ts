@@ -133,9 +133,7 @@ export class SidebarComponent implements OnInit {
     return this.currentUser?.profile?.designation || '';
   }
 
-  // --- Icons --------------------------------------------------------------
-
-  // Cache so we don't recreate identical markup on every change detection
+  // Icon cache so identical markup is not recreated on every change detection
   private readonly iconCache = new Map<string, string>();
 
   // Inline 24x24 stroke icons keyed by the node's `icon` field (with aliases)

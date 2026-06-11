@@ -5,11 +5,7 @@ import {
   FormGroup,
 } from '@angular/forms';
 
-// Backend-aligned form validators that attach a specific error key per rule
-
-// --- Shared patterns (kept identical to the backend) ---------------------
-
-// Phone: optional country code, then exactly 10 digits
+// Phone: optional country code, then exactly 10 digits (kept identical to the backend)
 export const PHONE_PATTERN = /^(\+\d{1,3} )?\d{10}$/;
 
 // At least one lowercase, one uppercase, one digit, one special char
@@ -28,9 +24,7 @@ export const MED_REG_PATTERN = /^MED-[0-9-]+$/;
 export const TIME_SLOT_PATTERN =
   /^([01]\d|2[0-3]):([0-5]\d)-([01]\d|2[0-3]):([0-5]\d)$/;
 
-// --- Date helpers ---------------------------------------------------------
-
-// Today's date at local midnight (time component stripped) for date-only compares
+// Today at local midnight for date-only compares
 function startOfToday(): Date {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
@@ -66,8 +60,6 @@ export function todayIsoDate(): string {
   return `${d.getFullYear()}-${month}-${day}`;
 }
 
-// --- Date validators ------------------------------------------------------
-
 // Rejects a future date (today allowed)
 export const noFutureDate: ValidatorFn = (
   control: AbstractControl,
@@ -92,9 +84,7 @@ export const noPastDate: ValidatorFn = (
   return date.getTime() < startOfToday().getTime() ? { pastDate: true } : null;
 };
 
-// --- Field validators -----------------------------------------------------
-
-// Phone must match the country-code + 10-digit pattern. Error: { phone: true }
+// Phone must match the country-code + 10-digit pattern, error key phone
 export const phoneValidator: ValidatorFn = (
   control: AbstractControl,
 ): ValidationErrors | null => {

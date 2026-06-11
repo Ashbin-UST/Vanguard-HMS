@@ -7,8 +7,7 @@ import { DoctorsResponse } from '../models/appointment.model';
 import { ApiResponse } from '../models/api-response.model';
 import { EmployeeProfile } from '../models/employee.model';
 
-// PUT /employees/update-profile response. OWNER/ADMIN updates apply
-// immediately (employee payload); staff updates create a pending request.
+// Update-profile response; OWNER/ADMIN apply immediately, staff create a pending request
 export type ProfileUpdateRequestResponse = ApiResponse<{
   employee?: EmployeeProfile;
   request?: {

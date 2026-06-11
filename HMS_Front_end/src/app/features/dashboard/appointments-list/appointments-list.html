@@ -132,17 +132,28 @@
               <button
                 type="button"
                 class="btn btn-sm btn-danger-outline"
+                [disabled]="busyId() !== null"
                 (click)="cancel(a, $event)">
-                Cancel
+                @if (busyId() === a.appointmentId && busyAction() === 'cancel') {
+                <span>Cancelling…</span>
+                } @else {
+                <span>Cancel</span>
+                }
               </button>
               }
 
-              @if (isDoctor() && canComplete(a)) {
+              @if (isDoctor() && a.status === 'BOOKED') {
               <button
                 type="button"
                 class="btn btn-sm btn-success-outline"
+                [disabled]="!isStartTimePassed(a) || busyId() !== null"
+                [title]="!isStartTimePassed(a) ? 'Available once the appointment starts' : ''"
                 (click)="complete(a, $event)">
-                Complete
+                @if (busyId() === a.appointmentId && busyAction() === 'complete') {
+                <span>Completing…</span>
+                } @else {
+                <span>Complete</span>
+                }
               </button>
               }
             </td>

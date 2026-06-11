@@ -4,9 +4,7 @@ const AppError = require("../utils/AppError");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
 
-// Validates that the employee exists, has the expected designation, and the
-// linked user account is active. Throws AppError on failure, returns the
-// employee record on success.
+// Checks employee exists, matches designation, and account is active; throws on failure
 const validateEmployeeStatus = async (employeeCode, expectedDesignation) => {
 
     // Look up the employee record

@@ -56,8 +56,7 @@ exports.createAppointment = async (req, res) => {
         timeSlot
     } = req.body;
 
-    // Validates patient, doctor availability, and slot conflicts;
-    // throws AppError when any rule is violated
+    // Validates patient, doctor availability, and slot conflicts; throws on violation
     const { patient, doctor } = await checkAppointmentValidity({
         patientId,
         doctorId: doctorEmployeeId,
@@ -282,8 +281,7 @@ exports.updateAppointment = async (req, res) => {
         throw new AppError(STATUS.BAD_REQUEST, MESSAGES.APPOINTMENT.ONLY_BOOKED_EDITABLE);
     }
 
-    // Re-validates with the current appointment excluded from duplicate
-    // checks; throws AppError when any rule is violated
+    // Re-validates excluding this appointment from duplicate checks; throws on violation
     const { patient, doctor } = await checkAppointmentValidity({
         patientId,
         doctorId: doctorEmployeeId,

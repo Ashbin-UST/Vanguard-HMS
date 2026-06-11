@@ -51,8 +51,7 @@ const patientSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
-    // Patient-initiated password reset. Stored only as a hash; kept absent
-    // (default undefined) until a reset is actually requested.
+    // Reset token stored only as a hash; absent until a reset is requested
     resetPasswordTokenHash: {
         type: String,
         default: undefined

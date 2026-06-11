@@ -88,7 +88,7 @@
   to { opacity: 1; }
 }
 
-/* ---- Desktop collapse: hide the docked sidebar when toggled off ---- */
+/* Desktop collapse: hide the docked sidebar when toggled off */
 @media (min-width: 769px) {
   .dashboard-layout.sidebar-collapsed .sidebar-host {
     /* The inner .sidebar is position:fixed and slides out via its own rule */
@@ -96,7 +96,7 @@
   }
 }
 
-/* ---- Mobile: sidebar becomes a slide-in overlay ---- */
+/* Mobile: sidebar becomes a slide-in overlay */
 @media (max-width: 768px) {
   .dashboard-main {
     margin-left: 0;

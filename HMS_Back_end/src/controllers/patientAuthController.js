@@ -13,11 +13,7 @@ require("dotenv").config();
 
 const SALT_ROUNDS = 12;
 
-// Reset codes are typed by hand in the mobile app and matched case-sensitively,
-// so the alphabet skips easily-confused characters (0/O, 1/I/l, etc.) but mixes
-// upper/lowercase letters, digits, and special characters. 8 chars from a
-// 65-char alphabet (~48 bits) keeps blind guessing infeasible within the
-// 15-minute expiry.
+// Hand-typed reset code alphabet; skips confusable chars, ~48 bits beats the 15-min expiry
 const RESET_CODE_ALPHABET =
     "ABCDEFGHJKMNPQRSTUVWXYZ" +
     "abcdefghjkmnpqrstuvwxyz" +
@@ -31,8 +27,7 @@ const generateResetCode = () =>
         () => RESET_CODE_ALPHABET[crypto.randomInt(RESET_CODE_ALPHABET.length)]
     ).join("");
 
-// Sign a patient JWT. The `type: "PATIENT"` marker keeps these tokens from
-// being accepted on employee routes (and vice-versa).
+// Signs a patient JWT; the PATIENT type marker blocks use on employee routes
 const signPatientToken = (patient) =>
     jwt.sign(
         {
@@ -45,8 +40,7 @@ const signPatientToken = (patient) =>
         }
     );
 
-// Self-service patient registration. The patient sets their own password and
-// the account is immediately ACTIVE (no staff approval, no temporary password).
+// Self-service registration; own password, account immediately ACTIVE
 exports.register = async (req, res) => {
 
     const {
@@ -154,8 +148,7 @@ exports.forgotPassword = async (req, res) => {
 
     const patient = await Patient.findOne({ email });
 
-    // Always return the same neutral response to avoid leaking which
-    // emails are registered.
+    // Same neutral response always, so registered emails are not leaked
     const neutralResponse = () =>
         sendSuccess(res, STATUS.OK, MESSAGES.AUTH.RESET_CODE_SENT);
 

@@ -1,15 +1,8 @@
-// Centralized catalog of every user-facing API message, organized by domain.
-// Static messages are plain strings; messages needing interpolation are arrow
-// function templates invoked at the call site, e.g.
-//   MESSAGES.APPOINTMENT.DOCTOR_NOT_JOINED(joinedOn)
-// Strings shared by multiple flows (e.g. token errors used by both staff and
-// patient auth) live once in the most general domain.
+// Centralized catalog of user-facing API messages by domain; interpolated ones are arrow templates
 
 const MESSAGES = Object.freeze({
 
-    // ------------------------------------------------------------------
     // Cross-cutting messages used by the error handler and app plumbing
-    // ------------------------------------------------------------------
     COMMON: Object.freeze({
         API_RUNNING: "API running",
         DB_STATUS_RETRIEVED: "Database status retrieved successfully",
@@ -21,9 +14,7 @@ const MESSAGES = Object.freeze({
         VALIDATION_FAILED: "Validation failed"
     }),
 
-    // ------------------------------------------------------------------
     // Authentication / authorization (staff + patient)
-    // ------------------------------------------------------------------
     AUTH: Object.freeze({
         ACCESS_DENIED: "Access denied",
         ACCOUNT_INACTIVE: "Account is inactive",
@@ -50,9 +41,7 @@ const MESSAGES = Object.freeze({
         USER_RETRIEVED: "User retrieved successfully"
     }),
 
-    // ------------------------------------------------------------------
     // Employee self-service + shared employee lookups
-    // ------------------------------------------------------------------
     EMPLOYEE: Object.freeze({
         CHANGE_REQUEST_SUBMITTED: "Your profile change request has been submitted for approval",
         DESIGNATION_INACTIVE: (designation) => `${designation} account is inactive`,
@@ -72,9 +61,7 @@ const MESSAGES = Object.freeze({
         USER_EMAIL_EXISTS: "User with this email already exists"
     }),
 
-    // ------------------------------------------------------------------
     // Admin workflows (employee management, approvals, audit)
-    // ------------------------------------------------------------------
     ADMIN: Object.freeze({
         ACCOUNT_APPROVED: "Employee account approved successfully",
         AUDIT_LOGS_RETRIEVED: "Audit logs retrieved successfully",
@@ -94,9 +81,7 @@ const MESSAGES = Object.freeze({
         STATUS_NOT_PENDING: "Account status is not pending"
     }),
 
-    // ------------------------------------------------------------------
     // Owner workflows (admin account management)
-    // ------------------------------------------------------------------
     OWNER: Object.freeze({
         ADMINS_RETRIEVED: "Admins retrieved successfully",
         ADMIN_CREATED: "Admin account created successfully. Credentials sent via email.",
@@ -106,9 +91,7 @@ const MESSAGES = Object.freeze({
         CANNOT_DELETE_OWNER: "Owner account cannot be deleted"
     }),
 
-    // ------------------------------------------------------------------
     // Patient accounts and profiles (staff-managed + self-service)
-    // ------------------------------------------------------------------
     PATIENT: Object.freeze({
         ALREADY_REGISTERED: "Patient with this email is already registered",
         CREATED: "Patient account created successfully. Login credentials have been sent via email.",
@@ -125,9 +108,7 @@ const MESSAGES = Object.freeze({
         UPDATED: "Patient updated successfully"
     }),
 
-    // ------------------------------------------------------------------
     // Appointment booking and lifecycle
-    // ------------------------------------------------------------------
     APPOINTMENT: Object.freeze({
         ALREADY_CANCELLED: "Appointment is already cancelled",
         ALREADY_COMPLETED: "Appointment is already completed",
@@ -157,9 +138,7 @@ const MESSAGES = Object.freeze({
         UPDATED: "Appointment updated successfully"
     }),
 
-    // ------------------------------------------------------------------
     // Organization nodes (hierarchy management)
-    // ------------------------------------------------------------------
     NODE: Object.freeze({
         CREATED: "Node created successfully",
         DELETED: "Node deleted successfully",
@@ -169,9 +148,7 @@ const MESSAGES = Object.freeze({
         UPDATED: "Node updated successfully"
     }),
 
-    // ------------------------------------------------------------------
     // Dashboard statistics
-    // ------------------------------------------------------------------
     DASHBOARD: Object.freeze({
         ADMIN_STATS_RETRIEVED: "Admin dashboard statistics retrieved successfully",
         APPOINTMENT_STATS_RETRIEVED: "Appointment statistics retrieved successfully",
@@ -182,9 +159,7 @@ const MESSAGES = Object.freeze({
         UNAUTHORIZED: "Unauthorized to access dashboard statistics"
     }),
 
-    // ------------------------------------------------------------------
     // Audit-trail entries written via recordAudit (not sent to clients)
-    // ------------------------------------------------------------------
     AUDIT: Object.freeze({
         ADMIN_CREATED: (name, code) => `Admin account created for ${name} (${code})`,
         ADMIN_DELETED: (name, code) => `Admin ${name} (${code}) was deleted`,

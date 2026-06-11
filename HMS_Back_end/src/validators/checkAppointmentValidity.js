@@ -11,8 +11,7 @@ const withExclusion = (filter, excludeAppointmentId) => {
   return { ...filter, appointmentId: { $ne: excludeAppointmentId } };
 };
 
-// Validates every booking rule for an appointment request. Throws AppError on
-// the first violated rule; returns { patient, doctor } when the slot is valid.
+// Validates all booking rules; throws on the first violation, returns patient and doctor
 const checkAppointmentValidity = async ({
   patientId,
   doctorId,

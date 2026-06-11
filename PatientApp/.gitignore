@@ -30,6 +30,9 @@ yarn-error.*
 .DS_Store
 *.pem
 
+# env files
+.env
+
 # local env files
 .env*.local
 
@@ -45,3 +48,9 @@ sonar-project.properties
 .scannerwork/.sonar_lock
 .scannerwork/report-task.txt
 UI_Guide.pdf
+
+# error logs
+errorlogs
+
+# vs code settings
+.vscode

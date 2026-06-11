@@ -3,10 +3,7 @@ const AppError = require("../utils/AppError");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
 
-// Authenticate a patient from their JWT.
-// Patient tokens are signed with { patientId, type: "PATIENT" }; this rejects
-// employee tokens (which carry employeeCode/roles) so the two auth domains stay
-// separate.
+// Authenticates a patient JWT; rejects employee tokens so the auth domains stay separate
 const authenticatePatient = (req, res, next) => {
     const authHeader = req.headers.authorization;
 

@@ -103,15 +103,13 @@ export default function AppointmentsScreen() {
   );
 
   // Switching away from a dirty booking form prompts via the shared nav guard
-  // (the embedded form publishes its dirty state through useUnsavedChanges).
   const switchTab = async (next: TopTab) => {
     if (next === tab) return;
     if (!(await confirmLeave())) return;
     setTab(next);
   };
 
-  // After a successful booking: jump to the list and refresh it. Direct setTab
-  // on purpose — a completed submit must never trigger the unsaved-changes prompt.
+  // After booking, jump to the list directly so submit never triggers the unsaved prompt
   const handleBooked = useCallback(() => {
     setTab("list");
     load();

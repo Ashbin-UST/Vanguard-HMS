@@ -1,14 +1,7 @@
 import { create } from "zustand";
 import { useConfirmModal } from "./confirmModal";
 
-/**
- * Navigation guard, mirroring the Angular `unsavedChangesGuard` (CanDeactivate).
- *
- * Forms register their dirty state via `useUnsavedChanges`; any "leave" affordance
- * (tab bar, back button, cross-screen link) calls `confirmLeave()` through
- * `useGuardedRouter` before navigating. When the current form is dirty this opens
- * the shared confirm modal and resolves to the user's choice.
- */
+// Navigation guard mirroring the Angular unsavedChangesGuard
 interface NavGuardState {
   isDirty: boolean;
   setDirty: (dirty: boolean) => void;

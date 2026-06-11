@@ -1,11 +1,6 @@
 import { create } from "zustand";
 
-/**
- * Service-driven confirm dialog, mirroring the Angular ConfirmModalService.
- * Any caller can `await useConfirmModal.getState().open({...})` and receive a
- * boolean once the user picks the confirm or cancel action. The <ConfirmModal/>
- * component (mounted once at the app root) renders whatever is in `config`.
- */
+// Service-driven confirm dialog awaited via useConfirmModal.open, rendered by ConfirmModal
 export type ConfirmModalType = "danger" | "warning" | "success" | "info";
 
 export interface ConfirmModalConfig {

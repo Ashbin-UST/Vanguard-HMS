@@ -79,8 +79,7 @@ export class ApprovalsComponent implements OnInit {
     });
   }
 
-  // --- Registration approvals --------------------------------------------
-
+  // Registration approvals
   openRegistration(item: EmployeeListItem): void {
     this.selectedRegistration.set(item);
   }
@@ -135,8 +134,7 @@ export class ApprovalsComponent implements OnInit {
     });
   }
 
-  // --- Profile change approvals ------------------------------------------
-
+  // Profile change approvals
   openChange(req: ProfileChangeRequest): void {
     this.selectedChange.set(req);
   }

@@ -1,6 +1,3 @@
-// Shared serialization for patient-facing responses: the password hash and the
-// password-reset token fields must never be returned to the client.
-
 // Mongoose .select() string that excludes the sensitive/internal fields on reads
 const PATIENT_SAFE_PROJECTION =
     "-passwordHash -resetPasswordTokenHash -resetPasswordTokenExpiry -__v";

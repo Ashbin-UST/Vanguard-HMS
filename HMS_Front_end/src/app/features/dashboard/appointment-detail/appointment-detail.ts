@@ -34,7 +34,10 @@ export class AppointmentDetailComponent implements OnInit {
 
   appointment = signal<Appointment | null>(null);
   loading = signal(true);
-  busy = signal(false);
+
+  // Action in flight; all header buttons disable while set
+  busyAction = signal<'cancel' | 'complete' | null>(null);
+  busy = computed(() => this.busyAction() !== null);
 
   isDoctor = computed(() => this.authService.getDesignation() === 'DOCTOR');
   hasReceptionAccess = computed(() => {
@@ -54,19 +57,23 @@ export class AppointmentDetailComponent implements OnInit {
       this.appointment()?.status === 'BOOKED',
   );
 
+  // Visibility only; the button enables once the start time passes
   canComplete = computed(() => {
     const a = this.appointment();
     if (a?.status !== 'BOOKED') {
       return false;
     }
     if (!this.isDoctor()) return false;
-    if (
-      a.doctorEmployeeId !==
+    return (
+      a.doctorEmployeeId ===
       this.authService.getCurrentUser()?.profile?.employeeCode
-    ) {
-      return false;
-    }
-    // Only completable once the scheduled start (day + slot start) has passed
+    );
+  });
+
+  // Completable only once the scheduled start (day + slot start) has passed (mirrors the backend guard)
+  startTimePassed = computed(() => {
+    const a = this.appointment();
+    if (!a) return false;
     const slotStart = (a.timeSlot || '').split('-')[0];
     const [h, m] = slotStart.split(':').map(Number);
     const scheduled = new Date(a.appointmentDate);
@@ -122,15 +129,15 @@ export class AppointmentDetailComponent implements OnInit {
     if (!result.confirmed) return;
 
     const reason = (result.inputValue ?? '').trim();
-    this.busy.set(true);
+    this.busyAction.set('cancel');
     this.appointmentService.cancelAppointment(a.appointmentId, reason).subscribe({
       next: (res) => {
-        this.busy.set(false);
+        this.busyAction.set(null);
         this.toast.success(res.message || APP_MESSAGES.APPOINTMENT_CANCELLED);
         this.load(a.appointmentId);
       },
       error: (err) => {
-        this.busy.set(false);
+        this.busyAction.set(null);
         this.toast.error(this.apiError.message(err, APP_MESSAGES.APPOINTMENT_CANCEL_FAILED));
       },
     });
@@ -148,15 +155,15 @@ export class AppointmentDetailComponent implements OnInit {
     });
     if (!result.confirmed) return;
 
-    this.busy.set(true);
+    this.busyAction.set('complete');
     this.appointmentService.completeAppointment(a.appointmentId).subscribe({
       next: (res) => {
-        this.busy.set(false);
+        this.busyAction.set(null);
         this.toast.success(res.message || APP_MESSAGES.APPOINTMENT_COMPLETED);
         this.load(a.appointmentId);
       },
       error: (err) => {
-        this.busy.set(false);
+        this.busyAction.set(null);
         this.toast.error(this.apiError.message(err, APP_MESSAGES.APPOINTMENT_COMPLETE_FAILED));
       },
     });

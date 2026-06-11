@@ -234,7 +234,7 @@
             </div>
 
             <div class="form-actions">
-              <button type="button" class="btn btn-secondary" (click)="cancelEdit()">
+              <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="cancelEdit()">
                 Cancel
               </button>
               <button type="submit" class="btn btn-primary" [disabled]="saving()">

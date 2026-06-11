@@ -100,8 +100,7 @@ export type AppointmentFormProps = {
   initialDoctorCode?: string;
   initialDate?: string;
   initialTimeSlot?: string;
-  // Rendered inside another screen (e.g. the Appointments tab): no top safe
-  // area inset and no header/back button — the host screen provides those.
+  // Embedded mode: host screen provides the safe area inset and header
   embedded?: boolean;
   // Called after a successful submit instead of router.replace("/explore").
   onDone?: () => void;
@@ -170,19 +169,14 @@ export default function AppointmentForm({
       (w) => w.day === weekday,
     );
     const slots = windows.flatMap((w) => buildSlots(w.startTime, w.endTime));
-    // Hide slots whose start time already passed when booking for today
-    // (mirrors the web app; the backend rejects them with 409). A passed
-    // initialTimeSlot is intentionally hidden too — saving it would 409 anyway.
+    // Hide already-passed slots for today; the backend rejects them with 409
     const now = new Date();
     if (date !== formatDate(now)) return slots;
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
     return slots.filter((slot) => toMinutes(slot.slice(0, 5)) > nowMinutes);
   }, [selectedDoctor, date]);
 
-  // Hide slots already booked by others; keep the slot being edited (RN does not
-  // pass excludeAppointmentId, so the current appointment's own slot would show
-  // as booked otherwise). Cancelled appointments are excluded server-side, so a
-  // freed slot reappears here automatically.
+  // Hide slots booked by others but keep the slot being edited
   const availableSlots = useMemo(
     () =>
       candidateSlots.filter(
@@ -230,8 +224,7 @@ export default function AppointmentForm({
     if (code !== initialDoctorCode) setSelectedSlot("");
   };
 
-  // Collapsing the dropdown without a selection counts as leaving the field, so
-  // the "required" error surfaces. Called from every other control on the form.
+  // Collapsing the dropdown without a selection surfaces the required error
   const blurDoctor = () => {
     if (doctorOpen) {
       setDoctorOpen(false);
@@ -346,8 +339,7 @@ export default function AppointmentForm({
             touched.doctor && errors.doctor ? styles.dropdownTriggerError : undefined,
           ]}
           onPress={() => {
-            // Mark touched only when closing the dropdown (leaving the field),
-            // so the "required" error doesn't flash the moment it's opened.
+            // Mark touched only when closing the dropdown so the error never flashes on open
             if (doctorOpen) touch("doctor");
             setDoctorOpen(!doctorOpen);
           }}

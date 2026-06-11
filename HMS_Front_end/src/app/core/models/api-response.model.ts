@@ -1,6 +1,4 @@
-// Standard API envelope. Every backend response is wrapped as:
-//   success: { success: true,  statusCode, message, data: {...} }
-//   error:   { success: false, statusCode, message, errors?: [...] }
+// Standard API envelope wrapping every backend response
 
 export interface ApiResponse<T> {
   success: true;

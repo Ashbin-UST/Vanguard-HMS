@@ -23,8 +23,7 @@ export class AdminService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/admin`;
 
-  // --- Employee management ------------------------------------------------
-
+  // Employee management
   createEmployee(data: CreateEmployeePayload): Observable<ApiMessage> {
     return this.http.post<ApiMessage>(`${this.apiUrl}/create-employee`, data);
   }
@@ -73,8 +72,7 @@ export class AdminService {
     );
   }
 
-  // --- Recent activity (audit logs) --------------------------------------
-
+  // Recent activity (audit logs)
   getAuditLogs(page = 1, limit = 20): Observable<AuditLogsResponse> {
     const params = new HttpParams()
       .set('page', page.toString())
@@ -84,8 +82,7 @@ export class AdminService {
     });
   }
 
-  // --- Profile change requests -------------------------------------------
-
+  // Profile change requests
   getProfileChangeRequests(): Observable<ProfileChangeRequestsResponse> {
     return this.http.get<ProfileChangeRequestsResponse>(
       `${this.apiUrl}/profile-change-requests`,

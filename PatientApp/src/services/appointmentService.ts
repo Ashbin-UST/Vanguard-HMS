@@ -1,8 +1,7 @@
 import { apiFetch } from "./apiClient";
 import type { Appointment, AppointmentStatus, Doctor } from "./types";
 
-// Payload types describe the `data` field of the API envelope;
-// apiFetch resolves with that payload directly.
+// Payload types describe the data field of the envelope that apiFetch resolves with
 type AppointmentsData = {
   total: number;
   page: number;

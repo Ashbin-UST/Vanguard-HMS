@@ -23,9 +23,7 @@ const matchesPassword = (passwordField) =>
             return true;
         });
 
-// Self-registration reuses the exact patient field rules used when staff create a
-// patient (createPatientValidation: name/phone/email/gender/dob/address/emergencyContact)
-// and only adds a self-chosen password.
+// Self-registration reuses createPatientValidation rules and adds a self-chosen password
 const patientRegisterValidation = [
     ...createPatientValidation,
     passwordStrengthValidator("password"),

@@ -21,12 +21,24 @@
             }
             @if (canCancel()) {
               <button class="btn btn-danger" [disabled]="busy()" (click)="cancel()">
-                Cancel Appointment
+                @if (busyAction() === 'cancel') {
+                  <span>Cancelling…</span>
+                } @else {
+                  <span>Cancel Appointment</span>
+                }
               </button>
             }
             @if (canComplete()) {
-              <button class="btn btn-success" [disabled]="busy()" (click)="complete()">
-                Mark Completed
+              <button
+                class="btn btn-success"
+                [disabled]="busy() || !startTimePassed()"
+                [title]="!startTimePassed() ? 'Available once the appointment starts' : ''"
+                (click)="complete()">
+                @if (busyAction() === 'complete') {
+                  <span>Completing…</span>
+                } @else {
+                  <span>Mark Completed</span>
+                }
               </button>
             }
           </div>

@@ -110,7 +110,7 @@
         </div>
 
         <div class="form-actions">
-          <button type="button" class="btn btn-secondary" (click)="onCancel()">
+          <button type="button" class="btn btn-secondary" [disabled]="loading" (click)="onCancel()">
             Cancel
           </button>
           <button type="submit" class="btn btn-primary" [disabled]="loading">

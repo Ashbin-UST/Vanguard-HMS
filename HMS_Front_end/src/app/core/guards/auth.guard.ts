@@ -4,7 +4,7 @@ import { AuthService } from '../services/auth.service';
 
 // Blocks access to protected routes for unauthenticated users and redirects them to /login
 
-export const authGuard: CanActivateFn = (route, state) => {
+export const authGuard: CanActivateFn = (_route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 

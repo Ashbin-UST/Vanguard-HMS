@@ -137,8 +137,7 @@ exports.forgotPassword = async (req, res) => {
         email
     });
 
-    // Always return the same neutral response to avoid leaking which
-    // emails are registered.
+    // Same neutral response always, so registered emails are not leaked
     const neutralResponse = () =>
         sendSuccess(res, STATUS.OK, MESSAGES.AUTH.RESET_LINK_SENT);
 

@@ -92,8 +92,7 @@ export class SearchableSelectComponent implements ControlValueAccessor {
     return opt ? String(opt[this.labelKey] ?? '') : '';
   });
 
-  // --- ControlValueAccessor ----------------------------------------------
-
+  // ControlValueAccessor
   writeValue(value: any): void {
     this.selectedValue.set(value ?? null);
   }
@@ -107,8 +106,7 @@ export class SearchableSelectComponent implements ControlValueAccessor {
     this.disabled = isDisabled;
   }
 
-  // --- Interaction --------------------------------------------------------
-
+  // Interaction
   toggle(): void {
     if (this.disabled) {
       return;
@@ -159,8 +157,7 @@ export class SearchableSelectComponent implements ControlValueAccessor {
 
   trackByValue = (_: number, option: any) => option?.[this.valueKey];
 
-  // --- Keyboard navigation ------------------------------------------------
-
+  // Keyboard navigation
   onKeydown(event: KeyboardEvent): void {
     if (!this.isOpen()) {
       if (event.key === 'Enter' || event.key === 'ArrowDown') {

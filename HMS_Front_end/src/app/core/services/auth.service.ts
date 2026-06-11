@@ -43,8 +43,7 @@ export class AuthService {
     this.loadUserFromStorage();
   }
 
-  // --- Auth flows ---------------------------------------------------------
-
+  // Auth flows
   selfRegister(data: any): Observable<ApiMessage> {
     return this.http.post<ApiMessage>(`${this.apiUrl}/self-register`, data);
   }
@@ -134,8 +133,7 @@ export class AuthService {
     }
   }
 
-  // --- Session management -------------------------------------------------
-
+  // Session management
   private setSession(token: string, user: User): void {
     localStorage.setItem(TOKEN_KEY, token);
     this.persistUser(user);
@@ -170,8 +168,7 @@ export class AuthService {
     }
   }
 
-  // --- Accessors ----------------------------------------------------------
-
+  // Accessors
   isAuthenticated(): boolean {
     return !!this.getToken();
   }

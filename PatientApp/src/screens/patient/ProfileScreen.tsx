@@ -36,9 +36,7 @@ const ProfileScreen = () => {
   const router = useRouter();
   const guarded = useGuardedRouter();
 
-  // Clear auth state, then redirect to the login page. Done in the tap handler
-  // (raw router, same call stack as the press) so it fires reliably rather than
-  // relying solely on a layout-level reaction to the auth flag.
+  // Logout and redirect in the tap handler so it fires reliably
   const handleLogout = async () => {
     await logout();
     router.replace("/login");

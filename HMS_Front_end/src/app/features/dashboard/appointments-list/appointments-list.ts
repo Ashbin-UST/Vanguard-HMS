@@ -43,6 +43,10 @@ export class AppointmentsListComponent implements OnInit {
   loading = signal(true);
   appointments = signal<Appointment[]>([]);
 
+  // Row action in flight; all row buttons disable while set
+  busyId = signal<string | null>(null);
+  busyAction = signal<'cancel' | 'complete' | null>(null);
+
   statuses = APPOINTMENT_STATUSES;
   statusFilter = signal<string>('');
   dateFilter = signal<string>('');
@@ -163,10 +167,7 @@ export class AppointmentsListComponent implements OnInit {
   }
 
   // Completable only once the scheduled start has passed (mirrors the backend guard)
-  canComplete(a: Appointment): boolean {
-    if (a.status !== 'BOOKED') {
-      return false;
-    }
+  isStartTimePassed(a: Appointment): boolean {
     const slotStart = (a.timeSlot || '').split('-')[0];
     const [h, m] = slotStart.split(':').map(Number);
     const scheduled = new Date(a.appointmentDate);
@@ -228,12 +229,16 @@ export class AppointmentsListComponent implements OnInit {
       return;
     }
     const reason = (result.inputValue ?? '').trim();
+    this.busyId.set(a.appointmentId);
+    this.busyAction.set('cancel');
     this.appointmentService.cancelAppointment(a.appointmentId, reason).subscribe({
       next: (res) => {
+        this.clearBusy();
         this.toast.success(res.message || APP_MESSAGES.APPOINTMENT_CANCELLED);
         this.load();
       },
       error: (err) => {
+        this.clearBusy();
         this.toast.error(this.apiError.message(err, APP_MESSAGES.APPOINTMENT_CANCEL_FAILED));
       },
     });
@@ -251,15 +256,24 @@ export class AppointmentsListComponent implements OnInit {
     if (!result.confirmed) {
       return;
     }
+    this.busyId.set(a.appointmentId);
+    this.busyAction.set('complete');
     this.appointmentService.completeAppointment(a.appointmentId).subscribe({
       next: (res) => {
+        this.clearBusy();
         this.toast.success(res.message || APP_MESSAGES.APPOINTMENT_COMPLETED);
         this.load();
       },
       error: (err) => {
+        this.clearBusy();
         this.toast.error(this.apiError.message(err, APP_MESSAGES.APPOINTMENT_COMPLETE_FAILED));
       },
     });
+  }
+
+  private clearBusy(): void {
+    this.busyId.set(null);
+    this.busyAction.set(null);
   }
 
   trackById = (_: number, a: Appointment) => a.appointmentId;

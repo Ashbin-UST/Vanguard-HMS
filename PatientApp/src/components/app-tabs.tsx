@@ -74,10 +74,7 @@ export default function AppTabs() {
     checkLoginStatus();
   }, [checkLoginStatus]);
 
-  // When the user logs out while on a protected route (e.g. via the Profile
-  // "Log out" button), send them straight to the login page. The bottom tab bar
-  // already reacts to `isLoggedIn`, but the routed content needs an explicit
-  // redirect. Uses the raw router so the unsaved-changes guard never blocks it.
+  // Redirect to login on logout from a protected route; raw router so the unsaved-changes guard never blocks it
   useEffect(() => {
     const onProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
     if (!isLoggedIn && onProtected) {
@@ -154,11 +151,7 @@ const styles = StyleSheet.create({
     borderTopColor: "#f3f4f6",
     paddingTop: 8,
     paddingHorizontal: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 8,
+    boxShadow: "0 -2px 8px rgba(0, 0, 0, 0.06)",
   },
   tabItem: {
     flex: 1,
@@ -178,11 +171,9 @@ const styles = StyleSheet.create({
   },
   iconPillActiveFirst: {
     borderBottomEndRadius: 16,
-    // borderBottomStartRadius: 10,
   },
   iconPillActiveLast: {
     borderBottomStartRadius: 16,
-    // borderBottomEndRadius: 10,
   },
   tabLabel: {
     fontSize: 11,

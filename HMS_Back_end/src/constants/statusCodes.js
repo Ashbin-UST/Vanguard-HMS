@@ -1,5 +1,4 @@
-// HTTP status codes used by the API. Single source of truth so controllers
-// and middlewares never hard-code numeric statuses.
+// Single source of truth for HTTP status codes
 const STATUS = Object.freeze({
     OK: 200,
     CREATED: 201,

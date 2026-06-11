@@ -1,8 +1,7 @@
 import AppointmentForm from "@/components/appointment/AppointmentForm";
 import { useLocalSearchParams } from "expo-router";
 
-// Edit screen receives the appointment to reschedule via route params.
-// appointmentDate arrives as an ISO string; we slice it to YYYY-MM-DD for the form.
+// Reschedule screen; appointmentDate route param is sliced to YYYY-MM-DD for the form
 export default function EditAppointment() {
   const { appointmentId, doctorEmployeeId, appointmentDate, timeSlot } =
     useLocalSearchParams<{

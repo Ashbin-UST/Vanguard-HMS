@@ -1,4 +1,4 @@
-import { EmployeeProfile, Designation, UserRole } from './employee.model';
+import { EmployeeProfile, UserRole } from './employee.model';
 import { ApiResponse } from './api-response.model';
 
 export interface User {
@@ -24,7 +24,3 @@ export type MeResponse = ApiResponse<{
 
 // Re-export commonly used role types so consumers can import from one place
 export type { Designation, UserRole } from './employee.model';
-
-export function getDesignation(user: User | null): Designation | null {
-  return user?.profile?.designation ?? null;
-}

@@ -5,8 +5,7 @@ const AppError = require("./AppError");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
 
-// Builds the current user's payload; throws AppError when the account or
-// employee profile is missing. The caller decides how to send the response.
+// Builds the current user payload; throws when account or employee profile is missing
 async function getCurrentUser(employeeCode) {
     const user = await User.findOne({ employeeCode })
         .select("-passwordHash -resetPasswordTokenHash -resetPasswordTokenExpiry -__v");

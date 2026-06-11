@@ -221,9 +221,7 @@ const passwordReset = ({ resetToken }) => ({
   `),
 });
 
-// Password reset requested from the patient mobile app — sends a one-time
-// code to be typed into the app's reset screen (no link; the Angular reset
-// page is for employees only)
+// Patient app password reset; emails a one-time code, no link
 const patientPasswordResetCode = ({ resetCode }) => ({
   subject: "HMS Password Reset Code",
   html: wrap(`

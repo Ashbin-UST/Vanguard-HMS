@@ -1,5 +1,4 @@
-// Centralized user-facing fallback strings. Components must reference these
-// instead of hard-coding text so wording stays consistent app-wide.
+// Centralized user-facing fallback strings so wording stays consistent app-wide
 export const APP_MESSAGES = {
   GENERIC_ERROR: 'Something went wrong',
   SESSION_EXPIRED: 'Session expired. Please login again.',

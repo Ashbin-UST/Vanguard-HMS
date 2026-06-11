@@ -4,9 +4,7 @@ const {
     cancelAppointmentValidation
 } = require("./appointmentValidators");
 
-// Booking/rescheduling fields for a patient. patientId is taken from the token,
-// so it is NOT accepted in the body (this is the only difference from the staff
-// createAppointmentValidation).
+// Patient booking/reschedule fields; patientId comes from the token, never the body
 const patientBookAppointmentValidation = [
     body("doctorEmployeeId")
         .notEmpty()
@@ -22,8 +20,7 @@ const patientBookAppointmentValidation = [
         .withMessage("Time slot must be in HH:mm-HH:mm format")
 ];
 
-// The appointmentId-param and cancellation-reason rules are identical to the
-// staff appointment routes, so reuse them instead of redefining.
+// Reuses the staff appointmentId-param and cancellation-reason rules
 module.exports = {
     patientBookAppointmentValidation,
     patientAppointmentIdValidation: appointmentIdValidation,

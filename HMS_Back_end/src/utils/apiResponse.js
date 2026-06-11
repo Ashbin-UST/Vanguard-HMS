@@ -1,7 +1,4 @@
-// Single point of truth for the success wire envelope:
-//   { success: true, statusCode, message, data: {...} }
-// Every 2xx response in the API must be sent through sendSuccess so the
-// envelope can never drift between endpoints.
+// Single point of truth for the success wire envelope; every 2xx goes through sendSuccess
 const sendSuccess = (res, statusCode, message, data = {}) =>
     res.status(statusCode).json({
         success: true,

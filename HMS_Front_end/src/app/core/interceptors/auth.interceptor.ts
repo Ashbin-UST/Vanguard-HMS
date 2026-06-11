@@ -30,10 +30,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   const isPublicAuthCall = PUBLIC_AUTH_PATHS.some((p) => req.url.includes(p));
 
-  // Only cross-cutting statuses are toasted here (session, permissions,
-  // connectivity). Other errors — including 500s — are surfaced by the
-  // calling component via ApiErrorHandlerService; adding a global toast for
-  // them would double-toast every failure.
+  // Only cross-cutting statuses are toasted here; other errors surface via ApiErrorHandlerService
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       switch (error.status) {

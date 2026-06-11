@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { LastLoginCellComponent } from '../../../shared/ui/last-login-cell/last-login-cell';
 import { OwnerService } from '../../../core/services/owner.service';
@@ -23,7 +23,6 @@ export class AdminsComponent implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly apiError = inject(ApiErrorHandlerService);
   private readonly confirmModal = inject(ConfirmModalService);
-  private readonly router = inject(Router);
 
   admins = signal<EmployeeListItem[]>([]);
   loading = signal(true);

@@ -7,14 +7,7 @@ interface TextboxProps extends TextInputProps {
   label: string;
   icon?: any;
   error?: string;
-  /** When provided, the whole field becomes a tap target (used for picker fields). */
-  onPress?: () => void;
-  /**
-   * Shows an eye button that toggles the value between hidden dots and plain
-   * text. When set, it controls `secureTextEntry` internally — do not also pass
-   * `secureTextEntry`. Intended for password fields, but NOT confirm-password
-   * fields (which should stay hidden with no reveal affordance).
-   */
+  // Eye button toggling secure entry; for password fields, not confirm-password
   secureToggle?: boolean;
 }
 

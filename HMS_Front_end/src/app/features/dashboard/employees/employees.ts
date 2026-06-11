@@ -54,6 +54,7 @@ export class EmployeesListComponent implements OnInit {
   ];
 
   selected = signal<EmployeeListItem | null>(null);
+  deleting = signal(false);
 
   isOwner = computed(
     () => this.authService.getDesignation() === 'OWNER',
@@ -152,13 +153,16 @@ export class EmployeesListComponent implements OnInit {
       ? this.ownerService.deleteAdmin(item.employee.employeeCode)
       : this.adminService.deleteEmployee(item.employee.employeeCode);
 
+    this.deleting.set(true);
     obs.subscribe({
       next: (res) => {
+        this.deleting.set(false);
         this.toast.success(res.message || APP_MESSAGES.EMPLOYEE_DELETED);
         this.close();
         this.load();
       },
       error: (err) => {
+        this.deleting.set(false);
         this.toast.error(this.apiError.message(err, APP_MESSAGES.EMPLOYEE_DELETE_FAILED));
       },
     });

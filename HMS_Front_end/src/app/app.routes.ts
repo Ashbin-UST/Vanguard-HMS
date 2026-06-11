@@ -6,7 +6,7 @@ import { unsavedChangesGuard } from './core/guards/unsaved-changes.guard';
 
 // Application routes (public, gated change-password, and the authenticated dashboard tree)
 export const routes: Routes = [
-  // --- Public routes ------------------------------------------------------
+  // Public routes
   {
     path: '',
     loadComponent: () =>
@@ -39,7 +39,7 @@ export const routes: Routes = [
       ),
   },
 
-  // --- Authenticated change-password (voluntary or forced first-login) ----
+  // Authenticated change-password (voluntary or forced first-login)
   {
     path: 'change-password',
     canActivate: [authGuard],
@@ -49,7 +49,7 @@ export const routes: Routes = [
       ),
   },
 
-  // --- Dashboard tree -----------------------------------------------------
+  // Dashboard tree
   {
     path: 'dashboard',
     canActivate: [authGuard, mustChangePasswordGuard],
@@ -204,12 +204,12 @@ export const routes: Routes = [
   { path: '**', redirectTo: '' },
 ];
 
-// --- Local OWNER-only guard (defined here to keep all routing in one file) ---
+// Local OWNER-only guard (defined here to keep all routing in one file)
 import { inject } from '@angular/core';
 import { AuthService } from './core/services/auth.service';
 
 function ownerOnlyGuard(): CanActivateFn {
-  return (route, state) => {
+  return (_route, state) => {
     const authService = inject(AuthService);
     const router = inject(Router);
 

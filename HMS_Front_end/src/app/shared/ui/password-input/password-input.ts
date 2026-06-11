@@ -34,7 +34,7 @@ export class PasswordInputComponent implements ControlValueAccessor {
   private onChange: (value: string) => void = () => {};
   private onTouched: () => void = () => {};
 
-  // --- ControlValueAccessor ---
+  // ControlValueAccessor
   writeValue(value: string): void {
     this.value.set(value ?? '');
   }

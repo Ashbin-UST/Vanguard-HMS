@@ -7,15 +7,14 @@ export const TOKEN_KEY = "jwt";
 export type ApiOptions = {
   method?: "GET" | "POST" | "PUT" | "DELETE";
   body?: unknown;
-  // When false, the request is sent without an Authorization header
-  // (used for public auth endpoints like login/register).
+  // When false, no Authorization header is sent (public auth endpoints)
   auth?: boolean;
 };
 
-/** Field-level validation error item, as sent by the backend. */
+// Field-level validation error item, as sent by the backend
 export type ApiFieldError = { msg: string; path?: string };
 
-/** Wire envelope every backend response uses. */
+// Wire envelope every backend response uses
 type Envelope<T> = {
   success: boolean;
   statusCode: number;
@@ -24,10 +23,7 @@ type Envelope<T> = {
   errors?: ApiFieldError[];
 };
 
-/**
- * Error thrown for every failed API call. Carries the HTTP status code
- * (0 for network failures) and any field-level validation errors.
- */
+// Error for failed API calls; carries HTTP status (0 = network) and field-level errors
 export class ApiError extends Error {
   statusCode: number;
   errors?: ApiFieldError[];
@@ -40,13 +36,7 @@ export class ApiError extends Error {
   }
 }
 
-/**
- * Thin fetch wrapper around the HMS backend.
- * - prefixes API_BASE_URL
- * - attaches the stored patient JWT (unless auth: false)
- * - unwraps the success envelope and resolves with its `data` payload
- * - throws an ApiError carrying the server message/status on failure
- */
+// Fetch wrapper; prefixes base URL, attaches patient JWT, unwraps the envelope, throws ApiError
 export async function apiFetch<T = any>(
   path: string,
   { method = "GET", body, auth = true }: ApiOptions = {},
@@ -81,8 +71,7 @@ export async function apiFetch<T = any>(
   }
 
   if (!response.ok || envelope?.success === false) {
-    // 422 carries field-level errors whose first `msg` is more useful than
-    // the generic top-level "Validation failed" message.
+    // First field-level msg beats the generic top-level validation message
     const message =
       (response.status === 422 && envelope?.errors?.[0]?.msg) ||
       envelope?.message ||

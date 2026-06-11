@@ -2,8 +2,7 @@ const AppError = require("../utils/AppError");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
 
-// Single point of truth for the error wire envelope:
-//   { success: false, statusCode, message, errors?: [...] }
+// Single point of truth for the error wire envelope
 const sendError = (res, statusCode, message, errors) => {
     const body = {
         success: false,
@@ -16,11 +15,7 @@ const sendError = (res, statusCode, message, errors) => {
     return res.status(statusCode).json(body);
 };
 
-// Global error handler. Express 5 forwards both sync throws and rejected
-// promises from any handler/middleware here, so controllers stay free of
-// response-sending try/catch blocks. Must keep all 4 args to be registered
-// as error middleware.
-// eslint-disable-next-line no-unused-vars
+// Global error handler; Express 5 registers it by the 4-arg signature
 const errorHandler = (err, req, res, next) => {
 
     if (res.headersSent) {
@@ -56,8 +51,7 @@ const errorHandler = (err, req, res, next) => {
         return sendError(res, STATUS.CONFLICT, MESSAGES.COMMON.DUPLICATE_KEY);
     }
 
-    // Unknown/unexpected error: log the full stack server-side but send an
-    // opaque message so internals are never leaked to clients.
+    // Unknown error: log server-side, send an opaque message to the client
     console.error("Unhandled error:", err);
     return sendError(res, STATUS.INTERNAL_SERVER_ERROR, MESSAGES.COMMON.INTERNAL_ERROR);
 };

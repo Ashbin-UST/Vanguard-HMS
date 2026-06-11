@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { User } from '../../../core/models/user.model';
 
@@ -13,7 +13,6 @@ import { User } from '../../../core/models/user.model';
 })
 export class NavbarComponent {
   private readonly authService = inject(AuthService);
-  private readonly router = inject(Router);
 
   currentUser: User | null = null;
 

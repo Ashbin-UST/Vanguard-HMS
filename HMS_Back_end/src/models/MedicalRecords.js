@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const { timeStamp } = require("node:console");
 const Counter = require("./Counter");
 
 const medicalRecordSchema = new mongoose.Schema({

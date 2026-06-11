@@ -1,6 +1,4 @@
-// Centralized user-facing strings: alert titles and messages.
-// Screens must reference these instead of hard-coding text so wording
-// stays consistent and can be changed in one place.
+// Centralized user-facing alert strings so wording stays consistent app-wide
 
 export const ALERT_TITLES = {
   ERROR: "Error",

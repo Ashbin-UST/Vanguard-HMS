@@ -5,8 +5,7 @@ const AppError = require("../utils/AppError");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
 
-// Throws AppError(409) when any uniqueness rule is violated; resolves
-// silently when all fields are available.
+// Throws AppError 409 on any uniqueness violation, resolves silently otherwise
 const validateUniqueEmployeeFields = async (data) => {
 
     const {

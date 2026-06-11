@@ -14,8 +14,7 @@ const { sendSuccess } = require("../utils/apiResponse");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
 
-// Build an audit actor for a patient (resolveActor assumes an employee, so we
-// construct one directly here).
+// Builds a patient audit actor directly since resolveActor assumes an employee
 const patientActor = (patient) => ({
     employeeCode: patient.UHID,
     name: patient.name,
@@ -38,9 +37,7 @@ exports.getMyProfile = async (req, res) => {
     });
 };
 
-// Update the authenticated patient's own contact details.
-// Identity fields (name, gender, dob) and account fields (status, UHID,
-// passwordHash) are intentionally NOT editable here.
+// Updates own contact details; identity and account fields are not editable here
 exports.updateMyProfile = async (req, res) => {
 
     const patient = await Patient.findOne({

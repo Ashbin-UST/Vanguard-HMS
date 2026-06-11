@@ -87,11 +87,11 @@
           </div>
           <div class="modal-header-actions">
             @if (canEdit(item)) {
-              <button type="button" class="btn btn-secondary btn-sm" (click)="editEmployee(item)">
+              <button type="button" class="btn btn-secondary btn-sm" [disabled]="deleting()" (click)="editEmployee(item)">
                 Edit
               </button>
             }
-            <button type="button" class="modal-close" (click)="close()">✕</button>
+            <button type="button" class="modal-close" [disabled]="deleting()" (click)="close()">✕</button>
           </div>
         </div>
 
@@ -168,15 +168,20 @@
         </div>
 
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="close()">
+          <button type="button" class="btn btn-secondary" [disabled]="deleting()" (click)="close()">
             Close
           </button>
           <button
             type="button"
             class="btn btn-danger"
+            [disabled]="deleting()"
             (click)="deleteEmployee(item)"
           >
-            Delete
+            @if (deleting()) {
+              <span>Deleting…</span>
+            } @else {
+              <span>Delete</span>
+            }
           </button>
         </div>
       </div>

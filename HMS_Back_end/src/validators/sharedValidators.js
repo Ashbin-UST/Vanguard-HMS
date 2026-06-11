@@ -1,9 +1,5 @@
 const { body } = require("express-validator");
 
-// Shared express-validator builders for employee/patient fields
-
-// ---- name ----------------------------------------------------------------
-
 // Name: letters, spaces, hyphens, apostrophes, periods
 const NAME_REGEX = /^\p{L}[\p{L} .'-]*$/u;
 
@@ -29,8 +25,6 @@ const nameValidator = (field = "name", label = "Name", { optional = false } = {}
     );
 };
 
-// ---- phone ---------------------------------------------------------------
-
 // Phone: optional country code, then 10 digits
 const PHONE_REGEX = /^(\+\d{1,3} )?\d{10}$/;
 
@@ -48,8 +42,6 @@ const phoneValidator = (
   }
   return chain.matches(PHONE_REGEX).withMessage(message);
 };
-
-// ---- email ---------------------------------------------------------------
 
 // Email validation chain
 const emailValidator = (field = "email", { optional = false } = {}) => {

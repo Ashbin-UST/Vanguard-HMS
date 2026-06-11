@@ -24,29 +24,27 @@ export class FormDraftService {
     this.drafts.set(key, sanitized);
   }
 
-  /** Returns the saved draft for a key, or null if none exists */
+  // Returns the saved draft for a key, or null if none exists
   get(key: string): Record<string, any> | null {
     const draft = this.drafts.get(key);
     // Return a clone so callers can't mutate the stored copy
     return draft ? this.clone(draft) : null;
   }
 
-  /** True if a draft exists for the key */
+  // True if a draft exists for the key
   has(key: string): boolean {
     return this.drafts.has(key);
   }
 
-  /** Clears the draft for a key (call after a successful submit) */
+  // Clears the draft for a key (call after a successful submit)
   clear(key: string): void {
     this.drafts.delete(key);
   }
 
-  /** Clears every draft (e.g. on logout) */
+  // Clears every draft (e.g. on logout)
   clearAll(): void {
     this.drafts.clear();
   }
-
-  // --- internals ----------------------------------------------------------
 
   // Recursively removes password-like keys and deep-clones the rest
   private sanitize(value: any): any {
@@ -77,11 +75,11 @@ export class FormDraftService {
   }
 
   private clone(value: any): any {
-    // structuredClone is available in modern browser/Angular targets
     try {
       return structuredClone(value);
     } catch {
-      return structuredClone(value);
+      // JSON fallback for values structuredClone rejects
+      return JSON.parse(JSON.stringify(value));
     }
   }
 }

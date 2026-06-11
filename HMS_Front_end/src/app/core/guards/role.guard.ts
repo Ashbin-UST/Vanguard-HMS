@@ -7,7 +7,7 @@ import { Designation } from '../models/employee.model';
 export const designationGuard = (
   allowed: Designation[],
 ): CanActivateFn => {
-  return (route, state) => {
+  return (_route, state) => {
     const authService = inject(AuthService);
     const router = inject(Router);
 

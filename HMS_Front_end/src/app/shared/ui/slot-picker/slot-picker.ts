@@ -49,8 +49,7 @@ export class SlotPickerComponent implements ControlValueAccessor {
   private onChange: (value: any) => void = () => {};
   private onTouched: () => void = () => {};
 
-  // --- ControlValueAccessor ----------------------------------------------
-
+  // ControlValueAccessor
   writeValue(value: any): void {
     this.selected.set(value ?? null);
   }
@@ -64,8 +63,7 @@ export class SlotPickerComponent implements ControlValueAccessor {
     this.disabled = isDisabled;
   }
 
-  // --- Rendering helpers --------------------------------------------------
-
+  // Rendering helpers
   isBooked(slot: string): boolean {
     return this._booked().has(slot);
   }
