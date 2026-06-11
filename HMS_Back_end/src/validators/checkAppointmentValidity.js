@@ -52,6 +52,18 @@ const checkAppointmentValidity = async ({
     };
   }
 
+  // Reject dates more than 6 months ahead of today
+  const maxBookingDay = new Date(todayStart);
+  maxBookingDay.setMonth(maxBookingDay.getMonth() + 6);
+
+  if (apptDay.getTime() > maxBookingDay.getTime()) {
+    return {
+      success: false,
+      status: 409,
+      message: "Appointments can only be booked up to 6 months in advance.",
+    };
+  }
+
   // For today's date, reject slots whose start time has already passed
   if (apptDay.getTime() === todayStart.getTime()) {
     const [slotStartHH, slotStartMM] = timeSlot
