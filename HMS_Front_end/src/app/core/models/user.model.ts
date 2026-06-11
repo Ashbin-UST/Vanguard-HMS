@@ -1,4 +1,5 @@
 import { EmployeeProfile, Designation, UserRole } from './employee.model';
+import { ApiResponse } from './api-response.model';
 
 export interface User {
   employeeCode: string;
@@ -11,17 +12,15 @@ export interface User {
 }
 
 // POST /auth/login response
-export interface LoginResponse {
-  message: string;
+export type LoginResponse = ApiResponse<{
   token: string;
   user: User;
-}
+}>;
 
 // GET /auth/me and GET /employees/me response
-export interface MeResponse {
-  message: string;
+export type MeResponse = ApiResponse<{
   user: User;
-}
+}>;
 
 // Re-export commonly used role types so consumers can import from one place
 export type { Designation, UserRole } from './employee.model';

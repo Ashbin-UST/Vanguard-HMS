@@ -6,6 +6,8 @@ import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/da
 import { AppointmentService } from '../../../core/services/appointment.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
+import { APP_MESSAGES } from '../../../core/constants/messages';
 import { ConfirmModalService } from '../../../core/services/confirm-modal.service';
 import {
   Appointment,
@@ -33,6 +35,7 @@ export class AppointmentsListComponent implements OnInit {
   private readonly appointmentService = inject(AppointmentService);
   private readonly authService = inject(AuthService);
   private readonly toast = inject(ToastService);
+  private readonly apiError = inject(ApiErrorHandlerService);
   private readonly confirmModal = inject(ConfirmModalService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -125,12 +128,12 @@ export class AppointmentsListComponent implements OnInit {
       // Pull a large window of the doctor's appointments and slice client-side
       this.appointmentService.getMyAppointments(1, 200).subscribe({
         next: (res) => {
-          this.appointments.set(res.appointments || []);
+          this.appointments.set(res.data.appointments || []);
           this.loading.set(false);
         },
         error: () => {
           this.loading.set(false);
-          this.toast.error('Failed to load appointments.');
+          this.toast.error(APP_MESSAGES.LOAD_APPOINTMENTS_FAILED);
         },
       });
       return;
@@ -143,14 +146,14 @@ export class AppointmentsListComponent implements OnInit {
       })
       .subscribe({
         next: (res) => {
-          this.appointments.set(res.appointments || []);
-          this.totalPages.set(res.totalPages || 1);
-          this.total.set(res.total || 0);
+          this.appointments.set(res.data.appointments || []);
+          this.totalPages.set(res.data.totalPages || 1);
+          this.total.set(res.data.total || 0);
           this.loading.set(false);
         },
         error: () => {
           this.loading.set(false);
-          this.toast.error('Failed to load appointments.');
+          this.toast.error(APP_MESSAGES.LOAD_APPOINTMENTS_FAILED);
         },
       });
   }
@@ -227,11 +230,11 @@ export class AppointmentsListComponent implements OnInit {
     const reason = (result.inputValue ?? '').trim();
     this.appointmentService.cancelAppointment(a.appointmentId, reason).subscribe({
       next: (res) => {
-        this.toast.success(res.message || 'Appointment cancelled.');
+        this.toast.success(res.message || APP_MESSAGES.APPOINTMENT_CANCELLED);
         this.load();
       },
       error: (err) => {
-        this.toast.error(err.error?.message || 'Failed to cancel.');
+        this.toast.error(this.apiError.message(err, APP_MESSAGES.APPOINTMENT_CANCEL_FAILED));
       },
     });
   }
@@ -250,11 +253,11 @@ export class AppointmentsListComponent implements OnInit {
     }
     this.appointmentService.completeAppointment(a.appointmentId).subscribe({
       next: (res) => {
-        this.toast.success(res.message || 'Appointment marked completed.');
+        this.toast.success(res.message || APP_MESSAGES.APPOINTMENT_COMPLETED);
         this.load();
       },
       error: (err) => {
-        this.toast.error(err.error?.message || 'Failed to complete.');
+        this.toast.error(this.apiError.message(err, APP_MESSAGES.APPOINTMENT_COMPLETE_FAILED));
       },
     });
   }

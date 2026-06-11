@@ -9,6 +9,8 @@ import {
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
+import { APP_MESSAGES } from '../../../core/constants/messages';
 
 @Component({
   selector: 'app-forgot-password',
@@ -21,6 +23,7 @@ export class ForgotPasswordComponent {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly toast = inject(ToastService);
+  private readonly apiError = inject(ApiErrorHandlerService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   forgotPasswordForm: FormGroup;
@@ -51,15 +54,16 @@ export class ForgotPasswordComponent {
         this.cdr.markForCheck();
         this.emailSent = true;
         this.toast.success(
-          response?.message || 'Password reset link sent to your email.',
+          response?.message || APP_MESSAGES.RESET_LINK_SENT,
         );
       },
       error: (error) => {
         this.loading = false;
         this.cdr.markForCheck();
-        this.errorMessage =
-          error.error?.message ||
-          'Failed to send reset link. Please try again.';
+        this.errorMessage = this.apiError.message(
+          error,
+          APP_MESSAGES.FORGOT_PASSWORD_FAILED,
+        );
         this.toast.error(this.errorMessage);
       },
     });

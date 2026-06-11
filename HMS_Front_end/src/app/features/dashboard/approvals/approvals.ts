@@ -3,6 +3,8 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { AdminService } from '../../../core/services/admin.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
+import { APP_MESSAGES } from '../../../core/constants/messages';
 import { ConfirmModalService } from '../../../core/services/confirm-modal.service';
 import { EmployeeListItem } from '../../../core/models/employee.model';
 import {
@@ -23,6 +25,7 @@ type Tab = 'registrations' | 'profileChanges';
 export class ApprovalsComponent implements OnInit {
   private readonly adminService = inject(AdminService);
   private readonly toast = inject(ToastService);
+  private readonly apiError = inject(ApiErrorHandlerService);
   private readonly confirmModal = inject(ConfirmModalService);
 
   tab = signal<Tab>('registrations');
@@ -52,12 +55,12 @@ export class ApprovalsComponent implements OnInit {
     this.loadingReg.set(true);
     this.adminService.getPendingEmployees().subscribe({
       next: (res) => {
-        this.registrations.set(res.employees || []);
+        this.registrations.set(res.data.employees || []);
         this.loadingReg.set(false);
       },
       error: () => {
         this.loadingReg.set(false);
-        this.toast.error('Failed to load pending registrations.');
+        this.toast.error(APP_MESSAGES.LOAD_APPROVALS_FAILED);
       },
     });
   }
@@ -66,12 +69,12 @@ export class ApprovalsComponent implements OnInit {
     this.loadingChanges.set(true);
     this.adminService.getProfileChangeRequests().subscribe({
       next: (res) => {
-        this.changes.set(res.requests || []);
+        this.changes.set(res.data.requests || []);
         this.loadingChanges.set(false);
       },
       error: () => {
         this.loadingChanges.set(false);
-        this.toast.error('Failed to load profile change requests.');
+        this.toast.error(APP_MESSAGES.LOAD_APPROVALS_FAILED);
       },
     });
   }
@@ -99,12 +102,12 @@ export class ApprovalsComponent implements OnInit {
     }
     this.adminService.approveEmployee(item.employee.employeeCode).subscribe({
       next: (res) => {
-        this.toast.success(res.message || 'Employee approved.');
+        this.toast.success(res.message || APP_MESSAGES.EMPLOYEE_APPROVED);
         this.closeRegistration();
         this.loadRegistrations();
       },
       error: (err) => {
-        this.toast.error(err.error?.message || 'Failed to approve.');
+        this.toast.error(this.apiError.message(err, APP_MESSAGES.EMPLOYEE_APPROVE_FAILED));
       },
     });
   }
@@ -122,12 +125,12 @@ export class ApprovalsComponent implements OnInit {
     }
     this.adminService.rejectEmployee(item.employee.employeeCode).subscribe({
       next: (res) => {
-        this.toast.success(res.message || 'Registration rejected.');
+        this.toast.success(res.message || APP_MESSAGES.EMPLOYEE_REJECTED);
         this.closeRegistration();
         this.loadRegistrations();
       },
       error: (err) => {
-        this.toast.error(err.error?.message || 'Failed to reject.');
+        this.toast.error(this.apiError.message(err, APP_MESSAGES.EMPLOYEE_REJECT_FAILED));
       },
     });
   }
@@ -182,12 +185,12 @@ export class ApprovalsComponent implements OnInit {
     }
     this.adminService.approveProfileChange(req.requestId).subscribe({
       next: (res) => {
-        this.toast.success(res.message || 'Profile change approved.');
+        this.toast.success(res.message || APP_MESSAGES.PROFILE_CHANGE_APPROVED);
         this.closeChange();
         this.loadChanges();
       },
       error: (err) => {
-        this.toast.error(err.error?.message || 'Failed to approve.');
+        this.toast.error(this.apiError.message(err, APP_MESSAGES.PROFILE_CHANGE_APPROVE_FAILED));
       },
     });
   }
@@ -205,12 +208,12 @@ export class ApprovalsComponent implements OnInit {
     }
     this.adminService.rejectProfileChange(req.requestId).subscribe({
       next: (res) => {
-        this.toast.success(res.message || 'Profile change rejected.');
+        this.toast.success(res.message || APP_MESSAGES.PROFILE_CHANGE_REJECTED);
         this.closeChange();
         this.loadChanges();
       },
       error: (err) => {
-        this.toast.error(err.error?.message || 'Failed to reject.');
+        this.toast.error(this.apiError.message(err, APP_MESSAGES.PROFILE_CHANGE_REJECT_FAILED));
       },
     });
   }

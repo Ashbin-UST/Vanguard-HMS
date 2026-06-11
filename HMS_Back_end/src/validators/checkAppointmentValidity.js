@@ -1,6 +1,9 @@
 const Appointment = require("../models/Appointments");
 const Patient = require("../models/Patients");
 const validateEmployeeStatus = require("./validateEmployeeStatus");
+const AppError = require("../utils/AppError");
+const STATUS = require("../constants/statusCodes");
+const MESSAGES = require("../constants/messages");
 
 // Returns the filter with an appointmentId exclusion added when editing
 const withExclusion = (filter, excludeAppointmentId) => {
@@ -8,6 +11,8 @@ const withExclusion = (filter, excludeAppointmentId) => {
   return { ...filter, appointmentId: { $ne: excludeAppointmentId } };
 };
 
+// Validates every booking rule for an appointment request. Throws AppError on
+// the first violated rule; returns { patient, doctor } when the slot is valid.
 const checkAppointmentValidity = async ({
   patientId,
   doctorId,
@@ -22,20 +27,11 @@ const checkAppointmentValidity = async ({
   });
 
   if (!patient) {
-    return {
-      success: false,
-      status: 404,
-      message: "Patient doesn't exist",
-    };
+    throw new AppError(STATUS.NOT_FOUND, MESSAGES.PATIENT.DOESNT_EXIST);
   }
 
-  const validDoctor = await validateEmployeeStatus(doctorId, "DOCTOR");
-
-  if (!validDoctor.success) {
-    return validDoctor;
-  }
-
-  const doctor = validDoctor.employee;
+  // Throws when the doctor is missing, not a DOCTOR, or inactive
+  const doctor = await validateEmployeeStatus(doctorId, "DOCTOR");
 
   // Reject past dates
   const todayStart = new Date();
@@ -45,11 +41,7 @@ const checkAppointmentValidity = async ({
   apptDay.setHours(0, 0, 0, 0);
 
   if (apptDay.getTime() < todayStart.getTime()) {
-    return {
-      success: false,
-      status: 409,
-      message: "Cannot book an appointment in the past.",
-    };
+    throw new AppError(STATUS.CONFLICT, MESSAGES.APPOINTMENT.PAST_DATE);
   }
 
   // Reject dates more than 6 months ahead of today
@@ -57,11 +49,7 @@ const checkAppointmentValidity = async ({
   maxBookingDay.setMonth(maxBookingDay.getMonth() + 6);
 
   if (apptDay.getTime() > maxBookingDay.getTime()) {
-    return {
-      success: false,
-      status: 409,
-      message: "Appointments can only be booked up to 6 months in advance.",
-    };
+    throw new AppError(STATUS.CONFLICT, MESSAGES.APPOINTMENT.TOO_FAR_AHEAD);
   }
 
   // For today's date, reject slots whose start time has already passed
@@ -75,11 +63,7 @@ const checkAppointmentValidity = async ({
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
     if (slotStartMinutes <= nowMinutes) {
-      return {
-        success: false,
-        status: 409,
-        message: "Cannot book an appointment for a time that has already passed.",
-      };
+      throw new AppError(STATUS.CONFLICT, MESSAGES.APPOINTMENT.PAST_TIME);
     }
   }
 
@@ -97,11 +81,10 @@ const checkAppointmentValidity = async ({
         month: "short",
         day: "numeric",
       });
-      return {
-        success: false,
-        status: 409,
-        message: `Doctor has not joined yet. Earliest appointment date is ${joinedOn}`,
-      };
+      throw new AppError(
+        STATUS.CONFLICT,
+        MESSAGES.APPOINTMENT.DOCTOR_NOT_JOINED(joinedOn)
+      );
     }
   }
 
@@ -117,11 +100,7 @@ const checkAppointmentValidity = async ({
   );
 
   if (!matchingSlot) {
-    return {
-      success: false,
-      status: 409,
-      message: "Doctor is unavailable on the selected day",
-    };
+    throw new AppError(STATUS.CONFLICT, MESSAGES.APPOINTMENT.DOCTOR_UNAVAILABLE_DAY);
   }
 
   const [appointmentStartTime, appointmentEndTime] = timeSlot.split("-");
@@ -132,11 +111,7 @@ const checkAppointmentValidity = async ({
     appointmentEndTime <= matchingSlot.endTime;
 
   if (!isValidTimeSlot) {
-    return {
-      success: false,
-      status: 409,
-      message: "Doctor is unavailable for the selected time slot",
-    };
+    throw new AppError(STATUS.CONFLICT, MESSAGES.APPOINTMENT.DOCTOR_UNAVAILABLE_SLOT);
   }
 
   // Ensure the patient does not already have a non-cancelled appointment at this slot
@@ -148,11 +123,7 @@ const checkAppointmentValidity = async ({
   );
 
   if (patientAppointment) {
-    return {
-      success: false,
-      status: 409,
-      message: "Patient already has an appointment for this time slot",
-    };
+    throw new AppError(STATUS.CONFLICT, MESSAGES.APPOINTMENT.PATIENT_SLOT_CONFLICT);
   }
 
   // Ensure the doctor does not already have a non-cancelled appointment at this slot
@@ -164,15 +135,10 @@ const checkAppointmentValidity = async ({
   );
 
   if (doctorAppointment) {
-    return {
-      success: false,
-      status: 409,
-      message: "Doctor already has an appointment for this time slot",
-    };
+    throw new AppError(STATUS.CONFLICT, MESSAGES.APPOINTMENT.DOCTOR_SLOT_CONFLICT);
   }
 
   return {
-    success: true,
     patient,
     doctor,
   };

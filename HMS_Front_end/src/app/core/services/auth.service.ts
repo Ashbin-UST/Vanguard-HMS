@@ -54,8 +54,8 @@ export class AuthService {
       .post<LoginResponse>(`${this.apiUrl}/login`, { email, password })
       .pipe(
         tap((response) => {
-          if (response?.token && response?.user) {
-            this.setSession(response.token, response.user);
+          if (response?.data?.token && response?.data?.user) {
+            this.setSession(response.data.token, response.data.user);
           }
         }),
       );
@@ -97,8 +97,8 @@ export class AuthService {
   refreshCurrentUser(): Observable<MeResponse> {
     return this.http.get<MeResponse>(`${this.apiUrl}/me`).pipe(
       tap((response) => {
-        if (response?.user) {
-          this.persistUser(response.user);
+        if (response?.data?.user) {
+          this.persistUser(response.data.user);
         }
       }),
     );

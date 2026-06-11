@@ -2,6 +2,8 @@ require("dotenv").config();
 
 const app = require("../app");
 const connectDB = require("../config/db");
+const STATUS = require("../constants/statusCodes");
+const MESSAGES = require("../constants/messages");
 
 async function handler(req, res) {
   try {
@@ -10,8 +12,11 @@ async function handler(req, res) {
   } catch (error) {
     console.error("Database connection error:", error);
 
-    return res.status(500).json({
-      message: "Database connection failed"
+    // Outside Express, so the envelope is emitted directly here
+    return res.status(STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      statusCode: STATUS.INTERNAL_SERVER_ERROR,
+      message: MESSAGES.COMMON.DB_CONNECTION_FAILED
     });
   }
 }

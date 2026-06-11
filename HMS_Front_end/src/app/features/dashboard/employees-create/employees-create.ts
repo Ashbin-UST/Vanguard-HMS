@@ -14,6 +14,8 @@ import { AdminService } from '../../../core/services/admin.service';
 import { OwnerService } from '../../../core/services/owner.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
+import { APP_MESSAGES } from '../../../core/constants/messages';
 import { FormDraftService } from '../../../core/services/form-draft.service';
 import { CanComponentDeactivate } from '../../../core/guards/unsaved-changes.guard';
 import {
@@ -53,6 +55,7 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
   private readonly ownerService = inject(OwnerService);
   private readonly authService = inject(AuthService);
   private readonly toast = inject(ToastService);
+  private readonly apiError = inject(ApiErrorHandlerService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -153,13 +156,13 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
 
     this.adminService.getEmployee(this.editEmployeeCode).subscribe({
       next: (res) => {
-        this.populateEditForm(res.employee);
+        this.populateEditForm(res.data.employee);
         this.initialLoading = false;
         this.cdr.markForCheck();
       },
       error: () => {
         this.initialLoading = false;
-        this.toast.error('Failed to load employee data.');
+        this.toast.error(APP_MESSAGES.LOAD_EMPLOYEE_FAILED);
         this.router.navigate(['/dashboard/employees']);
       },
     });
@@ -338,13 +341,13 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
           this.loading = false;
           this.cdr.markForCheck();
           this.submittedOk = true;
-          this.toast.success(res.message || 'Employee updated successfully.');
+          this.toast.success(res.message || APP_MESSAGES.EMPLOYEE_UPDATED);
           this.router.navigate(['/dashboard/employees']);
         },
         error: (err) => {
           this.loading = false;
           this.cdr.markForCheck();
-          this.toast.error(err.error?.message || 'Failed to update employee.');
+          this.toast.error(this.apiError.message(err, APP_MESSAGES.EMPLOYEE_UPDATE_FAILED));
         },
       });
       return;
@@ -379,7 +382,7 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
         this.formDraft.clear(this.draftKey);
         this.toast.success(
           res.message ||
-            `${creatingAdmin ? 'Admin' : 'Employee'} created. Credentials sent via email.`,
+            (creatingAdmin ? APP_MESSAGES.ADMIN_CREATED : APP_MESSAGES.EMPLOYEE_CREATED),
         );
         this.router.navigate([
           creatingAdmin ? '/dashboard/admins' : '/dashboard/employees',
@@ -388,7 +391,12 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
       error: (err) => {
         this.loading = false;
         this.cdr.markForCheck();
-        this.toast.error(err.error?.message || 'Failed to create.');
+        this.toast.error(
+          this.apiError.message(
+            err,
+            creatingAdmin ? APP_MESSAGES.ADMIN_CREATE_FAILED : APP_MESSAGES.EMPLOYEE_CREATE_FAILED,
+          ),
+        );
       },
     });
   }

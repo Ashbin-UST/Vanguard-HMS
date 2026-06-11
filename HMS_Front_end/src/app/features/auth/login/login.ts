@@ -9,6 +9,8 @@ import {
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
+import { APP_MESSAGES } from '../../../core/constants/messages';
 import { PasswordInputComponent } from '../../../shared/ui/password-input/password-input';
 
 @Component({
@@ -24,6 +26,7 @@ export class LoginComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(ToastService);
+  private readonly apiError = inject(ApiErrorHandlerService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   loginForm: FormGroup;
@@ -52,13 +55,14 @@ export class LoginComponent {
       next: (response) => {
         this.loading = false;
         this.cdr.markForCheck();
-        if (response?.token && response?.user) {
+        const user = response?.data?.user;
+        if (response?.data?.token && user) {
           this.toast.success(
-            `Welcome back, ${response.user.profile?.name || response.user.username}!`,
+            `Welcome back, ${user.profile?.name || user.username}!`,
           );
 
           // First-login users must change their temporary password first
-          if (response.user.mustChangePassword) {
+          if (user.mustChangePassword) {
             this.router.navigate(['/change-password']);
             return;
           }
@@ -72,8 +76,7 @@ export class LoginComponent {
       },
       error: (error) => {
         this.loading = false;
-        this.errorMessage =
-          error.error?.message || 'Login failed. Please try again.';
+        this.errorMessage = this.apiError.message(error, APP_MESSAGES.LOGIN_FAILED);
         this.toast.error(this.errorMessage);
         this.cdr.markForCheck();
       },

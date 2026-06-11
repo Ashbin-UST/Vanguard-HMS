@@ -4,16 +4,19 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { MeResponse } from '../models/user.model';
 import { DoctorsResponse } from '../models/appointment.model';
+import { ApiResponse } from '../models/api-response.model';
+import { EmployeeProfile } from '../models/employee.model';
 
-// PUT /employees/update-profile response
-export interface ProfileUpdateRequestResponse {
-  message: string;
-  request: {
+// PUT /employees/update-profile response. OWNER/ADMIN updates apply
+// immediately (employee payload); staff updates create a pending request.
+export type ProfileUpdateRequestResponse = ApiResponse<{
+  employee?: EmployeeProfile;
+  request?: {
     requestId: string;
     status: string;
     requestedChanges: Record<string, { old?: any; new?: any }>;
   };
-}
+}>;
 
 // Self-editable profile fields (phone + qualification only)
 export interface ProfileUpdatePayload {

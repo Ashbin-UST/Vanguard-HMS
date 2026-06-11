@@ -1,4 +1,5 @@
 import { AvailabilitySlot } from './employee.model';
+import { ApiResponse, PaginatedData } from './api-response.model';
 
 // Appointment domain models aligned with the backend Appointments schema
 
@@ -65,32 +66,25 @@ export interface CreateAppointmentPayload {
 export type UpdateAppointmentPayload = CreateAppointmentPayload;
 
 // GET /appointments (and /appointments/my) response
-export interface AppointmentsResponse {
-  message: string;
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
+export interface AppointmentsData extends PaginatedData {
   appointments: Appointment[];
 }
+export type AppointmentsResponse = ApiResponse<AppointmentsData>;
 
 // Single-appointment response
-export interface AppointmentResponse {
-  message: string;
+export type AppointmentResponse = ApiResponse<{
   appointment: Appointment;
-}
+}>;
 
 // GET /employees/doctors response
-export interface DoctorsResponse {
-  message: string;
+export type DoctorsResponse = ApiResponse<{
   total: number;
   doctors: DoctorOption[];
-}
+}>;
 
 // GET /appointments/booked-slots response
-export interface BookedSlotsResponse {
-  message: string;
+export type BookedSlotsResponse = ApiResponse<{
   doctorEmployeeId: string;
   date: string;
   bookedSlots: string[];
-}
+}>;

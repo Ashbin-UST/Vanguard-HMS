@@ -5,6 +5,10 @@ const Patient = require("../models/Patients");
 const sendEmail = require("../utils/sendEmail");
 const emailTemplates = require("../utils/emailTemplates");
 const { toSafePatient } = require("../utils/toSafePatient");
+const AppError = require("../utils/AppError");
+const { sendSuccess } = require("../utils/apiResponse");
+const STATUS = require("../constants/statusCodes");
+const MESSAGES = require("../constants/messages");
 require("dotenv").config();
 
 const SALT_ROUNDS = 12;
@@ -45,252 +49,183 @@ const signPatientToken = (patient) =>
 // the account is immediately ACTIVE (no staff approval, no temporary password).
 exports.register = async (req, res) => {
 
-    try {
-        const {
-            name,
-            phone,
-            email,
-            password,
-            gender,
-            dob,
-            address,
-            emergencyContact
-        } = req.body;
+    const {
+        name,
+        phone,
+        email,
+        password,
+        gender,
+        dob,
+        address,
+        emergencyContact
+    } = req.body;
 
-        const existingPatient = await Patient.findOne({ email });
+    const existingPatient = await Patient.findOne({ email });
 
-        if (existingPatient) {
-            return res.status(409).json({
-                message: "Patient with this email is already registered"
-            });
-        }
-
-        const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-
-        const patient = new Patient({
-            name,
-            phone,
-            email,
-            passwordHash,
-            gender,
-            dob,
-            address,
-            emergencyContact,
-            status: "ACTIVE",
-            mustChangePassword: false
-        });
-
-        await patient.save();
-
-        return res.status(201).json({
-            message: "Registration successful. You can now log in.",
-            patient: toSafePatient(patient)
-        });
+    if (existingPatient) {
+        throw new AppError(STATUS.CONFLICT, MESSAGES.PATIENT.ALREADY_REGISTERED);
     }
-    catch (err) {
-        console.error("Error during patient registration: ", err);
-        return res.status(500).json({
-            message: "Server error during patient registration"
-        });
-    }
+
+    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+
+    const patient = new Patient({
+        name,
+        phone,
+        email,
+        passwordHash,
+        gender,
+        dob,
+        address,
+        emergencyContact,
+        status: "ACTIVE",
+        mustChangePassword: false
+    });
+
+    await patient.save();
+
+    return sendSuccess(res, STATUS.CREATED, MESSAGES.PATIENT.REGISTER_SUCCESS, {
+        patient: toSafePatient(patient)
+    });
 };
 
 // Authenticate a patient by email + password and return a JWT
 exports.login = async (req, res) => {
 
-    try {
-        const { email, password } = req.body;
+    const { email, password } = req.body;
 
-        const patient = await Patient.findOne({ email });
-        if (!patient) {
-            return res.status(401).json({
-                message: "Invalid email or password"
-            });
-        }
-
-        const isMatch = Boolean(await bcrypt.compare(password, patient.passwordHash));
-        if (!isMatch) {
-            return res.status(401).json({
-                message: "Invalid email or password"
-            });
-        }
-
-        if (patient.status !== "ACTIVE") {
-            return res.status(403).json({
-                message: "Account is inactive"
-            });
-        }
-
-        const token = signPatientToken(patient);
-
-        return res.status(200).json({
-            message: "Login successful",
-            token,
-            patient: toSafePatient(patient)
-        });
+    const patient = await Patient.findOne({ email });
+    if (!patient) {
+        throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_CREDENTIALS);
     }
-    catch (err) {
-        console.error("Patient login error:", err);
-        return res.status(500).json({
-            message: "Server error during login"
-        });
+
+    const isMatch = Boolean(await bcrypt.compare(password, patient.passwordHash));
+    if (!isMatch) {
+        throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_CREDENTIALS);
     }
+
+    if (patient.status !== "ACTIVE") {
+        throw new AppError(STATUS.FORBIDDEN, MESSAGES.AUTH.ACCOUNT_INACTIVE);
+    }
+
+    const token = signPatientToken(patient);
+
+    return sendSuccess(res, STATUS.OK, MESSAGES.AUTH.LOGIN_SUCCESS, {
+        token,
+        patient: toSafePatient(patient)
+    });
 };
 
 // Allow an authenticated patient to change their own password
 exports.changePassword = async (req, res) => {
 
-    try {
-        const { patientId } = req.patient;
-        const { currentPassword, newPassword, confirmPassword } = req.body;
+    const { patientId } = req.patient;
+    const { currentPassword, newPassword, confirmPassword } = req.body;
 
-        const patient = await Patient.findOne({ UHID: patientId });
-        if (!patient) {
-            return res.status(404).json({
-                message: "Patient not found"
-            });
-        }
-
-        const isMatch = Boolean(await bcrypt.compare(currentPassword, patient.passwordHash));
-        if (!isMatch) {
-            return res.status(401).json({
-                message: "Current password is incorrect"
-            });
-        }
-
-        if (newPassword !== confirmPassword) {
-            return res.status(400).json({
-                message: "Passwords do not match!!"
-            });
-        }
-
-        const samePassword = Boolean(await bcrypt.compare(newPassword, patient.passwordHash));
-        if (samePassword) {
-            return res.status(400).json({
-                message: "New password cannot be the same as current password"
-            });
-        }
-
-        patient.passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
-        patient.mustChangePassword = false;
-        await patient.save();
-
-        return res.status(200).json({
-            message: "Password changed successfully"
-        });
+    const patient = await Patient.findOne({ UHID: patientId });
+    if (!patient) {
+        throw new AppError(STATUS.NOT_FOUND, MESSAGES.PATIENT.NOT_FOUND);
     }
-    catch (err) {
-        console.error("Error during patient password change: ", err);
-        return res.status(500).json({
-            message: "Server error during password change"
-        });
+
+    const isMatch = Boolean(await bcrypt.compare(currentPassword, patient.passwordHash));
+    if (!isMatch) {
+        throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.CURRENT_PASSWORD_INCORRECT);
     }
+
+    if (newPassword !== confirmPassword) {
+        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.AUTH.PASSWORDS_DO_NOT_MATCH);
+    }
+
+    const samePassword = Boolean(await bcrypt.compare(newPassword, patient.passwordHash));
+    if (samePassword) {
+        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.AUTH.PASSWORD_SAME_AS_CURRENT);
+    }
+
+    patient.passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    patient.mustChangePassword = false;
+    await patient.save();
+
+    return sendSuccess(res, STATUS.OK, MESSAGES.AUTH.PASSWORD_CHANGED);
 };
 
 // Generate a short-lived reset code and email it to the patient
 exports.forgotPassword = async (req, res) => {
 
-    try {
-        const { email } = req.body;
+    const { email } = req.body;
 
-        const patient = await Patient.findOne({ email });
+    const patient = await Patient.findOne({ email });
 
-        // Always return the same neutral response to avoid leaking which
-        // emails are registered.
-        const neutralResponse = () =>
-            res.status(200).json({
-                message: "If the email exists, a reset code has been sent"
-            });
+    // Always return the same neutral response to avoid leaking which
+    // emails are registered.
+    const neutralResponse = () =>
+        sendSuccess(res, STATUS.OK, MESSAGES.AUTH.RESET_CODE_SENT);
 
-        if (!patient || patient.status !== "ACTIVE") {
-            return neutralResponse();
-        }
-
-        // Store only the hash of the code; the raw value is emailed and never persisted.
-        const resetCode = generateResetCode();
-        patient.resetPasswordTokenHash = crypto
-            .createHash("sha256")
-            .update(resetCode)
-            .digest("hex");
-        patient.resetPasswordTokenExpiry = new Date(Date.now() + 15 * 60 * 1000);
-
-        await patient.save();
-
-        // dev only: print the code so it can be tested without a real inbox
-        if (process.env.NODE_ENV !== "production") {
-            console.log(`\n[DEV] Patient reset code for ${patient.email}: ${resetCode}\n`);
-        }
-
-        try {
-            await sendEmail({
-                to: patient.email,
-                ...emailTemplates.patientPasswordResetCode({ resetCode })
-            });
-        } catch (emailError) {
-            console.error("Email sending error:", emailError);
-        }
-
+    if (!patient || patient.status !== "ACTIVE") {
         return neutralResponse();
     }
-    catch (err) {
-        console.error("Error during patient forgot password: ", err);
-        return res.status(500).json({
-            message: "Server error during forgot password"
-        });
+
+    // Store only the hash of the code; the raw value is emailed and never persisted.
+    const resetCode = generateResetCode();
+    patient.resetPasswordTokenHash = crypto
+        .createHash("sha256")
+        .update(resetCode)
+        .digest("hex");
+    patient.resetPasswordTokenExpiry = new Date(Date.now() + 15 * 60 * 1000);
+
+    await patient.save();
+
+    // dev only: print the code so it can be tested without a real inbox
+    if (process.env.NODE_ENV !== "production") {
+        console.log(`\n[DEV] Patient reset code for ${patient.email}: ${resetCode}\n`);
     }
+
+    // Email failures must not break the neutral response
+    try {
+        await sendEmail({
+            to: patient.email,
+            ...emailTemplates.patientPasswordResetCode({ resetCode })
+        });
+    } catch (emailError) {
+        console.error("Email sending error:", emailError);
+    }
+
+    return neutralResponse();
 };
 
 // Validate the reset code and set a new password
 exports.resetPassword = async (req, res) => {
 
-    try {
-        const { resetCode, newPassword, confirmPassword } = req.body;
+    const { resetCode, newPassword, confirmPassword } = req.body;
 
-        if (newPassword !== confirmPassword) {
-            return res.status(400).json({
-                message: "Passwords do not match!!"
-            });
-        }
-
-        const hashedCode = crypto
-            .createHash("sha256")
-            .update(resetCode)
-            .digest("hex");
-
-        const patient = await Patient.findOne({
-            resetPasswordTokenHash: hashedCode,
-            resetPasswordTokenExpiry: { $gt: new Date() }
-        });
-
-        if (!patient || patient.status !== "ACTIVE") {
-            return res.status(400).json({
-                message: "Invalid or expired reset code"
-            });
-        }
-
-        const isSamePassword = Boolean(await bcrypt.compare(newPassword, patient.passwordHash));
-        if (isSamePassword) {
-            return res.status(400).json({
-                message: "New password cannot be the same as current password"
-            });
-        }
-
-        patient.passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
-        // Clear the reset fields back to undefined so they drop out of the document
-        patient.resetPasswordTokenHash = undefined;
-        patient.resetPasswordTokenExpiry = undefined;
-        patient.mustChangePassword = false;
-
-        await patient.save();
-
-        return res.status(200).json({
-            message: "Password reset successful"
-        });
+    if (newPassword !== confirmPassword) {
+        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.AUTH.PASSWORDS_DO_NOT_MATCH);
     }
-    catch (err) {
-        console.error("Error during patient reset password: ", err);
-        return res.status(500).json({
-            message: "Server error during reset password"
-        });
+
+    const hashedCode = crypto
+        .createHash("sha256")
+        .update(resetCode)
+        .digest("hex");
+
+    const patient = await Patient.findOne({
+        resetPasswordTokenHash: hashedCode,
+        resetPasswordTokenExpiry: { $gt: new Date() }
+    });
+
+    if (!patient || patient.status !== "ACTIVE") {
+        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.AUTH.INVALID_RESET_CODE);
     }
+
+    const isSamePassword = Boolean(await bcrypt.compare(newPassword, patient.passwordHash));
+    if (isSamePassword) {
+        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.AUTH.PASSWORD_SAME_AS_CURRENT);
+    }
+
+    patient.passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    // Clear the reset fields back to undefined so they drop out of the document
+    patient.resetPasswordTokenHash = undefined;
+    patient.resetPasswordTokenExpiry = undefined;
+    patient.mustChangePassword = false;
+
+    await patient.save();
+
+    return sendSuccess(res, STATUS.OK, MESSAGES.AUTH.PASSWORD_RESET_SUCCESS);
 };

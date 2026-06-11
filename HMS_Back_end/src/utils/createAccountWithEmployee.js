@@ -15,13 +15,9 @@ async function createAccountWithEmployee(
 ) {
     const { username, email } = req.body;
 
-    // Reject if username, email, or medical registration number is already taken
-    const uniquenessResult = await validateUniqueEmployeeFields(req.body);
-    if (!uniquenessResult.success) {
-        const err = new Error(uniquenessResult.message);
-        err.status = uniquenessResult.status;
-        throw err;
-    }
+    // Throws AppError(409) if username, email, or medical registration
+    // number is already taken
+    await validateUniqueEmployeeFields(req.body);
 
     // Generate a temporary password
     const temporaryPassword = generateTemporaryPassword();

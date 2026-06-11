@@ -16,6 +16,12 @@ const patientAuthRoutes = require("./routes/patientAuthRoutes");
 const patientSelfRoutes = require("./routes/patientSelfRoutes");
 const mongoose = require("mongoose");
 
+const notFound = require("./middlewares/notFound");
+const errorHandler = require("./middlewares/errorHandler");
+const { sendSuccess } = require("./utils/apiResponse");
+const STATUS = require("./constants/statusCodes");
+const MESSAGES = require("./constants/messages");
+
 const app = express();
 
 // Used for secure HTTP headers
@@ -35,13 +41,13 @@ app.use(morgan("dev"));
 // Read JSON data sent from frontend/Postman
 app.use(express.json());
 
-app.get("/api/db-status", (req, res) => {
-  res.json({
+app.get("/api/db-status", (req, res) =>
+  sendSuccess(res, STATUS.OK, MESSAGES.COMMON.DB_STATUS_RETRIEVED, {
     readyState: mongoose.connection.readyState,
     host: mongoose.connection.host,
     dbName: mongoose.connection.name,
-  });
-});
+  })
+);
 
 // Routes
 app.use("/api/auth", authRoutes);
@@ -58,9 +64,13 @@ app.use("/api/patient", patientSelfRoutes);
 
 // Default route
 app.get("/", (req, res) =>
-  res.json({
-    message: "API running",
-  })
+  sendSuccess(res, STATUS.OK, MESSAGES.COMMON.API_RUNNING)
 );
+
+// Unknown routes -> JSON 404 envelope
+app.use(notFound);
+
+// Global error handler; must stay the last middleware
+app.use(errorHandler);
 
 module.exports = app;

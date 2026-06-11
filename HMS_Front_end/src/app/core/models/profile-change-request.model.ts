@@ -1,3 +1,5 @@
+import { ApiResponse } from './api-response.model';
+
 export type ProfileChangeStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 // A single field diff: old value -> new value
@@ -24,8 +26,7 @@ export interface ProfileChangeRequest {
 }
 
 // GET /admin/profile-change-requests response
-export interface ProfileChangeRequestsResponse {
-  message: string;
+export type ProfileChangeRequestsResponse = ApiResponse<{
   total: number;
   requests: ProfileChangeRequest[];
-}
+}>;

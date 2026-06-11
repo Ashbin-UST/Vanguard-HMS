@@ -25,7 +25,7 @@ export class NodeService {
       return of(this.cachedNodes);
     }
     return this.getMyNodes().pipe(
-      map((res) => res.nodes ?? []),
+      map((res) => res.data?.nodes ?? []),
       tap((nodes) => (this.cachedNodes = nodes)),
     );
   }

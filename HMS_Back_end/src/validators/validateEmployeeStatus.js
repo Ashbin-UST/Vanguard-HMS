@@ -1,6 +1,12 @@
 const Employee = require("../models/Employees");
 const User = require("../models/Users");
+const AppError = require("../utils/AppError");
+const STATUS = require("../constants/statusCodes");
+const MESSAGES = require("../constants/messages");
 
+// Validates that the employee exists, has the expected designation, and the
+// linked user account is active. Throws AppError on failure, returns the
+// employee record on success.
 const validateEmployeeStatus = async (employeeCode, expectedDesignation) => {
 
     // Look up the employee record
@@ -9,11 +15,7 @@ const validateEmployeeStatus = async (employeeCode, expectedDesignation) => {
     });
 
     if (!employee) {
-        return {
-            success: false,
-            status: 404,
-            message: "Employee doesn't exist"
-        };
+        throw new AppError(STATUS.NOT_FOUND, MESSAGES.EMPLOYEE.DOESNT_EXIST);
     }
 
     // Look up the linked user account
@@ -22,35 +24,26 @@ const validateEmployeeStatus = async (employeeCode, expectedDesignation) => {
     });
 
     if (!user) {
-        return {
-            success: false,
-            status: 404,
-            message: "User doesn't exist"
-        };
+        throw new AppError(STATUS.NOT_FOUND, MESSAGES.EMPLOYEE.USER_DOESNT_EXIST);
     }
 
     // Confirm the employee holds the required designation
-    if (employee.designation !== expectedDesignation){
-        return {
-            success: false,
-            status: 400,
-            message: "The selected employee is not a " + expectedDesignation
-        };
+    if (employee.designation !== expectedDesignation) {
+        throw new AppError(
+            STATUS.BAD_REQUEST,
+            MESSAGES.EMPLOYEE.NOT_DESIGNATION(expectedDesignation)
+        );
     }
 
     // Confirm the user account is active
     if (String(user.status) !== "ACTIVE") {
-        return {
-            success: false,
-            status: 403,
-            message: expectedDesignation + " account is inactive"
-        };
+        throw new AppError(
+            STATUS.FORBIDDEN,
+            MESSAGES.EMPLOYEE.DESIGNATION_INACTIVE(expectedDesignation)
+        );
     }
 
-    return {
-        success: true,
-        employee
-    };
-}
+    return employee;
+};
 
 module.exports = validateEmployeeStatus;

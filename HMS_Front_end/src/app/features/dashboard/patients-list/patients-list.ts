@@ -6,6 +6,7 @@ import { debounceTime, Subject } from 'rxjs';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { PatientService } from '../../../core/services/patient.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { APP_MESSAGES } from '../../../core/constants/messages';
 import {
   GENDERS,
   Patient,
@@ -66,14 +67,14 @@ export class PatientsListComponent implements OnInit {
     if (this.searching()) {
       this.patientService.searchPatients(this.searchTerm()).subscribe({
         next: (res) => {
-          this.patients.set(res.patients || []);
-          this.total.set(res.total || 0);
+          this.patients.set(res.data.patients || []);
+          this.total.set(res.data.total || 0);
           this.totalPages.set(1);
           this.loading.set(false);
         },
         error: () => {
           this.loading.set(false);
-          this.toast.error('Failed to search patients.');
+          this.toast.error(APP_MESSAGES.LOAD_PATIENTS_FAILED);
         },
       });
       return;
@@ -86,14 +87,14 @@ export class PatientsListComponent implements OnInit {
       })
       .subscribe({
         next: (res) => {
-          this.patients.set(res.patients || []);
-          this.total.set(res.total || 0);
-          this.totalPages.set(res.totalPages || 1);
+          this.patients.set(res.data.patients || []);
+          this.total.set(res.data.total || 0);
+          this.totalPages.set(res.data.totalPages || 1);
           this.loading.set(false);
         },
         error: () => {
           this.loading.set(false);
-          this.toast.error('Failed to load patients.');
+          this.toast.error(APP_MESSAGES.LOAD_PATIENTS_FAILED);
         },
       });
   }

@@ -1,33 +1,29 @@
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
+const AppError = require("../utils/AppError");
+const STATUS = require("../constants/statusCodes");
+const MESSAGES = require("../constants/messages");
 
 const authenticateUser = (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader?.startsWith("Bearer ")) {
-        return res.status(401).json({
-            message: "No token provided"
-        });
+        throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.NO_TOKEN);
     }
 
     const token = authHeader.split(" ")[1];
 
+    // jwt.verify throwing is expected control flow for bad/expired tokens
     try {
-        const decoded = jwt.verify(
+        req.user = jwt.verify(
             token,
             process.env.JWT_SECRET
         );
-
-        req.user = decoded;
-
-        next();
-
-    } 
-    catch (err) {
-      console.error("Error:", err);
-      return res.status(401).json({
-          message: "Invalid or expired token"
-      });
     }
+    catch {
+        throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_TOKEN);
+    }
+
+    next();
 };
 
 module.exports = authenticateUser;

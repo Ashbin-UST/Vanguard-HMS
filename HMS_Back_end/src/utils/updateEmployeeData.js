@@ -1,5 +1,5 @@
 const sanitizeQualifications = require("./qualificationSanitizer");
-const { SPECIALIZATION_DESIGNATIONS_SET } = require("../config/constants");
+const { SPECIALIZATION_DESIGNATIONS_SET } = require("../constants/domain");
 
 const doctorOnlyFields = new Set(["consultationFee", "availabilitySlots"]);
 

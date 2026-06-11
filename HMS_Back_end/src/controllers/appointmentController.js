@@ -8,8 +8,10 @@ const resolveActor = require("../utils/resolveActor");
 const emailTemplates = require("../utils/emailTemplates");
 const parsePagination = require("../utils/parsePagination");
 const enrichAppointments = require("../utils/enrichAppointments");
-
-const ACTIVE_STATUSES = ["BOOKED", "COMPLETED"];
+const AppError = require("../utils/AppError");
+const { sendSuccess } = require("../utils/apiResponse");
+const STATUS = require("../constants/statusCodes");
+const MESSAGES = require("../constants/messages");
 
 // Shared pagination helper for appointment list endpoints
 const paginateAppointments = async (filter, reqQuery, res) => {
@@ -35,8 +37,7 @@ const paginateAppointments = async (filter, reqQuery, res) => {
 
     const enriched = await enrichAppointments(appointments);
 
-    return res.status(200).json({
-        message: "Appointments retrieved successfully",
+    return sendSuccess(res, STATUS.OK, MESSAGES.APPOINTMENT.LIST_RETRIEVED, {
         total,
         page,
         limit,
@@ -48,429 +49,334 @@ const paginateAppointments = async (filter, reqQuery, res) => {
 // Create appointment
 exports.createAppointment = async (req, res) => {
 
+    const {
+        patientId,
+        doctorEmployeeId,
+        appointmentDate,
+        timeSlot
+    } = req.body;
+
+    // Validates patient, doctor availability, and slot conflicts;
+    // throws AppError when any rule is violated
+    const { patient, doctor } = await checkAppointmentValidity({
+        patientId,
+        doctorId: doctorEmployeeId,
+        appointmentDate,
+        timeSlot
+    });
+
+    const appointment = await Appointment.create({
+        patientId,
+        doctorEmployeeId,
+        appointmentDate,
+        timeSlot,
+        createdByEmployeeId: req.user.employeeCode
+    });
+
+    // Notify patient by email (best-effort)
     try {
-        const {
-            patientId,
-            doctorEmployeeId,
-            appointmentDate,
-            timeSlot
-        } = req.body;
-
-        // Validate patient, doctor availability, and slot conflicts
-        const validAppointment = await checkAppointmentValidity({
-            patientId,
-            doctorId: doctorEmployeeId,
-            appointmentDate,
-            timeSlot
+        await sendEmail({
+            to: patient.email,
+            ...emailTemplates.appointmentScheduled({
+                patientName: patient.name,
+                doctorName: doctor.name,
+                appointmentDate,
+                timeSlot
+            })
         });
-
-        if (!validAppointment.success) {
-            return res.status(validAppointment.status).json({
-                message: validAppointment.message
-            });
-        }
-
-        const appointment = await Appointment.create({
-            patientId,
-            doctorEmployeeId,
-            appointmentDate,
-            timeSlot,
-            createdByEmployeeId: req.user.employeeCode
-        });
-
-        // Notify patient by email
-        try {
-            await sendEmail({
-                to: validAppointment.patient.email,
-                ...emailTemplates.appointmentScheduled({
-                    patientName: validAppointment.patient.name,
-                    doctorName: validAppointment.doctor.name,
-                    appointmentDate,
-                    timeSlot
-                })
-            });
-        } catch (emailError) {
-            console.error("Email sending error:", emailError);
-        }
-
-        // Log the appointment creation
-        const actor = await resolveActor(req.user);
-        await recordAudit({
-            actor,
-            action: "APPOINTMENT_CREATED",
-            targetType: "APPOINTMENT",
-            targetId: appointment.appointmentId,
-            message: `Appointment ${appointment.appointmentId} booked for ${validAppointment.patient.name} with ${validAppointment.doctor.name}`
-        });
-
-        return res.status(201).json({
-            message: "Appointment created successfully",
-            appointment
-        });
-
+    } catch (emailError) {
+        console.error("Email sending error:", emailError);
     }
-    catch (err) {
-        console.error("Error during appointment creation: ", err);
-        return res.status(500).json({
-            message: "Server error during appointment creation"
-        });
-    }
+
+    // Log the appointment creation
+    const actor = await resolveActor(req.user);
+    await recordAudit({
+        actor,
+        action: "APPOINTMENT_CREATED",
+        targetType: "APPOINTMENT",
+        targetId: appointment.appointmentId,
+        message: MESSAGES.AUDIT.APPOINTMENT_BOOKED(
+            appointment.appointmentId,
+            patient.name,
+            doctor.name
+        )
+    });
+
+    return sendSuccess(res, STATUS.CREATED, MESSAGES.APPOINTMENT.CREATED, {
+        appointment
+    });
 };
 
 // List all appointments with optional status/doctor/patient filters (paginated)
 exports.getAppointments = async (req, res) => {
-    try {
-        const filter = {};
 
-        if (req.query.status) {
-            filter.status = req.query.status;
-        }
+    const filter = {};
 
-        if (req.query.doctorEmployeeId) {
-            filter.doctorEmployeeId = req.query.doctorEmployeeId;
-        }
-
-        if (req.query.patientId) {
-            filter.patientId = req.query.patientId;
-        }
-
-        await paginateAppointments(filter, req.query, res);
+    if (req.query.status) {
+        filter.status = req.query.status;
     }
-    catch (err) {
-        console.error("Error during appointments retrieval: ", err);
-        return res.status(500).json({
-            message: "Server error while fetching appointments"
-        });
+
+    if (req.query.doctorEmployeeId) {
+        filter.doctorEmployeeId = req.query.doctorEmployeeId;
     }
+
+    if (req.query.patientId) {
+        filter.patientId = req.query.patientId;
+    }
+
+    return paginateAppointments(filter, req.query, res);
 };
 
 // List appointments belonging to the authenticated doctor
 exports.getMyAppointments = async (req, res) => {
-    try {
-        const filter = { doctorEmployeeId: req.user.employeeCode };
 
-        if (req.query.status) {
-            filter.status = req.query.status;
-        }
+    const filter = { doctorEmployeeId: req.user.employeeCode };
 
-        await paginateAppointments(filter, req.query, res);
+    if (req.query.status) {
+        filter.status = req.query.status;
     }
-    catch (err) {
-        console.error("Error during doctor appointments retrieval: ", err);
-        return res.status(500).json({
-            message: "Server error while fetching appointments"
-        });
-    }
+
+    return paginateAppointments(filter, req.query, res);
 };
 
 // Fetch a single appointment
 exports.getAppointmentById = async (req, res) => {
 
-    try {
-        const { appointmentId } = req.params;
+    const { appointmentId } = req.params;
 
-        const appointment = await Appointment.findOne({
-            appointmentId
-        })
-            .select("-__v")
-            .lean();
+    const appointment = await Appointment.findOne({
+        appointmentId
+    })
+        .select("-__v")
+        .lean();
 
-        if (!appointment) {
-            return res.status(404).json({
-                message: "Appointment not found"
-            });
-        }
-
-        const [enriched] = await enrichAppointments([appointment]);
-
-        return res.status(200).json({
-            message: "Appointment retrieved successfully",
-            appointment: enriched
-        });
+    if (!appointment) {
+        throw new AppError(STATUS.NOT_FOUND, MESSAGES.APPOINTMENT.NOT_FOUND);
     }
-    catch (err) {
-        console.error("Error during appointment retrieval: ", err);
-        return res.status(500).json({
-            message: "Server error while fetching appointment"
-        });
-    }
+
+    const [enriched] = await enrichAppointments([appointment]);
+
+    return sendSuccess(res, STATUS.OK, MESSAGES.APPOINTMENT.RETRIEVED, {
+        appointment: enriched
+    });
 };
 
 // Return the list of already-booked time slots for a doctor on a given date
 exports.getBookedSlots = async (req, res) => {
 
-    try {
-        const { doctorEmployeeId, date } = req.query;
+    const { doctorEmployeeId, date } = req.query;
 
-        if (!doctorEmployeeId || !date) {
-            return res.status(400).json({
-                message: "doctorEmployeeId and date are required"
-            });
-        }
-
-        const start = new Date(date);
-        const end = new Date(date);
-        end.setHours(23, 59, 59, 999);
-
-        // Only BOOKED appointments occupy a slot
-        const bookedSlotsFilter = {
-            doctorEmployeeId,
-            appointmentDate: { $gte: start, $lte: end },
-            status: "BOOKED"
-        };
-
-        const { excludeAppointmentId } = req.query;
-        if (excludeAppointmentId) {
-            bookedSlotsFilter.appointmentId = { $ne: excludeAppointmentId };
-        }
-
-        const appointments = await Appointment.find(bookedSlotsFilter).select("timeSlot -_id");
-
-        const bookedSlots = appointments.map((a) => a.timeSlot);
-
-        return res.status(200).json({
-            message: "Booked slots retrieved successfully",
-            doctorEmployeeId,
-            date,
-            bookedSlots
-        });
+    if (!doctorEmployeeId || !date) {
+        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.APPOINTMENT.DOCTOR_AND_DATE_REQUIRED);
     }
-    catch (err) {
-        console.error("Error fetching booked slots: ", err);
-        return res.status(500).json({
-            message: "Server error while fetching booked slots"
-        });
+
+    const start = new Date(date);
+    const end = new Date(date);
+    end.setHours(23, 59, 59, 999);
+
+    // Only BOOKED appointments occupy a slot
+    const bookedSlotsFilter = {
+        doctorEmployeeId,
+        appointmentDate: { $gte: start, $lte: end },
+        status: "BOOKED"
+    };
+
+    const { excludeAppointmentId } = req.query;
+    if (excludeAppointmentId) {
+        bookedSlotsFilter.appointmentId = { $ne: excludeAppointmentId };
     }
+
+    const appointments = await Appointment.find(bookedSlotsFilter).select("timeSlot -_id");
+
+    const bookedSlots = appointments.map((a) => a.timeSlot);
+
+    return sendSuccess(res, STATUS.OK, MESSAGES.APPOINTMENT.BOOKED_SLOTS_RETRIEVED, {
+        doctorEmployeeId,
+        date,
+        bookedSlots
+    });
 };
 
 // Cancel an appointment
 exports.cancelAppointment = async (req, res) => {
 
+    const { appointmentId } = req.params;
+    const { cancellationReason } = req.body;
+
+    const appointment = await Appointment.findOne({ appointmentId });
+
+    if (!appointment) {
+        throw new AppError(STATUS.NOT_FOUND, MESSAGES.APPOINTMENT.NOT_FOUND);
+    }
+
+    if (appointment.status === "CANCELED") {
+        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.APPOINTMENT.ALREADY_CANCELLED);
+    }
+
+    if (appointment.status === "COMPLETED") {
+        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.APPOINTMENT.COMPLETED_CANNOT_CANCEL);
+    }
+
+    appointment.status = "CANCELED";
+    appointment.cancellationReason = cancellationReason;
+    await appointment.save();
+
+    // Fetch patient and doctor in parallel to build the cancellation email (best-effort)
     try {
-        const { appointmentId } = req.params;
-        const { cancellationReason } = req.body;
-
-        const appointment = await Appointment.findOne({ appointmentId });
-
-        if (!appointment) {
-            return res.status(404).json({
-                message: "Appointment not found"
+        const [patient, doctor] = await Promise.all([
+            Patient.findOne({ UHID: appointment.patientId }).select("name email"),
+            Employee.findOne({ employeeCode: appointment.doctorEmployeeId }).select("name")
+        ]);
+        if (patient?.email) {
+            await sendEmail({
+                to: patient.email,
+                ...emailTemplates.appointmentCanceled({
+                    patientName: patient.name,
+                    doctorName: doctor?.name,
+                    appointmentDate: appointment.appointmentDate,
+                    timeSlot: appointment.timeSlot,
+                    cancellationReason
+                })
             });
         }
-
-        if (appointment.status === "CANCELED") {
-            return res.status(400).json({
-                message: "Appointment is already cancelled"
-            });
-        }
-
-        if (appointment.status === "COMPLETED") {
-            return res.status(400).json({
-                message: "Completed appointments cannot be cancelled"
-            });
-        }
-
-        appointment.status = "CANCELED";
-        appointment.cancellationReason = cancellationReason;
-        await appointment.save();
-
-        // Fetch patient and doctor in parallel to build the cancellation email
-        try {
-            const [patient, doctor] = await Promise.all([
-                Patient.findOne({ UHID: appointment.patientId }).select("name email"),
-                Employee.findOne({ employeeCode: appointment.doctorEmployeeId }).select("name")
-            ]);
-            if (patient?.email) {
-                await sendEmail({
-                    to: patient.email,
-                    ...emailTemplates.appointmentCanceled({
-                        patientName: patient.name,
-                        doctorName: doctor?.name,
-                        appointmentDate: appointment.appointmentDate,
-                        timeSlot: appointment.timeSlot,
-                        cancellationReason
-                    })
-                });
-            }
-        } catch (emailError) {
-            console.error("Email sending error:", emailError);
-        }
-
-        // Log appointment cancellation
-        const actor = await resolveActor(req.user);
-        await recordAudit({
-            actor,
-            action: "APPOINTMENT_CANCELED",
-            targetType: "APPOINTMENT",
-            targetId: appointment.appointmentId,
-            message: `Appointment ${appointment.appointmentId} was cancelled. Reason: ${cancellationReason}`
-        });
-
-        return res.status(200).json({
-            message: "Appointment cancelled successfully",
-            appointment
-        });
+    } catch (emailError) {
+        console.error("Email sending error:", emailError);
     }
-    catch (err) {
-        console.error("Error during appointment cancellation: ", err);
-        return res.status(500).json({
-            message: "Server error during appointment cancellation"
-        });
-    }
+
+    // Log appointment cancellation
+    const actor = await resolveActor(req.user);
+    await recordAudit({
+        actor,
+        action: "APPOINTMENT_CANCELED",
+        targetType: "APPOINTMENT",
+        targetId: appointment.appointmentId,
+        message: MESSAGES.AUDIT.APPOINTMENT_CANCELLED(
+            appointment.appointmentId,
+            cancellationReason
+        )
+    });
+
+    return sendSuccess(res, STATUS.OK, MESSAGES.APPOINTMENT.CANCELLED, {
+        appointment
+    });
 };
 
 // Update scheduling fields on a BOOKED appointment
 exports.updateAppointment = async (req, res) => {
 
+    const { appointmentId } = req.params;
+    const {
+        patientId,
+        doctorEmployeeId,
+        appointmentDate,
+        timeSlot
+    } = req.body;
+
+    const appointment = await Appointment.findOne({ appointmentId });
+
+    if (!appointment) {
+        throw new AppError(STATUS.NOT_FOUND, MESSAGES.APPOINTMENT.NOT_FOUND);
+    }
+
+    if (appointment.status !== "BOOKED") {
+        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.APPOINTMENT.ONLY_BOOKED_EDITABLE);
+    }
+
+    // Re-validates with the current appointment excluded from duplicate
+    // checks; throws AppError when any rule is violated
+    const { patient, doctor } = await checkAppointmentValidity({
+        patientId,
+        doctorId: doctorEmployeeId,
+        appointmentDate,
+        timeSlot,
+        excludeAppointmentId: appointmentId
+    });
+
+    appointment.patientId = patientId;
+    appointment.doctorEmployeeId = doctorEmployeeId;
+    appointment.appointmentDate = appointmentDate;
+    appointment.timeSlot = timeSlot;
+    await appointment.save();
+
+    // Notify patient of the updated schedule (best-effort)
     try {
-        const { appointmentId } = req.params;
-        const {
-            patientId,
-            doctorEmployeeId,
-            appointmentDate,
-            timeSlot
-        } = req.body;
-
-        const appointment = await Appointment.findOne({ appointmentId });
-
-        if (!appointment) {
-            return res.status(404).json({ message: "Appointment not found" });
-        }
-
-        if (appointment.status !== "BOOKED") {
-            return res.status(400).json({
-                message: "Only BOOKED appointments can be edited"
-            });
-        }
-
-        // Re-validate with the current appointment excluded from duplicate checks
-        const validAppointment = await checkAppointmentValidity({
-            patientId,
-            doctorId: doctorEmployeeId,
-            appointmentDate,
-            timeSlot,
-            excludeAppointmentId: appointmentId
+        await sendEmail({
+            to: patient.email,
+            ...emailTemplates.appointmentUpdated({
+                patientName: patient.name,
+                doctorName: doctor.name,
+                appointmentDate,
+                timeSlot
+            })
         });
-
-        if (!validAppointment.success) {
-            return res.status(validAppointment.status).json({
-                message: validAppointment.message
-            });
-        }
-
-        appointment.patientId = patientId;
-        appointment.doctorEmployeeId = doctorEmployeeId;
-        appointment.appointmentDate = appointmentDate;
-        appointment.timeSlot = timeSlot;
-        await appointment.save();
-
-        // Notify patient of the updated schedule
-        try {
-            await sendEmail({
-                to: validAppointment.patient.email,
-                ...emailTemplates.appointmentUpdated({
-                    patientName: validAppointment.patient.name,
-                    doctorName: validAppointment.doctor.name,
-                    appointmentDate,
-                    timeSlot
-                })
-            });
-        } catch (emailError) {
-            console.error("Email sending error:", emailError);
-        }
-
-        // Log appointment updation
-        const actor = await resolveActor(req.user);
-        await recordAudit({
-            actor,
-            action: "APPOINTMENT_UPDATED",
-            targetType: "APPOINTMENT",
-            targetId: appointment.appointmentId,
-            message: `Appointment ${appointment.appointmentId} was updated`
-        });
-
-        return res.status(200).json({
-            message: "Appointment updated successfully",
-            appointment
-        });
+    } catch (emailError) {
+        console.error("Email sending error:", emailError);
     }
-    catch (err) {
-        console.error("Error during appointment update: ", err);
-        return res.status(500).json({
-            message: "Server error during appointment update"
-        });
-    }
+
+    // Log appointment updation
+    const actor = await resolveActor(req.user);
+    await recordAudit({
+        actor,
+        action: "APPOINTMENT_UPDATED",
+        targetType: "APPOINTMENT",
+        targetId: appointment.appointmentId,
+        message: MESSAGES.AUDIT.APPOINTMENT_UPDATED(appointment.appointmentId)
+    });
+
+    return sendSuccess(res, STATUS.OK, MESSAGES.APPOINTMENT.UPDATED, {
+        appointment
+    });
 };
 
 // Mark an appointment COMPLETED
 exports.completeAppointment = async (req, res) => {
 
-    try {
-        const { appointmentId } = req.params;
+    const { appointmentId } = req.params;
 
-        const appointment = await Appointment.findOne({ appointmentId });
+    const appointment = await Appointment.findOne({ appointmentId });
 
-        if (!appointment) {
-            return res.status(404).json({
-                message: "Appointment not found"
-            });
-        }
-
-        // Only the concerned doctor can mark an appointment as complete
-        if (appointment.doctorEmployeeId !== req.user.employeeCode) {
-            return res.status(403).json({
-                message: "You can only complete your own appointments"
-            });
-        }
-
-        if (appointment.status === "CANCELED") {
-            return res.status(400).json({
-                message: "Cancelled appointments cannot be completed"
-            });
-        }
-
-        if (appointment.status === "COMPLETED") {
-            return res.status(400).json({
-                message: "Appointment is already completed"
-            });
-        }
-
-        // Reject completion if the scheduled start time has not yet passed
-        const slotStart = (appointment.timeSlot || "").split("-")[0];
-        const [slotHour, slotMinute] = slotStart.split(":").map(Number);
-        const scheduledStart = new Date(appointment.appointmentDate);
-        if (!Number.isNaN(slotHour) && !Number.isNaN(slotMinute)) {
-            scheduledStart.setHours(slotHour, slotMinute, 0, 0);
-        }
-        if (scheduledStart.getTime() > Date.now()) {
-            return res.status(400).json({
-                message:
-                    "This appointment cannot be completed before its scheduled date and time have passed"
-            });
-        }
-
-        appointment.status = "COMPLETED";
-        await appointment.save();
-
-        // Log appointment completion
-        const actor = await resolveActor(req.user);
-        await recordAudit({
-            actor,
-            action: "APPOINTMENT_COMPLETED",
-            targetType: "APPOINTMENT",
-            targetId: appointment.appointmentId,
-            message: `Appointment ${appointment.appointmentId} was marked completed`
-        });
-
-        return res.status(200).json({
-            message: "Appointment marked as completed",
-            appointment
-        });
+    if (!appointment) {
+        throw new AppError(STATUS.NOT_FOUND, MESSAGES.APPOINTMENT.NOT_FOUND);
     }
-    catch (err) {
-        console.error("Error during appointment completion: ", err);
-        return res.status(500).json({
-            message: "Server error during appointment completion"
-        });
+
+    // Only the concerned doctor can mark an appointment as complete
+    if (appointment.doctorEmployeeId !== req.user.employeeCode) {
+        throw new AppError(STATUS.FORBIDDEN, MESSAGES.APPOINTMENT.OWN_ONLY_COMPLETE);
     }
+
+    if (appointment.status === "CANCELED") {
+        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.APPOINTMENT.CANCELLED_CANNOT_COMPLETE);
+    }
+
+    if (appointment.status === "COMPLETED") {
+        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.APPOINTMENT.ALREADY_COMPLETED);
+    }
+
+    // Reject completion if the scheduled start time has not yet passed
+    const slotStart = (appointment.timeSlot || "").split("-")[0];
+    const [slotHour, slotMinute] = slotStart.split(":").map(Number);
+    const scheduledStart = new Date(appointment.appointmentDate);
+    if (!Number.isNaN(slotHour) && !Number.isNaN(slotMinute)) {
+        scheduledStart.setHours(slotHour, slotMinute, 0, 0);
+    }
+    if (scheduledStart.getTime() > Date.now()) {
+        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.APPOINTMENT.CANNOT_COMPLETE_BEFORE_TIME);
+    }
+
+    appointment.status = "COMPLETED";
+    await appointment.save();
+
+    // Log appointment completion
+    const actor = await resolveActor(req.user);
+    await recordAudit({
+        actor,
+        action: "APPOINTMENT_COMPLETED",
+        targetType: "APPOINTMENT",
+        targetId: appointment.appointmentId,
+        message: MESSAGES.AUDIT.APPOINTMENT_COMPLETED(appointment.appointmentId)
+    });
+
+    return sendSuccess(res, STATUS.OK, MESSAGES.APPOINTMENT.COMPLETED, {
+        appointment
+    });
 };

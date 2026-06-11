@@ -5,7 +5,7 @@ const validate = require("../middlewares/validate");
 const auth = require("../middlewares/authMiddleware");
 const authorizeRoles = require("../middlewares/authorizeRolesMiddleware");
 const controller = require("../controllers/nodeController");
-const { STAFF_DESIGNATIONS, RESTRICTED_ROLES } = require("../config/constants");
+const { STAFF_DESIGNATIONS, RESTRICTED_ROLES } = require("../constants/domain");
 
 // All the routes require authentication
 router.use(auth);

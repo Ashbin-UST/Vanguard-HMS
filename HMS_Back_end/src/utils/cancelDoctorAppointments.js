@@ -3,6 +3,7 @@ const Patient = require("../models/Patients");
 const sendEmail = require("./sendEmail");
 const emailTemplates = require("./emailTemplates");
 const recordAudit = require("./recordAudit");
+const MESSAGES = require("../constants/messages");
 
 async function cancelDoctorAppointments(employeeCode, doctorName, actor) {
   const appointments = await Appointment.find({ doctorEmployeeId: employeeCode, status: "BOOKED" });
@@ -22,7 +23,12 @@ async function cancelDoctorAppointments(employeeCode, doctorName, actor) {
         action: "APPOINTMENT_CANCELED",
         targetType: "APPOINTMENT",
         targetId: appointment.appointmentId,
-        message: `Appointment ${appointment.appointmentId} was cancelled due to deletion of doctor ${doctorName} (${employeeCode}). Reason: ${cancellationReason}`,
+        message: MESSAGES.AUDIT.DOCTOR_DELETED_CANCELLATION(
+          appointment.appointmentId,
+          doctorName,
+          employeeCode,
+          cancellationReason
+        ),
       });
     } catch (error_) {
       console.error(`Audit log failed for appointment ${appointment.appointmentId}:`, error_);

@@ -10,6 +10,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { PatientService } from '../../../core/services/patient.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
+import { APP_MESSAGES } from '../../../core/constants/messages';
 import { FormDraftService } from '../../../core/services/form-draft.service';
 import { CanComponentDeactivate } from '../../../core/guards/unsaved-changes.guard';
 import {
@@ -44,6 +46,7 @@ export class PatientDetailComponent
   private readonly fb = inject(FormBuilder);
   private readonly patientService = inject(PatientService);
   private readonly toast = inject(ToastService);
+  private readonly apiError = inject(ApiErrorHandlerService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly formDraft = inject(FormDraftService);
@@ -93,8 +96,8 @@ export class PatientDetailComponent
 
     this.patientService.getPatientByUHID(uhid).subscribe({
       next: (res) => {
-        this.patient.set(res.patient);
-        this.applyToForm(res.patient);
+        this.patient.set(res.data.patient);
+        this.applyToForm(res.data.patient);
         // Restore any in-progress edits
         const draft = this.formDraft.get(this.draftKey);
         if (draft) {
@@ -105,7 +108,7 @@ export class PatientDetailComponent
       },
       error: () => {
         this.loading.set(false);
-        this.toast.error('Failed to load patient.');
+        this.toast.error(APP_MESSAGES.LOAD_PATIENT_FAILED);
         this.router.navigate(['/dashboard/patients']);
       },
     });
@@ -166,14 +169,14 @@ export class PatientDetailComponent
         this.saving.set(false);
         this.submittedOk = true;
         this.formDraft.clear(this.draftKey);
-        this.patient.set(res.patient);
-        this.applyToForm(res.patient);
+        this.patient.set(res.data.patient);
+        this.applyToForm(res.data.patient);
         this.editing.set(false);
-        this.toast.success(res.message || 'Patient updated.');
+        this.toast.success(res.message || APP_MESSAGES.PATIENT_UPDATED);
       },
       error: (err) => {
         this.saving.set(false);
-        this.toast.error(err.error?.message || 'Failed to update patient.');
+        this.toast.error(this.apiError.message(err, APP_MESSAGES.PATIENT_UPDATE_FAILED));
       },
     });
   }

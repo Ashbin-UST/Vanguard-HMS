@@ -1,13 +1,35 @@
-// Common base — every backend JSON response carries a message
-export interface ApiMessage {
+// Standard API envelope. Every backend response is wrapped as:
+//   success: { success: true,  statusCode, message, data: {...} }
+//   error:   { success: false, statusCode, message, errors?: [...] }
+
+export interface ApiResponse<T> {
+  success: true;
+  statusCode: number;
   message: string;
+  data: T;
 }
 
-// Generic paginated list envelope used by patients / appointments / audit logs
-export interface Paginated<T> extends ApiMessage {
+// Body of a failed response (available on HttpErrorResponse.error)
+export interface ApiErrorBody {
+  success: false;
+  statusCode: number;
+  message: string;
+  errors?: ApiFieldError[];
+}
+
+// Field-level validation error item (422 responses)
+export interface ApiFieldError {
+  msg: string;
+  path?: string;
+}
+
+// Pagination fields shared by list payloads (inside `data`)
+export interface PaginatedData {
   total: number;
   page: number;
   limit: number;
   totalPages: number;
-  [key: string]: any;
 }
+
+// Responses whose payload carries no data (mutations, password flows, ...)
+export type ApiMessage = ApiResponse<Record<string, never>>;

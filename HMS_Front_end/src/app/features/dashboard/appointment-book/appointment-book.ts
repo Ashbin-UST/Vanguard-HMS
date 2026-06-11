@@ -17,6 +17,8 @@ import { PatientService } from '../../../core/services/patient.service';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { AppointmentService } from '../../../core/services/appointment.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
+import { APP_MESSAGES } from '../../../core/constants/messages';
 import { FormDraftService } from '../../../core/services/form-draft.service';
 import { CanComponentDeactivate } from '../../../core/guards/unsaved-changes.guard';
 import { Patient } from '../../../core/models/patient.model';
@@ -67,6 +69,7 @@ export class AppointmentBookComponent
   private readonly employeeService = inject(EmployeeService);
   private readonly appointmentService = inject(AppointmentService);
   private readonly toast = inject(ToastService);
+  private readonly apiError = inject(ApiErrorHandlerService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly formDraft = inject(FormDraftService);
   private readonly router = inject(Router);
@@ -139,7 +142,7 @@ export class AppointmentBookComponent
 
     this.employeeService.getDoctors().subscribe({
       next: (res) => {
-        const docs = res.doctors || [];
+        const docs = res.data.doctors || [];
         this.doctors.set(docs);
         this.doctorOptions.set(
           docs.map((d) => ({
@@ -155,26 +158,26 @@ export class AppointmentBookComponent
           this.loadForEdit(this.editAppointmentId);
         }
       },
-      error: () => this.toast.error('Failed to load doctors.'),
+      error: () => this.toast.error(APP_MESSAGES.LOAD_DOCTORS_FAILED),
     });
 
     this.patientService.getPatients(1, 25).subscribe({
       next: (res) => {
-        this.setPatientOptions(res.patients);
+        this.setPatientOptions(res.data.patients);
       },
-      error: () => this.toast.error('Failed to load patients.'),
+      error: () => this.toast.error(APP_MESSAGES.LOAD_PATIENTS_FAILED),
     });
 
     // Debounced server-side patient search
     this.patientSearch$.pipe(debounceTime(300)).subscribe((term) => {
       if (!term || term.trim().length === 0) {
         this.patientService.getPatients(1, 25).subscribe({
-          next: (res) => this.setPatientOptions(res.patients),
+          next: (res) => this.setPatientOptions(res.data.patients),
         });
         return;
       }
       this.patientService.searchPatients(term).subscribe({
-        next: (res) => this.setPatientOptions(res.patients),
+        next: (res) => this.setPatientOptions(res.data.patients),
       });
     });
 
@@ -211,7 +214,7 @@ export class AppointmentBookComponent
     this.loading = true;
     this.appointmentService.getAppointmentById(id).subscribe({
       next: (res) => {
-        const a = res.appointment;
+        const a = res.data.appointment;
         if (a.status !== 'BOOKED') {
           this.loading = false;
           this.toast.error('Only BOOKED appointments can be edited.');
@@ -253,7 +256,7 @@ export class AppointmentBookComponent
       },
       error: () => {
         this.loading = false;
-        this.toast.error('Failed to load appointment.');
+        this.toast.error(APP_MESSAGES.LOAD_APPOINTMENT_FAILED);
         this.router.navigate(['/dashboard/appointments']);
       },
     });
@@ -368,7 +371,7 @@ export class AppointmentBookComponent
       )
       .subscribe({
         next: (res) => {
-          this.bookedSlots.set(res.bookedSlots || []);
+          this.bookedSlots.set(res.data.bookedSlots || []);
           this.loadingSlots.set(false);
           // Restore the pre-selected slot after slots finish loading (edit mode)
           if (this.pendingTimeSlot) {
@@ -440,7 +443,7 @@ export class AppointmentBookComponent
             this.loading = false;
             this.cdr.markForCheck();
             this.submittedOk = true;
-            this.toast.success(res.message || 'Appointment updated.');
+            this.toast.success(res.message || APP_MESSAGES.APPOINTMENT_UPDATED);
             this.router.navigate([
               '/dashboard/appointments',
               this.editAppointmentId,
@@ -450,7 +453,7 @@ export class AppointmentBookComponent
             this.loading = false;
             this.cdr.markForCheck();
             this.toast.error(
-              err.error?.message || 'Failed to update appointment.',
+              this.apiError.message(err, APP_MESSAGES.APPOINTMENT_UPDATE_FAILED),
             );
             this.refreshSlots();
           },
@@ -462,17 +465,17 @@ export class AppointmentBookComponent
           this.cdr.markForCheck();
           this.submittedOk = true;
           this.formDraft.clear(DRAFT_KEY_CREATE);
-          this.toast.success(res.message || 'Appointment booked.');
+          this.toast.success(res.message || APP_MESSAGES.APPOINTMENT_BOOKED);
           this.router.navigate([
             '/dashboard/appointments',
-            res.appointment.appointmentId,
+            res.data.appointment.appointmentId,
           ]);
         },
         error: (err) => {
           this.loading = false;
           this.cdr.markForCheck();
           this.toast.error(
-            err.error?.message || 'Failed to book appointment.',
+            this.apiError.message(err, APP_MESSAGES.APPOINTMENT_BOOK_FAILED),
           );
           // Refresh slots in case a race produced the conflict
           this.refreshSlots();

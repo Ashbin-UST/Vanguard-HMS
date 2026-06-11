@@ -4,6 +4,7 @@ import { catchError, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { ToastService } from '../services/toast.service';
 import { Router } from '@angular/router';
+import { APP_MESSAGES } from '../constants/messages';
 
 const PUBLIC_AUTH_PATHS = [
   '/auth/login',
@@ -29,24 +30,28 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   const isPublicAuthCall = PUBLIC_AUTH_PATHS.some((p) => req.url.includes(p));
 
+  // Only cross-cutting statuses are toasted here (session, permissions,
+  // connectivity). Other errors — including 500s — are surfaced by the
+  // calling component via ApiErrorHandlerService; adding a global toast for
+  // them would double-toast every failure.
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       switch (error.status) {
         case 401:
 
           if (!isPublicAuthCall) {
-            toastService.error('Session expired. Please login again.');
+            toastService.error(APP_MESSAGES.SESSION_EXPIRED);
             authService.forceClearSession();
           }
           break;
 
         case 403:
-          toastService.error('Access denied. You do not have permission.');
+          toastService.error(APP_MESSAGES.ACCESS_DENIED);
           router.navigate(['/dashboard/overview']);
           break;
 
         case 0:
-          toastService.error('Cannot reach server. Check your connection.');
+          toastService.error(APP_MESSAGES.NETWORK_ERROR);
           break;
       }
 

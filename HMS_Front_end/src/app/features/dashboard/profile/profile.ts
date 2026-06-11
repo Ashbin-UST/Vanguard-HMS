@@ -11,6 +11,8 @@ import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/da
 import { AuthService } from '../../../core/services/auth.service';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
+import { APP_MESSAGES } from '../../../core/constants/messages';
 import { FormDraftService } from '../../../core/services/form-draft.service';
 import {
   phoneValidator,
@@ -38,6 +40,7 @@ export class ProfileComponent implements OnInit, CanComponentDeactivate {
   private readonly authService = inject(AuthService);
   private readonly employeeService = inject(EmployeeService);
   private readonly toast = inject(ToastService);
+  private readonly apiError = inject(ApiErrorHandlerService);
   private readonly formDraft = inject(FormDraftService);
   private readonly router = inject(Router);
 
@@ -69,14 +72,14 @@ export class ProfileComponent implements OnInit, CanComponentDeactivate {
 
     this.employeeService.getMe().subscribe({
       next: (res) => {
-        this.profile.set(res.user.profile);
-        this.applyToForm(res.user.profile);
+        this.profile.set(res.data.user.profile);
+        this.applyToForm(res.data.user.profile);
         this.loading.set(false);
       },
       error: () => {
         this.loading.set(false);
         if (!cached) {
-          this.toast.error('Failed to load profile.');
+          this.toast.error(APP_MESSAGES.LOAD_PROFILE_FAILED);
         }
       },
     });
@@ -143,7 +146,7 @@ export class ProfileComponent implements OnInit, CanComponentDeactivate {
         // Owner/admin changes apply immediately, so refresh the displayed profile
         if (this.isPrivileged()) {
           this.employeeService.getMe().subscribe({
-            next: (r) => this.profile.set(r.user.profile),
+            next: (r) => this.profile.set(r.data.user.profile),
           });
           this.authService.refreshCurrentUser().subscribe({
             next: () => {},
@@ -154,8 +157,7 @@ export class ProfileComponent implements OnInit, CanComponentDeactivate {
       error: (err) => {
         this.saving.set(false);
         this.toast.error(
-          err.error?.message ||
-            'Failed to submit profile change request.',
+          this.apiError.message(err, APP_MESSAGES.PROFILE_UPDATE_FAILED),
         );
       },
     });

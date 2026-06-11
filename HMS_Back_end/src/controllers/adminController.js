@@ -13,7 +13,11 @@ const deleteEmployeeAccount = require("../utils/deleteEmployeeAccount");
 const cancelDoctorAppointments = require("../utils/cancelDoctorAppointments");
 const createAccountWithEmployee = require("../utils/createAccountWithEmployee");
 const parsePagination = require("../utils/parsePagination");
-const { RESTRICTED_ROLES_SET } = require("../config/constants");
+const { RESTRICTED_ROLES_SET } = require("../constants/domain");
+const AppError = require("../utils/AppError");
+const { sendSuccess } = require("../utils/apiResponse");
+const STATUS = require("../constants/statusCodes");
+const MESSAGES = require("../constants/messages");
 
 // Fetch all STAFF users with a given status and their linked employee records
 const getEmployeesByStatus = async (status, res) => {
@@ -21,22 +25,20 @@ const getEmployeesByStatus = async (status, res) => {
   const employeeCodes = users.map((user) => user.employeeCode);
   const employees = await Employee.find({ employeeCode: { $in: employeeCodes } });
   const formattedEmployees = buildEmployeeResponse(employees, users);
-  return res.status(200).json({
+  return sendSuccess(res, STATUS.OK, MESSAGES.EMPLOYEE.LIST_RETRIEVED, {
     totalEmployees: formattedEmployees.length,
     employees: formattedEmployees,
   });
 };
 
 // Lookup a profile change request and guard that it is still PENDING
-const findPendingRequest = async (requestId, res) => {
+const findPendingRequest = async (requestId) => {
   const request = await ProfileChangeRequest.findOne({ requestId });
   if (!request) {
-    res.status(404).json({ message: "Profile change request not found" });
-    return null;
+    throw new AppError(STATUS.NOT_FOUND, MESSAGES.ADMIN.CHANGE_REQUEST_NOT_FOUND);
   }
   if (String(request.status) !== "PENDING") {
-    res.status(400).json({ message: "This request has already been reviewed" });
-    return null;
+    throw new AppError(STATUS.BAD_REQUEST, MESSAGES.ADMIN.CHANGE_REQUEST_REVIEWED);
   }
   return request;
 };
@@ -45,503 +47,387 @@ const findPendingRequest = async (requestId, res) => {
 exports.createEmployee = async (req, res) => {
   const { designation } = req.body;
 
-  try {
-    if (RESTRICTED_ROLES_SET.has(designation)) {
-      return res.status(403).json({
-        message: "Invalid designation. Cannot create admin or owner accounts.",
-      });
-    }
-
-    const { employee, user } = await createAccountWithEmployee(req, { // NOSONAR: false positive; function is async but Sonar loses type info across CommonJS require
-      roles: ["STAFF"],
-      emailTemplate: emailTemplates.employeeCredentials,
-      auditAction: "EMPLOYEE_CREATED",
-      buildAuditMessage: (emp) =>
-        `Employee ${emp.name} (${emp.employeeCode}) was created as ${emp.designation}`,
-    });
-
-    return res.status(201).json({
-      message:
-        "Employee account created successfully. Login credentials have been sent via email.",
-      user: {
-        username: user.username,
-        email: user.email,
-        roles: user.roles,
-      },
-      employee: {
-        employeeCode: employee.employeeCode,
-        name: employee.name,
-        department: employee.department,
-        designation: employee.designation,
-      },
-    });
-  } catch (err) {
-    if (err.status) {
-      return res.status(err.status).json({ message: err.message });
-    }
-    console.error("Employee creation error:", err);
-    return res.status(500).json({
-      message: "Server error during employee creation",
-    });
+  if (RESTRICTED_ROLES_SET.has(designation)) {
+    throw new AppError(STATUS.FORBIDDEN, MESSAGES.AUTH.INVALID_DESIGNATION);
   }
+
+  const { employee, user } = await createAccountWithEmployee(req, { // NOSONAR: false positive; function is async but Sonar loses type info across CommonJS require
+    roles: ["STAFF"],
+    emailTemplate: emailTemplates.employeeCredentials,
+    auditAction: "EMPLOYEE_CREATED",
+    buildAuditMessage: (emp) =>
+      MESSAGES.AUDIT.EMPLOYEE_CREATED(emp.name, emp.employeeCode, emp.designation),
+  });
+
+  return sendSuccess(res, STATUS.CREATED, MESSAGES.ADMIN.EMPLOYEE_CREATED, {
+    user: {
+      username: user.username,
+      email: user.email,
+      roles: user.roles,
+    },
+    employee: {
+      employeeCode: employee.employeeCode,
+      name: employee.name,
+      department: employee.department,
+      designation: employee.designation,
+    },
+  });
 };
 
 // Fetch a single employee profile
 exports.getEmployee = async (req, res) => {
-  try {
-    const { employeeCode } = req.params;
+  const { employeeCode } = req.params;
 
-    const employee = await Employee.findOne({ employeeCode });
-    if (!employee) {
-      return res.status(404).json({ message: "Employee not found" });
-    }
-
-    const user = await User.findOne({ employeeCode }).select("-passwordHash");
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    const profile = buildEmployeeProfile(employee);
-
-    return res.status(200).json({
-      employee: profile,
-      status: user.status,
-      roles: user.roles,
-      lastLoginAt: user.lastLoginAt,
-    });
-  } catch (err) {
-    console.error("Get employee error:", err);
-    return res.status(500).json({ message: "Server error while fetching employee" });
+  const employee = await Employee.findOne({ employeeCode });
+  if (!employee) {
+    throw new AppError(STATUS.NOT_FOUND, MESSAGES.EMPLOYEE.NOT_FOUND);
   }
+
+  const user = await User.findOne({ employeeCode }).select("-passwordHash");
+  if (!user) {
+    throw new AppError(STATUS.NOT_FOUND, MESSAGES.AUTH.USER_NOT_FOUND);
+  }
+
+  const profile = buildEmployeeProfile(employee);
+
+  return sendSuccess(res, STATUS.OK, MESSAGES.EMPLOYEE.RETRIEVED, {
+    employee: profile,
+    status: user.status,
+    roles: user.roles,
+    lastLoginAt: user.lastLoginAt,
+  });
 };
 
 // List all active STAFF employees
-exports.getEmployees = async (req, res) => {
-  try {
-    await getEmployeesByStatus("ACTIVE", res);
-  } catch (err) {
-    console.error("Get employees error:", err);
-    return res.status(500).json({
-      message: "Server error while fetching employees",
-    });
-  }
-};
+exports.getEmployees = async (req, res) =>
+  getEmployeesByStatus("ACTIVE", res);
 
 // List STAFF employees with PENDING account status awaiting approval
-exports.getPendingEmployees = async (req, res) => {
-  try {
-    await getEmployeesByStatus("PENDING", res);
-  } catch (err) {
-    console.error("Get employees error:", err);
-    return res.status(500).json({
-      message: "Server error while fetching employees",
-    });
-  }
-};
+exports.getPendingEmployees = async (req, res) =>
+  getEmployeesByStatus("PENDING", res);
 
 // Approve a self-registered employee
 exports.approveEmployee = async (req, res) => {
-  try {
-    const employeeCode = req.params.employeeCode;
+  const employeeCode = req.params.employeeCode;
 
-    const user = await User.findOne({
-      employeeCode,
-    });
+  const user = await User.findOne({
+    employeeCode,
+  });
 
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found!!",
-      });
-    }
-
-    if (user.roles.some((role) => RESTRICTED_ROLES_SET.has(role))) {
-      return res.status(403).json({
-        message: "Only STAFF accounts can be approved",
-      });
-    }
-
-    if (String(user.status) !== "PENDING") {
-      return res.status(400).json({
-        message: "Account status is not pending",
-      });
-    }
-
-    user.status = "ACTIVE";
-    user.approvedBy = req.user.employeeCode;
-    user.approvedAt = new Date();
-
-    await user.save();
-
-    // Notify the employee that their account has been approved
-    try {
-      await sendEmail({
-        to: user.email,
-        ...emailTemplates.accountApproved(),
-      });
-    } catch (emailError) {
-      console.error("Email sending error:", emailError);
-    }
-
-    // Log the approval action
-    const actor = await resolveActor(req.user);
-    await recordAudit({
-      actor,
-      action: "EMPLOYEE_APPROVED",
-      targetType: "EMPLOYEE",
-      targetId: user.employeeCode,
-      message: `Employee account ${user.employeeCode} (${user.username}) was approved`
-    });
-
-    res.status(200).json({
-      message: "Employee account approved successfully",
-      user: {
-        username: user.username,
-        email: user.email,
-      },
-    });
-  } catch (err) {
-    console.error("Error during approval: ", err);
-    return res.status(500).json({
-      message: "Server error during approval",
-    });
+  if (!user) {
+    throw new AppError(STATUS.NOT_FOUND, MESSAGES.AUTH.USER_NOT_FOUND);
   }
+
+  if (user.roles.some((role) => RESTRICTED_ROLES_SET.has(role))) {
+    throw new AppError(STATUS.FORBIDDEN, MESSAGES.ADMIN.ONLY_STAFF_APPROVED);
+  }
+
+  if (String(user.status) !== "PENDING") {
+    throw new AppError(STATUS.BAD_REQUEST, MESSAGES.ADMIN.STATUS_NOT_PENDING);
+  }
+
+  user.status = "ACTIVE";
+  user.approvedBy = req.user.employeeCode;
+  user.approvedAt = new Date();
+
+  await user.save();
+
+  // Notify the employee that their account has been approved (best-effort)
+  try {
+    await sendEmail({
+      to: user.email,
+      ...emailTemplates.accountApproved(),
+    });
+  } catch (emailError) {
+    console.error("Email sending error:", emailError);
+  }
+
+  // Log the approval action
+  const actor = await resolveActor(req.user);
+  await recordAudit({
+    actor,
+    action: "EMPLOYEE_APPROVED",
+    targetType: "EMPLOYEE",
+    targetId: user.employeeCode,
+    message: MESSAGES.AUDIT.EMPLOYEE_APPROVED(user.employeeCode, user.username)
+  });
+
+  return sendSuccess(res, STATUS.OK, MESSAGES.ADMIN.ACCOUNT_APPROVED, {
+    user: {
+      username: user.username,
+      email: user.email,
+    },
+  });
 };
 
 // Reject a self-registration request
 exports.rejectEmployee = async (req, res) => {
-  try {
-    const employeeCode = req.params.employeeCode;
+  const employeeCode = req.params.employeeCode;
 
-    const user = await User.findOne({
-      employeeCode,
-    });
+  const user = await User.findOne({
+    employeeCode,
+  });
 
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-      });
-    }
-
-    if (user.roles.some((role) => RESTRICTED_ROLES_SET.has(role))) {
-      return res.status(403).json({
-        message: "Only STAFF accounts can be rejected",
-      });
-    }
-
-    if (String(user.status) !== "PENDING") {
-      return res.status(400).json({
-        message: "Account status is not pending",
-      });
-    }
-
-    // Email before deletion so the address is still reachable
-    try {
-      await sendEmail({
-        to: user.email,
-        ...emailTemplates.accountRejected(),
-      });
-    } catch (emailError) {
-      console.error("Email sending error:", emailError);
-    }
-
-    // Log the rejection before the record is removed
-    const actor = await resolveActor(req.user);
-
-    await recordAudit({
-      actor,
-      action: "EMPLOYEE_REJECTED",
-      targetType: "EMPLOYEE",
-      targetId: employeeCode,
-      message: `Employee registration ${employeeCode} (${user.username}) was rejected`,
-    });
-
-    // Delete the account from the database
-    await deleteEmployeeAccount(employeeCode);
-
-    return res.status(200).json({
-      message: "Employee registration request rejected successfully",
-    });
-  } catch (err) {
-    console.error("Error during rejection:", err);
-
-    return res.status(500).json({
-      message: "Server error during rejection",
-    });
+  if (!user) {
+    throw new AppError(STATUS.NOT_FOUND, MESSAGES.AUTH.USER_NOT_FOUND);
   }
+
+  if (user.roles.some((role) => RESTRICTED_ROLES_SET.has(role))) {
+    throw new AppError(STATUS.FORBIDDEN, MESSAGES.ADMIN.ONLY_STAFF_REJECTED);
+  }
+
+  if (String(user.status) !== "PENDING") {
+    throw new AppError(STATUS.BAD_REQUEST, MESSAGES.ADMIN.STATUS_NOT_PENDING);
+  }
+
+  // Email before deletion so the address is still reachable (best-effort)
+  try {
+    await sendEmail({
+      to: user.email,
+      ...emailTemplates.accountRejected(),
+    });
+  } catch (emailError) {
+    console.error("Email sending error:", emailError);
+  }
+
+  // Log the rejection before the record is removed
+  const actor = await resolveActor(req.user);
+
+  await recordAudit({
+    actor,
+    action: "EMPLOYEE_REJECTED",
+    targetType: "EMPLOYEE",
+    targetId: employeeCode,
+    message: MESSAGES.AUDIT.EMPLOYEE_REGISTRATION_REJECTED(employeeCode, user.username),
+  });
+
+  // Delete the account from the database
+  await deleteEmployeeAccount(employeeCode);
+
+  return sendSuccess(res, STATUS.OK, MESSAGES.ADMIN.REGISTRATION_REJECTED);
 };
 
 // Update mutable fields on a STAFF employee record
 exports.updateEmployee = async (req, res) => {
-  try {
-    const { employeeCode } = req.params;
+  const { employeeCode } = req.params;
 
-    const employee = await Employee.findOne({
-      employeeCode,
-    });
+  const employee = await Employee.findOne({
+    employeeCode,
+  });
 
-    if (!employee) {
-      return res.status(404).json({
-        message: "Employee not found",
-      });
-    }
-
-    if (RESTRICTED_ROLES_SET.has(employee.designation)) {
-      return res.status(403).json({
-        message: "Cannot update OWNER or ADMIN accounts",
-      });
-    }
-
-    updateEmployeeData(employee, req.body);
-
-    await employee.save();
-
-    // Log the update
-    const actor = await resolveActor(req.user);
-    await recordAudit({
-      actor,
-      action: "EMPLOYEE_UPDATED",
-      targetType: "EMPLOYEE",
-      targetId: employee.employeeCode,
-      message: `Employee ${employee.name} (${employee.employeeCode}) was updated`
-    });
-
-    return res.status(200).json({
-      message: "Employee updated successfully",
-      employee: {
-        employeeCode: employee.employeeCode,
-        name: employee.name,
-        department: employee.department,
-        designation: employee.designation,
-      },
-    });
-  } catch (err) {
-    console.error("Error during employee update:", err);
-    return res.status(500).json({
-      message: "Server error during employee update",
-    });
+  if (!employee) {
+    throw new AppError(STATUS.NOT_FOUND, MESSAGES.EMPLOYEE.NOT_FOUND);
   }
+
+  if (RESTRICTED_ROLES_SET.has(employee.designation)) {
+    throw new AppError(STATUS.FORBIDDEN, MESSAGES.ADMIN.CANNOT_UPDATE_PRIVILEGED);
+  }
+
+  updateEmployeeData(employee, req.body);
+
+  await employee.save();
+
+  // Log the update
+  const actor = await resolveActor(req.user);
+  await recordAudit({
+    actor,
+    action: "EMPLOYEE_UPDATED",
+    targetType: "EMPLOYEE",
+    targetId: employee.employeeCode,
+    message: MESSAGES.AUDIT.EMPLOYEE_UPDATED(employee.name, employee.employeeCode)
+  });
+
+  return sendSuccess(res, STATUS.OK, MESSAGES.ADMIN.EMPLOYEE_UPDATED, {
+    employee: {
+      employeeCode: employee.employeeCode,
+      name: employee.name,
+      department: employee.department,
+      designation: employee.designation,
+    },
+  });
 };
 
 // Delete a STAFF employee and their linked user account
 exports.deleteEmployee = async (req, res) => {
 
-  try {
-    const employeeCode = req.params.employeeCode;
+  const employeeCode = req.params.employeeCode;
 
-    const employee = await Employee.findOne({
-      employeeCode,
-    });
+  const employee = await Employee.findOne({
+    employeeCode,
+  });
 
-    if (!employee) {
-      return res.status(404).json({
-        message: "Employee not found",
-      });
-    }
-
-    if (RESTRICTED_ROLES_SET.has(employee.designation)) {
-      return res.status(403).json({
-        message: "Cannot delete OWNER or ADMIN accounts",
-      });
-    }
-
-    // Log before deletion so the record still exists for the message
-    const actor = await resolveActor(req.user);
-    await recordAudit({
-      actor,
-      action: "EMPLOYEE_DELETED",
-      targetType: "EMPLOYEE",
-      targetId: employeeCode,
-      message: `Employee ${employee.name} (${employeeCode}) was deleted`
-    });
-
-    await cancelDoctorAppointments(employeeCode, employee.name, actor);
-    await deleteEmployeeAccount(employeeCode);
-
-    return res.status(200).json({
-      message: "Employee deleted successfully",
-    });
-  } catch (err) {
-    console.error("Error during employee deletion:", err);
-    return res.status(500).json({
-      message: "Server error during employee deletion",
-    });
+  if (!employee) {
+    throw new AppError(STATUS.NOT_FOUND, MESSAGES.EMPLOYEE.NOT_FOUND);
   }
+
+  if (RESTRICTED_ROLES_SET.has(employee.designation)) {
+    throw new AppError(STATUS.FORBIDDEN, MESSAGES.ADMIN.CANNOT_DELETE_PRIVILEGED);
+  }
+
+  // Log before deletion so the record still exists for the message
+  const actor = await resolveActor(req.user);
+  await recordAudit({
+    actor,
+    action: "EMPLOYEE_DELETED",
+    targetType: "EMPLOYEE",
+    targetId: employeeCode,
+    message: MESSAGES.AUDIT.EMPLOYEE_DELETED(employee.name, employeeCode)
+  });
+
+  await cancelDoctorAppointments(employeeCode, employee.name, actor);
+  await deleteEmployeeAccount(employeeCode);
+
+  return sendSuccess(res, STATUS.OK, MESSAGES.ADMIN.EMPLOYEE_DELETED);
 };
 
 // Fetch paginated audit log entries with optional action filter
 exports.getAuditLogs = async (req, res) => {
-  try {
-    const { page, limit, skip } = parsePagination(req.query, 20);
+  const { page, limit, skip } = parsePagination(req.query, 20);
 
-    const filter = {};
+  const filter = {};
 
-    if (req.query.action) {
-      filter.action = req.query.action;
-    }
-
-    const [logs, total] = await Promise.all([
-      AuditLog.find(filter)
-        .select("-__v")
-        .sort({ created_at: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      AuditLog.countDocuments(filter),
-    ]);
-
-    return res.status(200).json({
-      message: "Audit logs retrieved successfully",
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-      logs,
-    });
-  } catch (err) {
-    console.error("Error fetching audit logs:", err);
-    return res.status(500).json({
-      message: "Server error while fetching audit logs",
-    });
+  if (req.query.action) {
+    filter.action = req.query.action;
   }
+
+  const [logs, total] = await Promise.all([
+    AuditLog.find(filter)
+      .select("-__v")
+      .sort({ created_at: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    AuditLog.countDocuments(filter),
+  ]);
+
+  return sendSuccess(res, STATUS.OK, MESSAGES.ADMIN.AUDIT_LOGS_RETRIEVED, {
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+    logs,
+  });
 };
 
 // List all pending profile change requests
 exports.getProfileChangeRequests = async (req, res) => {
-  try {
-    const requests = await ProfileChangeRequest.find({
-      status: "PENDING",
-    })
-      .select("-__v")
-      .sort({ created_at: -1 })
-      .lean();
+  const requests = await ProfileChangeRequest.find({
+    status: "PENDING",
+  })
+    .select("-__v")
+    .sort({ created_at: -1 })
+    .lean();
 
-    // Normalize the Map field to a plain object for JSON serialization
-    const formatted = requests.map((request) => ({
-      ...request,
-      requestedChanges: request.requestedChanges || {},
-    }));
+  // Normalize the Map field to a plain object for JSON serialization
+  const formatted = requests.map((request) => ({
+    ...request,
+    requestedChanges: request.requestedChanges || {},
+  }));
 
-    return res.status(200).json({
-      message: "Profile change requests retrieved successfully",
-      total: formatted.length,
-      requests: formatted,
-    });
-  } catch (err) {
-    console.error("Error fetching profile change requests:", err);
-    return res.status(500).json({
-      message: "Server error while fetching profile change requests",
-    });
-  }
+  return sendSuccess(res, STATUS.OK, MESSAGES.ADMIN.CHANGE_REQUESTS_RETRIEVED, {
+    total: formatted.length,
+    requests: formatted,
+  });
 };
 
 // Approve profile change request
 exports.approveProfileChange = async (req, res) => {
-  try {
-    const { requestId } = req.params;
+  const { requestId } = req.params;
 
-    const request = await findPendingRequest(requestId, res);
-    if (!request) return;
+  // Throws AppError when missing or already reviewed
+  const request = await findPendingRequest(requestId);
 
-    const employee = await Employee.findOne({
-      employeeCode: request.employeeCode,
-    });
+  const employee = await Employee.findOne({
+    employeeCode: request.employeeCode,
+  });
 
-    if (!employee) {
-      return res.status(404).json({
-        message: "Employee not found",
-      });
-    }
-
-    request.requestedChanges.forEach((change, field) => {
-      employee[field] = change.new;
-    });
-
-    await employee.save();
-
-    request.status = "APPROVED";
-    request.reviewedBy = req.user.employeeCode;
-    request.reviewedAt = new Date();
-    await request.save();
-
-    // Notify the employee of approval
-    try {
-      await sendEmail({
-        to: employee.email,
-        ...emailTemplates.profileChangeApproved(),
-      });
-    } catch (emailError) {
-      console.error("Email sending error:", emailError);
-    }
-
-    // Log the approval
-    const actor = await resolveActor(req.user);
-    await recordAudit({
-      actor,
-      action: "PROFILE_CHANGE_APPROVED",
-      targetType: "PROFILE_CHANGE_REQUEST",
-      targetId: request.requestId,
-      message: `Profile change ${request.requestId} for ${employee.name} (${employee.employeeCode}) was approved`,
-    });
-
-    return res.status(200).json({
-      message: "Profile change request approved successfully",
-      request: {
-        requestId: request.requestId,
-        status: request.status,
-      },
-    });
-  } catch (err) {
-    console.error("Error approving profile change:", err);
-    return res.status(500).json({
-      message: "Server error during profile change approval",
-    });
+  if (!employee) {
+    throw new AppError(STATUS.NOT_FOUND, MESSAGES.EMPLOYEE.NOT_FOUND);
   }
+
+  request.requestedChanges.forEach((change, field) => {
+    employee[field] = change.new;
+  });
+
+  await employee.save();
+
+  request.status = "APPROVED";
+  request.reviewedBy = req.user.employeeCode;
+  request.reviewedAt = new Date();
+  await request.save();
+
+  // Notify the employee of approval (best-effort)
+  try {
+    await sendEmail({
+      to: employee.email,
+      ...emailTemplates.profileChangeApproved(),
+    });
+  } catch (emailError) {
+    console.error("Email sending error:", emailError);
+  }
+
+  // Log the approval
+  const actor = await resolveActor(req.user);
+  await recordAudit({
+    actor,
+    action: "PROFILE_CHANGE_APPROVED",
+    targetType: "PROFILE_CHANGE_REQUEST",
+    targetId: request.requestId,
+    message: MESSAGES.AUDIT.PROFILE_CHANGE_APPROVED(
+      request.requestId,
+      employee.name,
+      employee.employeeCode
+    ),
+  });
+
+  return sendSuccess(res, STATUS.OK, MESSAGES.ADMIN.CHANGE_REQUEST_APPROVED, {
+    request: {
+      requestId: request.requestId,
+      status: request.status,
+    },
+  });
 };
 
 // Reject a profile change request
 exports.rejectProfileChange = async (req, res) => {
+  const { requestId } = req.params;
+
+  // Throws AppError when missing or already reviewed
+  const request = await findPendingRequest(requestId);
+
+  request.status = "REJECTED";
+  request.reviewedBy = req.user.employeeCode;
+  request.reviewedAt = new Date();
+  await request.save();
+
+  // Notify the employee of rejection (best-effort)
   try {
-    const { requestId } = req.params;
-
-    const request = await findPendingRequest(requestId, res);
-    if (!request) return;
-
-    request.status = "REJECTED";
-    request.reviewedBy = req.user.employeeCode;
-    request.reviewedAt = new Date();
-    await request.save();
-
-    // Notify the employee of rejection
-    try {
-      await sendEmail({
-        to: request.email,
-        ...emailTemplates.profileChangeRejected(),
-      });
-    } catch (emailError) {
-      console.error("Email sending error:", emailError);
-    }
-
-    // Log the rejection
-    const actor = await resolveActor(req.user);
-    await recordAudit({
-      actor,
-      action: "PROFILE_CHANGE_REJECTED",
-      targetType: "PROFILE_CHANGE_REQUEST",
-      targetId: request.requestId,
-      message: `Profile change ${request.requestId} for ${request.employeeName} (${request.employeeCode}) was rejected`,
+    await sendEmail({
+      to: request.email,
+      ...emailTemplates.profileChangeRejected(),
     });
-
-    return res.status(200).json({
-      message: "Profile change request rejected successfully",
-      request: {
-        requestId: request.requestId,
-        status: request.status,
-      },
-    });
-  } catch (err) {
-    console.error("Error rejecting profile change:", err);
-    return res.status(500).json({
-      message: "Server error during profile change rejection",
-    });
+  } catch (emailError) {
+    console.error("Email sending error:", emailError);
   }
+
+  // Log the rejection
+  const actor = await resolveActor(req.user);
+  await recordAudit({
+    actor,
+    action: "PROFILE_CHANGE_REJECTED",
+    targetType: "PROFILE_CHANGE_REQUEST",
+    targetId: request.requestId,
+    message: MESSAGES.AUDIT.PROFILE_CHANGE_REJECTED(
+      request.requestId,
+      request.employeeName,
+      request.employeeCode
+    ),
+  });
+
+  return sendSuccess(res, STATUS.OK, MESSAGES.ADMIN.CHANGE_REQUEST_REJECTED, {
+    request: {
+      requestId: request.requestId,
+      status: request.status,
+    },
+  });
 };

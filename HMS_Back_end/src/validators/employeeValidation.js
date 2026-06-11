@@ -10,7 +10,7 @@ const {
   MEDICAL_DESIGNATIONS_SET,
   SPECIALIZATION_DESIGNATIONS_SET,
   DEPARTMENT_DESIGNATIONS,
-} = require("../config/constants");
+} = require("../constants/domain");
 
 // Medical registration number: "MED-" followed by digits and hyphens (e.g. MED-12345)
 const MED_REG_REGEX = /^MED-[0-9-]+$/;
