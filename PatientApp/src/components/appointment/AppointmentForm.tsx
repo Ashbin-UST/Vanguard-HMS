@@ -1,11 +1,8 @@
-import DateTimePicker, { DateTimePickerChangeEvent } from "@react-native-community/datetimepicker";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Modal,
-  Platform,
   StyleSheet,
   Text,
   TextInput,
@@ -14,9 +11,11 @@ import {
 } from "react-native";
 import { ALERT_TITLES, MESSAGES } from "@/constants/messages";
 import { showError, showSuccess } from "@/utils/alerts";
+import { formatDate, isRealDate } from "@/utils/format";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BottomTabInset, KeyboardScrollPadding } from "@/constants/theme";
+import DatePickerSheet from "@/components/common/DatePickerSheet";
 import { useGuardedRouter } from "@/hooks/useGuardedRouter";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import {
@@ -67,20 +66,6 @@ function weekdayOf(dateStr: string): string | null {
   return WEEKDAYS[date.getDay()];
 }
 
-function isRealDate(dateStr: string): boolean {
-  if (!DATE_REGEX.test(dateStr)) return false;
-  const [y, m, d] = dateStr.split("-").map(Number);
-  const dt = new Date(y, m - 1, d);
-  return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
-}
-
-function formatDate(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
 // Booking window: today through 6 months ahead.
 const MIN_DATE = new Date();
 MIN_DATE.setHours(0, 0, 0, 0);
@@ -92,6 +77,240 @@ MAX_DATE.setMonth(MAX_DATE.getMonth() + 6);
 function isBeyondMax(dateStr: string): boolean {
   const [y, m, d] = dateStr.split("-").map(Number);
   return new Date(y, m - 1, d).getTime() > MAX_DATE.getTime();
+}
+
+function getDateError(date: string): string | undefined {
+  if (!date) return "Required";
+  if (!DATE_REGEX.test(date)) return "Use YYYY-MM-DD format";
+  if (!isRealDate(date)) return "Enter a valid calendar date";
+  if (isBeyondMax(date)) return "Appointments can only be booked up to 6 months in advance";
+  return undefined;
+}
+
+function doctorLabel(doctor: Doctor | undefined): string {
+  if (!doctor) return "Select a doctor";
+  if (doctor.specialization) return `Dr. ${doctor.name} · ${doctor.specialization}`;
+  return `Dr. ${doctor.name}`;
+}
+
+function feeLabel(fee: number | null | undefined): string {
+  if (fee != null) return `₹ ${fee}`;
+  return "Not set";
+}
+
+function submitLabel(submitting: boolean, mode: "book" | "edit"): string {
+  if (submitting) return "Saving…";
+  if (mode === "book") return "Confirm booking";
+  return "Save changes";
+}
+
+type FormSelection = Readonly<{ doctorCode: string; date: string; selectedSlot: string }>;
+
+// Book mode is dirty on any input; edit mode only when moved off the initial selection
+function isFormDirty(mode: "book" | "edit", current: FormSelection, initial: FormSelection): boolean {
+  if (mode === "book") {
+    return Boolean(current.doctorCode || current.date || current.selectedSlot);
+  }
+  return (
+    current.doctorCode !== initial.doctorCode ||
+    current.date !== initial.date ||
+    current.selectedSlot !== initial.selectedSlot
+  );
+}
+
+// Loads the active doctor list once on mount
+function useDoctors() {
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [loadingDoctors, setLoadingDoctors] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await getDoctors();
+        setDoctors(data.doctors);
+      } catch (err) {
+        showError(err);
+      } finally {
+        setLoadingDoctors(false);
+      }
+    })();
+  }, []);
+
+  return { doctors, loadingDoctors };
+}
+
+// Tracks booked slots for the selected doctor/date combination
+function useBookedSlots(doctorCode: string, date: string) {
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!doctorCode || !DATE_REGEX.test(date)) {
+      setBookedSlots([]);
+      return;
+    }
+    let active = true;
+    (async () => {
+      try {
+        const data = await getBookedSlots(doctorCode, date);
+        if (active) setBookedSlots(data.bookedSlots);
+      } catch {
+        if (active) setBookedSlots([]);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [doctorCode, date]);
+
+  return bookedSlots;
+}
+
+type DoctorDropdownProps = Readonly<{
+  doctors: Doctor[];
+  selectedDoctor: Doctor | undefined;
+  open: boolean;
+  error: string | undefined;
+  onToggle: () => void;
+  onSelect: (code: string) => void;
+}>;
+
+function DoctorDropdown({
+  doctors,
+  selectedDoctor,
+  open,
+  error,
+  onToggle,
+  onSelect,
+}: DoctorDropdownProps) {
+  const [search, setSearch] = useState("");
+
+  // Filter doctors by name, specialization, or department for the dropdown search.
+  const filteredDoctors = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return doctors;
+    return doctors.filter((d) =>
+      [d.name, d.specialization, d.department]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(q),
+    );
+  }, [doctors, search]);
+
+  const handleSelect = (code: string) => {
+    setSearch("");
+    onSelect(code);
+  };
+
+  return (
+    <>
+      <Text style={styles.fieldLabel}>Doctor</Text>
+      <TouchableOpacity
+        style={[styles.dropdownTrigger, error ? styles.dropdownTriggerError : undefined]}
+        onPress={onToggle}
+        activeOpacity={0.8}
+      >
+        <Text style={selectedDoctor ? styles.dropdownValue : styles.dropdownPlaceholder}>
+          {doctorLabel(selectedDoctor)}
+        </Text>
+        <Ionicons name={open ? "chevron-up" : "chevron-down"} size={18} color="#6b7280" />
+      </TouchableOpacity>
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+      {open && (
+        <View style={styles.dropdownList}>
+          <View style={styles.dropdownSearch}>
+            <Ionicons name="search-outline" size={16} color="#9ca3af" />
+            <TextInput
+              style={styles.dropdownSearchInput}
+              value={search}
+              onChangeText={setSearch}
+              placeholder="Search by name or specialization..."
+              placeholderTextColor="#9ca3af"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+          </View>
+          {filteredDoctors.length === 0 ? (
+            <Text style={styles.dropdownEmpty}>No results found</Text>
+          ) : (
+            filteredDoctors.map((d) => (
+              <TouchableOpacity
+                key={d.employeeCode}
+                style={styles.dropdownItem}
+                onPress={() => handleSelect(d.employeeCode)}
+              >
+                <Text style={styles.dropdownItemName}>Dr. {d.name}</Text>
+                <Text style={styles.dropdownItemMeta}>
+                  {[d.specialization, d.department].filter(Boolean).join(" · ") || "General"}
+                </Text>
+              </TouchableOpacity>
+            ))
+          )}
+        </View>
+      )}
+    </>
+  );
+}
+
+type SlotsSectionProps = Readonly<{
+  selectedDoctor: Doctor | undefined;
+  dateValid: boolean;
+  candidateSlots: string[];
+  availableSlots: string[];
+  selectedSlot: string;
+  error: string | undefined;
+  onSelect: (slot: string) => void;
+}>;
+
+function SlotsSection({
+  selectedDoctor,
+  dateValid,
+  candidateSlots,
+  availableSlots,
+  selectedSlot,
+  error,
+  onSelect,
+}: SlotsSectionProps) {
+  if (!selectedDoctor || !dateValid) {
+    return <Text style={styles.hint}>Select a doctor and date to see available slots.</Text>;
+  }
+  if (candidateSlots.length === 0) {
+    return (
+      <Text style={styles.hint}>
+        Dr. {selectedDoctor.name} is not available on this day. Try another date.
+      </Text>
+    );
+  }
+  if (availableSlots.length === 0) {
+    return (
+      <Text style={styles.hint}>
+        All slots for this day are booked. Try another date.
+      </Text>
+    );
+  }
+  return (
+    <>
+      <View style={styles.slotsWrap}>
+        {availableSlots.map((slot) => {
+          const isActive = selectedSlot === slot;
+          return (
+            <TouchableOpacity
+              key={slot}
+              style={[styles.slot, isActive && styles.slotActive]}
+              onPress={() => onSelect(slot)}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.slotText, isActive && styles.slotTextActive]}>
+                {slot}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+    </>
+  );
 }
 
 export type AppointmentFormProps = {
@@ -114,47 +333,35 @@ export default function AppointmentForm({
   initialTimeSlot,
   embedded = false,
   onDone,
-}: AppointmentFormProps) {
+}: Readonly<AppointmentFormProps>) {
   const router = useRouter();
   const guarded = useGuardedRouter();
 
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [loadingDoctors, setLoadingDoctors] = useState(true);
+  const { doctors, loadingDoctors } = useDoctors();
   const [doctorOpen, setDoctorOpen] = useState(false);
-  const [doctorSearch, setDoctorSearch] = useState("");
   const [doctorCode, setDoctorCode] = useState(initialDoctorCode ?? "");
   const [date, setDate] = useState(initialDate ?? "");
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [datePickerDate, setDatePickerDate] = useState<Date>(() => new Date());
   const [selectedSlot, setSelectedSlot] = useState(initialTimeSlot ?? "");
-  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+  const bookedSlots = useBookedSlots(doctorCode, date);
   const [submitting, setSubmitting] = useState(false);
 
   const [touched, setTouched] = useState({ doctor: false, date: false, timeSlot: false });
   const touch = (field: keyof typeof touched) =>
     setTouched((prev) => ({ ...prev, [field]: true }));
 
-  // Dirty when the selection has moved away from its initial state.
-  const isDirty =
-    mode === "book"
-      ? Boolean(doctorCode || date || selectedSlot)
-      : doctorCode !== (initialDoctorCode ?? "") ||
-        date !== (initialDate ?? "") ||
-        selectedSlot !== (initialTimeSlot ?? "");
-  useUnsavedChanges(isDirty);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const data = await getDoctors();
-        setDoctors(data.doctors);
-      } catch (err) {
-        showError(err);
-      } finally {
-        setLoadingDoctors(false);
-      }
-    })();
-  }, []);
+  useUnsavedChanges(
+    isFormDirty(
+      mode,
+      { doctorCode, date, selectedSlot },
+      {
+        doctorCode: initialDoctorCode ?? "",
+        date: initialDate ?? "",
+        selectedSlot: initialTimeSlot ?? "",
+      },
+    ),
+  );
 
   const selectedDoctor = useMemo(
     () => doctors.find((d) => d.employeeCode === doctorCode),
@@ -185,43 +392,16 @@ export default function AppointmentForm({
     [candidateSlots, bookedSlots, initialTimeSlot],
   );
 
-  useEffect(() => {
-    if (!doctorCode || !DATE_REGEX.test(date)) {
-      setBookedSlots([]);
-      return;
-    }
-    let active = true;
-    (async () => {
-      try {
-        const data = await getBookedSlots(doctorCode, date);
-        if (active) setBookedSlots(data.bookedSlots);
-      } catch {
-        if (active) setBookedSlots([]);
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [doctorCode, date]);
-
-  // Filter doctors by name, specialization, or department for the dropdown search.
-  const filteredDoctors = useMemo(() => {
-    const q = doctorSearch.trim().toLowerCase();
-    if (!q) return doctors;
-    return doctors.filter((d) =>
-      [d.name, d.specialization, d.department]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase()
-        .includes(q),
-    );
-  }, [doctors, doctorSearch]);
-
   const onSelectDoctor = (code: string) => {
     setDoctorCode(code);
     setDoctorOpen(false);
-    setDoctorSearch("");
     if (code !== initialDoctorCode) setSelectedSlot("");
+  };
+
+  const onToggleDoctor = () => {
+    // Mark touched only when closing the dropdown so the error never flashes on open
+    if (doctorOpen) touch("doctor");
+    setDoctorOpen(!doctorOpen);
   };
 
   // Collapsing the dropdown without a selection surfaces the required error
@@ -232,33 +412,18 @@ export default function AppointmentForm({
     }
   };
 
-  const onDateValueChange = (_: DateTimePickerChangeEvent, selected: Date) => {
-    if (Platform.OS === "android") {
-      setShowDatePicker(false);
-      touch("date");
+  const openDatePicker = () => {
+    blurDoctor();
+    if (date && isRealDate(date)) {
+      const [y, m, d] = date.split("-").map(Number);
+      setDatePickerDate(new Date(y, m - 1, d));
     }
-    setDatePickerDate(selected);
-    setDate(formatDate(selected));
-  };
-
-  const onDatePickerDismiss = () => {
-    if (Platform.OS === "android") {
-      setShowDatePicker(false);
-      touch("date");
-    }
+    setShowDatePicker(true);
   };
 
   const errors = {
-    doctor: !doctorCode ? "Please select a doctor" : undefined,
-    date: !date
-      ? "Required"
-      : !DATE_REGEX.test(date)
-      ? "Use YYYY-MM-DD format"
-      : !isRealDate(date)
-      ? "Enter a valid calendar date"
-      : isBeyondMax(date)
-      ? "Appointments can only be booked up to 6 months in advance"
-      : undefined,
+    doctor: doctorCode ? undefined : "Please select a doctor",
+    date: getDateError(date),
     timeSlot: availableSlots.length > 0 && !selectedSlot
       ? "Please select a time slot"
       : undefined,
@@ -331,65 +496,14 @@ export default function AppointmentForm({
           </View>
         )}
 
-        {/* Doctor picker */}
-        <Text style={styles.fieldLabel}>Doctor</Text>
-        <TouchableOpacity
-          style={[
-            styles.dropdownTrigger,
-            touched.doctor && errors.doctor ? styles.dropdownTriggerError : undefined,
-          ]}
-          onPress={() => {
-            // Mark touched only when closing the dropdown so the error never flashes on open
-            if (doctorOpen) touch("doctor");
-            setDoctorOpen(!doctorOpen);
-          }}
-          activeOpacity={0.8}
-        >
-          <Text style={selectedDoctor ? styles.dropdownValue : styles.dropdownPlaceholder}>
-            {selectedDoctor
-              ? `Dr. ${selectedDoctor.name}${
-                  selectedDoctor.specialization ? ` · ${selectedDoctor.specialization}` : ""
-                }`
-              : "Select a doctor"}
-          </Text>
-          <Ionicons name={doctorOpen ? "chevron-up" : "chevron-down"} size={18} color="#6b7280" />
-        </TouchableOpacity>
-        {touched.doctor && errors.doctor ? (
-          <Text style={styles.errorText}>{errors.doctor}</Text>
-        ) : null}
-
-        {doctorOpen && (
-          <View style={styles.dropdownList}>
-            <View style={styles.dropdownSearch}>
-              <Ionicons name="search-outline" size={16} color="#9ca3af" />
-              <TextInput
-                style={styles.dropdownSearchInput}
-                value={doctorSearch}
-                onChangeText={setDoctorSearch}
-                placeholder="Search by name or specialization..."
-                placeholderTextColor="#9ca3af"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
-            {filteredDoctors.length === 0 ? (
-              <Text style={styles.dropdownEmpty}>No results found</Text>
-            ) : (
-              filteredDoctors.map((d) => (
-                <TouchableOpacity
-                  key={d.employeeCode}
-                  style={styles.dropdownItem}
-                  onPress={() => onSelectDoctor(d.employeeCode)}
-                >
-                  <Text style={styles.dropdownItemName}>Dr. {d.name}</Text>
-                  <Text style={styles.dropdownItemMeta}>
-                    {[d.specialization, d.department].filter(Boolean).join(" · ") || "General"}
-                  </Text>
-                </TouchableOpacity>
-              ))
-            )}
-          </View>
-        )}
+        <DoctorDropdown
+          doctors={doctors}
+          selectedDoctor={selectedDoctor}
+          open={doctorOpen}
+          error={touched.doctor ? errors.doctor : undefined}
+          onToggle={onToggleDoctor}
+          onSelect={onSelectDoctor}
+        />
 
         {/* Consultation fee — read-only, mirrors the web app's fee pill */}
         {selectedDoctor && (
@@ -397,11 +511,7 @@ export default function AppointmentForm({
             <Text style={[styles.fieldLabel, { marginTop: 18 }]}>Consultation fee</Text>
             <View style={styles.feePill}>
               <Ionicons name="cash-outline" size={18} color={TEAL} />
-              <Text style={styles.feeText}>
-                {selectedDoctor.consultationFee != null
-                  ? `₹ ${selectedDoctor.consultationFee}`
-                  : "Not set"}
-              </Text>
+              <Text style={styles.feeText}>{feeLabel(selectedDoctor.consultationFee)}</Text>
             </View>
           </>
         )}
@@ -413,14 +523,7 @@ export default function AppointmentForm({
             styles.dropdownTrigger,
             touched.date && errors.date ? styles.dropdownTriggerError : undefined,
           ]}
-          onPress={() => {
-            blurDoctor();
-            if (date && isRealDate(date)) {
-              const [y, m, d] = date.split("-").map(Number);
-              setDatePickerDate(new Date(y, m - 1, d));
-            }
-            setShowDatePicker(true);
-          }}
+          onPress={openDatePicker}
           activeOpacity={0.8}
         >
           <Text style={date ? styles.dropdownValue : styles.dropdownPlaceholder}>
@@ -432,45 +535,19 @@ export default function AppointmentForm({
           <Text style={styles.errorText}>{errors.date}</Text>
         ) : null}
 
-        {/* Time slots */}
         <Text style={[styles.fieldLabel, { marginTop: 18 }]}>Time slot</Text>
-        {!selectedDoctor || !DATE_REGEX.test(date) ? (
-          <Text style={styles.hint}>Select a doctor and date to see available slots.</Text>
-        ) : candidateSlots.length === 0 ? (
-          <Text style={styles.hint}>
-            Dr. {selectedDoctor.name} is not available on this day. Try another date.
-          </Text>
-        ) : availableSlots.length === 0 ? (
-          <Text style={styles.hint}>
-            All slots for this day are booked. Try another date.
-          </Text>
-        ) : (
-          <>
-            <View style={styles.slotsWrap}>
-              {availableSlots.map((slot) => {
-                const isActive = selectedSlot === slot;
-                return (
-                  <TouchableOpacity
-                    key={slot}
-                    style={[styles.slot, isActive && styles.slotActive]}
-                    onPress={() => {
-                      setSelectedSlot(slot);
-                      touch("timeSlot");
-                    }}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={[styles.slotText, isActive && styles.slotTextActive]}>
-                      {slot}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-            {touched.timeSlot && errors.timeSlot ? (
-              <Text style={styles.errorText}>{errors.timeSlot}</Text>
-            ) : null}
-          </>
-        )}
+        <SlotsSection
+          selectedDoctor={selectedDoctor}
+          dateValid={DATE_REGEX.test(date)}
+          candidateSlots={candidateSlots}
+          availableSlots={availableSlots}
+          selectedSlot={selectedSlot}
+          error={touched.timeSlot ? errors.timeSlot : undefined}
+          onSelect={(slot) => {
+            setSelectedSlot(slot);
+            touch("timeSlot");
+          }}
+        />
 
         <TouchableOpacity
           style={[styles.submitButton, submitting && styles.submitDisabled]}
@@ -478,58 +555,24 @@ export default function AppointmentForm({
           disabled={submitting}
           activeOpacity={0.85}
         >
-          <Text style={styles.submitText}>
-            {submitting
-              ? "Saving…"
-              : mode === "book"
-                ? "Confirm booking"
-                : "Save changes"}
-          </Text>
+          <Text style={styles.submitText}>{submitLabel(submitting, mode)}</Text>
         </TouchableOpacity>
 
-        {/* Android: DateTimePicker renders as a native dialog */}
-        {Platform.OS === "android" && showDatePicker && (
-          <DateTimePicker
-            value={datePickerDate}
-            mode="date"
-            display="default"
-            minimumDate={MIN_DATE}
-            maximumDate={MAX_DATE}
-            onValueChange={onDateValueChange}
-            onDismiss={onDatePickerDismiss}
-          />
-        )}
-
-        {/* iOS: DateTimePicker shown in a bottom-sheet modal */}
-        {Platform.OS === "ios" && (
-          <Modal visible={showDatePicker} transparent animationType="slide">
-            <View style={styles.pickerOverlay}>
-              <View style={styles.pickerSheet}>
-                <View style={styles.pickerHeader}>
-                  <Text style={styles.pickerTitle}>Appointment date</Text>
-                  <TouchableOpacity
-                    onPress={() => {
-                      setShowDatePicker(false);
-                      touch("date");
-                    }}
-                  >
-                    <Text style={styles.pickerDone}>Done</Text>
-                  </TouchableOpacity>
-                </View>
-                <DateTimePicker
-                  value={datePickerDate}
-                  mode="date"
-                  display="spinner"
-                  minimumDate={MIN_DATE}
-                  maximumDate={MAX_DATE}
-                  onValueChange={onDateValueChange}
-                  onDismiss={onDatePickerDismiss}
-                  style={{ width: "100%" }}
-                />
-              </View>
-            </View>
-          </Modal>
-        )}
+        <DatePickerSheet
+          visible={showDatePicker}
+          value={datePickerDate}
+          title="Appointment date"
+          minimumDate={MIN_DATE}
+          maximumDate={MAX_DATE}
+          onChange={(selected) => {
+            setDatePickerDate(selected);
+            setDate(formatDate(selected));
+          }}
+          onClose={() => {
+            setShowDatePicker(false);
+            touch("date");
+          }}
+        />
       </SafeAreaView>
     </KeyboardAwareScrollView>
   );
@@ -587,19 +630,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#1f2937",
   },
-  input: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-    fontSize: 15,
-    color: "#1f2937",
-  },
-  inputError: {
-    borderColor: "#ef4444",
-  },
   errorText: {
     color: "#ef4444",
     fontSize: 12,
@@ -648,26 +678,4 @@ const styles = StyleSheet.create({
   },
   submitDisabled: { opacity: 0.6 },
   submitText: { color: "#fff", fontSize: 16, fontWeight: "700" },
-  pickerOverlay: {
-    flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.4)",
-  },
-  pickerSheet: {
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    paddingBottom: 24,
-  },
-  pickerHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f3f4f6",
-  },
-  pickerTitle: { fontSize: 16, fontWeight: "700", color: "#1f2937" },
-  pickerDone: { fontSize: 16, fontWeight: "700", color: TEAL },
 });

@@ -1,12 +1,10 @@
-import DateTimePicker, { DateTimePickerChangeEvent } from "@react-native-community/datetimepicker";
 import { Textbox } from "@/components/common/textbox";
+import DatePickerSheet from "@/components/common/DatePickerSheet";
 import { registerPatient } from "@/services/authService";
 import { useIsFocused, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
   Animated,
-  Modal,
-  Platform,
   Text,
   TouchableOpacity,
   View,
@@ -14,23 +12,20 @@ import {
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { ALERT_TITLES, MESSAGES } from "@/constants/messages";
 import { showError, showSuccess } from "@/utils/alerts";
+import { formatDate, isRealDate } from "@/utils/format";
+import {
+  getConfirmPasswordError,
+  getEmailError,
+  getNameError,
+  getPasswordError,
+  getPhoneError,
+  getRequiredError,
+} from "@/utils/validation";
 import { useGuardedRouter } from "@/hooks/useGuardedRouter";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import { styles } from "./styles/RegisterScreen.style";
 
 type Gender = "Male" | "Female";
-
-const PHONE_REGEX = /^(\+\d{1,3} )?\d{10}$/;
-const DOB_REGEX = /^\d{4}-\d{2}-\d{2}$/;
-const NAME_REGEX = /^[a-zA-Z]+([ '-][a-zA-Z]+)*$/;
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PASSWORD_RULES = [
-  { test: (p: string) => p.length >= 8, msg: "at least 8 characters" },
-  { test: (p: string) => /[A-Z]/.test(p), msg: "an uppercase letter" },
-  { test: (p: string) => /[a-z]/.test(p), msg: "a lowercase letter" },
-  { test: (p: string) => /\d/.test(p), msg: "a number" },
-  { test: (p: string) => /[^A-Za-z0-9]/.test(p), msg: "a special character" },
-];
 
 const ALL_FIELDS = [
   "name", "dob", "phone", "email", "password", "confirmPassword", "gender",
@@ -39,25 +34,24 @@ const ALL_FIELDS = [
 ] as const;
 type Field = (typeof ALL_FIELDS)[number];
 
-function isRealDate(s: string): boolean {
-  if (!DOB_REGEX.test(s)) return false;
-  const [y, m, d] = s.split("-").map(Number);
-  const dt = new Date(y, m - 1, d);
-  return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
-}
-
-function formatDate(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
 const MAX_DOB = new Date();
 MAX_DOB.setHours(0, 0, 0, 0);
 
 const MIN_DOB = new Date();
 MIN_DOB.setFullYear(MIN_DOB.getFullYear() - 120);
+
+function getDobError(dob: string): string | undefined {
+  if (!dob) return "Required";
+  if (!isRealDate(dob)) return "Enter a valid calendar date";
+  const [y, m, d] = dob.split("-").map(Number);
+  if (new Date(y, m - 1, d) > MAX_DOB) return "Date of birth cannot be a future date";
+  return undefined;
+}
+
+function getGenderError(gender: Gender | ""): string | undefined {
+  if (gender === "") return "Please select a gender";
+  return undefined;
+}
 
 const RegisterScreen = () => {
   const [name, setName] = useState("");
@@ -116,72 +110,21 @@ const RegisterScreen = () => {
   const touch = (field: Field) =>
     setTouched((prev) => ({ ...prev, [field]: true }));
 
-  const onDobValueChange = (_: DateTimePickerChangeEvent, selected: Date) => {
-    if (Platform.OS === "android") {
-      setShowDobPicker(false);
-      touch("dob");
-    }
-    setDobPickerDate(selected);
-    setDob(formatDate(selected));
-  };
-
-  const onDobDismiss = () => {
-    if (Platform.OS === "android") {
-      setShowDobPicker(false);
-      touch("dob");
-    }
-  };
-
-  const passwordError = (() => {
-    if (!password) return "Required";
-    const missing = PASSWORD_RULES.filter((r) => !r.test(password)).map((r) => r.msg);
-    return missing.length ? `Needs ${missing.join(", ")}` : undefined;
-  })();
-
-  const dobError = (() => {
-    if (!dob) return "Required";
-    if (!isRealDate(dob)) return "Enter a valid calendar date";
-    const [y, m, d] = dob.split("-").map(Number);
-    const dobLocal = new Date(y, m - 1, d);
-    if (dobLocal > MAX_DOB) return "Date of birth cannot be a future date";
-    return undefined;
-  })();
-
   const errors: Record<Field, string | undefined> = {
-    name: !name.trim()
-      ? "Required"
-      : !NAME_REGEX.test(name.trim())
-      ? "Only letters, spaces, hyphens, and apostrophes"
-      : undefined,
-    dob: dobError,
-    phone: !phone
-      ? "Required"
-      : !PHONE_REGEX.test(phone)
-      ? "10 digits, optional +country code (e.g. +91 9876543210)"
-      : undefined,
-    email: !email.trim()
-      ? "Required"
-      : !EMAIL_REGEX.test(email.trim())
-      ? "Enter a valid email address"
-      : undefined,
-    password: passwordError,
-    confirmPassword: !confirmPassword
-      ? "Required"
-      : confirmPassword !== password
-      ? "Passwords do not match"
-      : undefined,
-    gender: !gender ? "Please select a gender" : undefined,
-    houseName: !houseName.trim() ? "Required" : undefined,
-    houseNumber: !houseNumber.trim() ? "Required" : undefined,
-    city: !city.trim() ? "Required" : undefined,
-    postCode: !postCode.trim() ? "Required" : undefined,
-    contactName: !contactName.trim() ? "Required" : undefined,
-    relationship: !relationship.trim() ? "Required" : undefined,
-    contactNumber: !contactNumber
-      ? "Required"
-      : !PHONE_REGEX.test(contactNumber)
-      ? "10 digits, optional +country code"
-      : undefined,
+    name: getNameError(name),
+    dob: getDobError(dob),
+    phone: getPhoneError(phone, "10 digits, optional +country code (e.g. +91 9876543210)"),
+    email: getEmailError(email),
+    password: getPasswordError(password),
+    confirmPassword: getConfirmPasswordError(confirmPassword, password),
+    gender: getGenderError(gender),
+    houseName: getRequiredError(houseName),
+    houseNumber: getRequiredError(houseNumber),
+    city: getRequiredError(city),
+    postCode: getRequiredError(postCode),
+    contactName: getRequiredError(contactName),
+    relationship: getRequiredError(relationship),
+    contactNumber: getPhoneError(contactNumber),
   };
 
   const err = (field: Field) => (touched[field] ? errors[field] : undefined);
@@ -440,49 +383,21 @@ const RegisterScreen = () => {
         </Animated.View>
       </KeyboardAwareScrollView>
 
-      {/* Android: DateTimePicker renders as a native dialog */}
-      {Platform.OS === "android" && showDobPicker && (
-        <DateTimePicker
-          value={dobPickerDate}
-          mode="date"
-          display="default"
-          maximumDate={MAX_DOB}
-          minimumDate={MIN_DOB}
-          onValueChange={onDobValueChange}
-          onDismiss={onDobDismiss}
-        />
-      )}
-
-      {/* iOS: DateTimePicker shown in a bottom-sheet modal */}
-      {Platform.OS === "ios" && (
-        <Modal visible={showDobPicker} transparent animationType="slide">
-          <View style={styles.pickerOverlay}>
-            <View style={styles.pickerSheet}>
-              <View style={styles.pickerHeader}>
-                <Text style={styles.pickerTitle}>Date of Birth</Text>
-                <TouchableOpacity
-                  onPress={() => {
-                    setShowDobPicker(false);
-                    touch("dob");
-                  }}
-                >
-                  <Text style={styles.pickerDone}>Done</Text>
-                </TouchableOpacity>
-              </View>
-              <DateTimePicker
-                value={dobPickerDate}
-                mode="date"
-                display="spinner"
-                maximumDate={MAX_DOB}
-                minimumDate={MIN_DOB}
-                onValueChange={onDobValueChange}
-                onDismiss={onDobDismiss}
-                style={{ width: "100%" }}
-              />
-            </View>
-          </View>
-        </Modal>
-      )}
+      <DatePickerSheet
+        visible={showDobPicker}
+        value={dobPickerDate}
+        title="Date of Birth"
+        minimumDate={MIN_DOB}
+        maximumDate={MAX_DOB}
+        onChange={(selected) => {
+          setDobPickerDate(selected);
+          setDob(formatDate(selected));
+        }}
+        onClose={() => {
+          setShowDobPicker(false);
+          touch("dob");
+        }}
+      />
     </>
   );
 };

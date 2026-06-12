@@ -1,50 +1,17 @@
-const Employee = require("../models/Employees");
-const Patient = require("../models/Patients");
-const sendEmail = require("../utils/sendEmail");
 const Appointment = require("../models/Appointments");
 const checkAppointmentValidity = require("../validators/checkAppointmentValidity");
 const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
 const emailTemplates = require("../utils/emailTemplates");
-const parsePagination = require("../utils/parsePagination");
 const enrichAppointments = require("../utils/enrichAppointments");
+const paginateAppointments = require("../utils/paginateAppointments");
+const getBookedSlots = require("../utils/getBookedSlots");
+const sendAppointmentEmail = require("../utils/sendAppointmentEmail");
+const cancelAppointmentRecord = require("../utils/cancelAppointmentRecord");
 const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/apiResponse");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
-
-// Shared pagination helper for appointment list endpoints
-const paginateAppointments = async (filter, reqQuery, res) => {
-    const { page, limit, skip } = parsePagination(reqQuery);
-
-    if (reqQuery.date) {
-        const start = new Date(reqQuery.date);
-        const end = new Date(reqQuery.date);
-        end.setHours(23, 59, 59, 999);
-        filter.appointmentDate = { $gte: start, $lte: end };
-    }
-
-    // Fetch page and total in parallel, then attach patient/doctor names
-    const [appointments, total] = await Promise.all([
-        Appointment.find(filter)
-            .select("-__v")
-            .sort({ appointmentDate: -1, _id: -1 })
-            .skip(skip)
-            .limit(limit)
-            .lean(),
-        Appointment.countDocuments(filter)
-    ]);
-
-    const enriched = await enrichAppointments(appointments);
-
-    return sendSuccess(res, STATUS.OK, MESSAGES.APPOINTMENT.LIST_RETRIEVED, {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-        appointments: enriched
-    });
-};
 
 // Create appointment
 exports.createAppointment = async (req, res) => {
@@ -72,20 +39,12 @@ exports.createAppointment = async (req, res) => {
         createdByEmployeeId: req.user.employeeCode
     });
 
-    // Notify patient by email (best-effort)
-    try {
-        await sendEmail({
-            to: patient.email,
-            ...emailTemplates.appointmentScheduled({
-                patientName: patient.name,
-                doctorName: doctor.name,
-                appointmentDate,
-                timeSlot
-            })
-        });
-    } catch (emailError) {
-        console.error("Email sending error:", emailError);
-    }
+    await sendAppointmentEmail(patient.email, emailTemplates.appointmentScheduled({
+        patientName: patient.name,
+        doctorName: doctor.name,
+        appointmentDate,
+        timeSlot
+    }));
 
     // Log the appointment creation
     const actor = await resolveActor(req.user);
@@ -161,40 +120,7 @@ exports.getAppointmentById = async (req, res) => {
 };
 
 // Return the list of already-booked time slots for a doctor on a given date
-exports.getBookedSlots = async (req, res) => {
-
-    const { doctorEmployeeId, date } = req.query;
-
-    if (!doctorEmployeeId || !date) {
-        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.APPOINTMENT.DOCTOR_AND_DATE_REQUIRED);
-    }
-
-    const start = new Date(date);
-    const end = new Date(date);
-    end.setHours(23, 59, 59, 999);
-
-    // Only BOOKED appointments occupy a slot
-    const bookedSlotsFilter = {
-        doctorEmployeeId,
-        appointmentDate: { $gte: start, $lte: end },
-        status: "BOOKED"
-    };
-
-    const { excludeAppointmentId } = req.query;
-    if (excludeAppointmentId) {
-        bookedSlotsFilter.appointmentId = { $ne: excludeAppointmentId };
-    }
-
-    const appointments = await Appointment.find(bookedSlotsFilter).select("timeSlot -_id");
-
-    const bookedSlots = appointments.map((a) => a.timeSlot);
-
-    return sendSuccess(res, STATUS.OK, MESSAGES.APPOINTMENT.BOOKED_SLOTS_RETRIEVED, {
-        doctorEmployeeId,
-        date,
-        bookedSlots
-    });
-};
+exports.getBookedSlots = getBookedSlots;
 
 // Cancel an appointment
 exports.cancelAppointment = async (req, res) => {
@@ -208,39 +134,7 @@ exports.cancelAppointment = async (req, res) => {
         throw new AppError(STATUS.NOT_FOUND, MESSAGES.APPOINTMENT.NOT_FOUND);
     }
 
-    if (appointment.status === "CANCELED") {
-        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.APPOINTMENT.ALREADY_CANCELLED);
-    }
-
-    if (appointment.status === "COMPLETED") {
-        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.APPOINTMENT.COMPLETED_CANNOT_CANCEL);
-    }
-
-    appointment.status = "CANCELED";
-    appointment.cancellationReason = cancellationReason;
-    await appointment.save();
-
-    // Fetch patient and doctor in parallel to build the cancellation email (best-effort)
-    try {
-        const [patient, doctor] = await Promise.all([
-            Patient.findOne({ UHID: appointment.patientId }).select("name email"),
-            Employee.findOne({ employeeCode: appointment.doctorEmployeeId }).select("name")
-        ]);
-        if (patient?.email) {
-            await sendEmail({
-                to: patient.email,
-                ...emailTemplates.appointmentCanceled({
-                    patientName: patient.name,
-                    doctorName: doctor?.name,
-                    appointmentDate: appointment.appointmentDate,
-                    timeSlot: appointment.timeSlot,
-                    cancellationReason
-                })
-            });
-        }
-    } catch (emailError) {
-        console.error("Email sending error:", emailError);
-    }
+    await cancelAppointmentRecord(appointment, cancellationReason);
 
     // Log appointment cancellation
     const actor = await resolveActor(req.user);
@@ -296,20 +190,12 @@ exports.updateAppointment = async (req, res) => {
     appointment.timeSlot = timeSlot;
     await appointment.save();
 
-    // Notify patient of the updated schedule (best-effort)
-    try {
-        await sendEmail({
-            to: patient.email,
-            ...emailTemplates.appointmentUpdated({
-                patientName: patient.name,
-                doctorName: doctor.name,
-                appointmentDate,
-                timeSlot
-            })
-        });
-    } catch (emailError) {
-        console.error("Email sending error:", emailError);
-    }
+    await sendAppointmentEmail(patient.email, emailTemplates.appointmentUpdated({
+        patientName: patient.name,
+        doctorName: doctor.name,
+        appointmentDate,
+        timeSlot
+    }));
 
     // Log appointment updation
     const actor = await resolveActor(req.user);

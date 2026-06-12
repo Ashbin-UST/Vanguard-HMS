@@ -1,6 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { ReactNode, useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -17,6 +17,7 @@ import { BottomTabInset } from "@/constants/theme";
 import { ALERT_TITLES, MESSAGES } from "@/constants/messages";
 import { showError } from "@/utils/alerts";
 import AppointmentForm from "@/components/appointment/AppointmentForm";
+import AppointmentCard from "@/components/appointment/AppointmentCard";
 import { useNavGuard } from "@/store/navGuard";
 import {
   cancelAppointment,
@@ -51,25 +52,6 @@ type TopTab = "book" | "list";
 
 type Filter = "All" | AppointmentStatus;
 const FILTERS: Filter[] = ["All", "BOOKED", "COMPLETED", "CANCELED"];
-
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-}
-
-function formatApptDate(iso: string) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("en-US", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  });
-}
 
 export default function AppointmentsScreen() {
   const router = useRouter();
@@ -163,6 +145,51 @@ export default function AppointmentsScreen() {
     });
   };
 
+  let listContent: ReactNode;
+  if (loading) {
+    listContent = <ActivityIndicator color={TEAL} style={{ marginTop: 40 }} />;
+  } else if (filtered.length === 0) {
+    listContent = (
+      <View style={styles.emptyState}>
+        <Ionicons name="calendar-outline" size={48} color="#d1d5db" />
+        <Text style={styles.emptyText}>No appointments found</Text>
+      </View>
+    );
+  } else {
+    listContent = filtered.map((appt) => (
+      <AppointmentCard
+        key={appt.appointmentId}
+        appointment={appt}
+        statusColor={STATUS_COLORS[appt.status]}
+      >
+        {appt.status === "BOOKED" && (
+          <View style={styles.actionRow}>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              activeOpacity={0.8}
+              onPress={() => openCancel(appt)}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.rescheduleButton}
+              activeOpacity={0.8}
+              onPress={() => reschedule(appt)}
+            >
+              <Text style={styles.rescheduleButtonText}>Reschedule</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {appt.status === "CANCELED" && appt.cancellationReason ? (
+          <Text style={styles.cancelReason}>
+            Reason: {appt.cancellationReason}
+          </Text>
+        ) : null}
+      </AppointmentCard>
+    ));
+  }
+
   return (
     <View style={styles.root}>
       <SafeAreaView edges={["top"]} style={styles.header}>
@@ -224,65 +251,7 @@ export default function AppointmentsScreen() {
             ))}
           </ScrollView>
 
-          {loading ? (
-            <ActivityIndicator color={TEAL} style={{ marginTop: 40 }} />
-          ) : filtered.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Ionicons name="calendar-outline" size={48} color="#d1d5db" />
-              <Text style={styles.emptyText}>No appointments found</Text>
-            </View>
-          ) : (
-            filtered.map((appt) => (
-              <View key={appt.appointmentId} style={styles.apptCard}>
-                <View style={styles.apptRow}>
-                  <View style={styles.apptAvatarBox}>
-                    <Text style={styles.apptAvatarText}>
-                      {getInitials(appt.doctor?.name || "Dr")}
-                    </Text>
-                  </View>
-                  <View style={styles.apptInfo}>
-                    <Text style={styles.apptDoctor}>
-                      Dr. {appt.doctor?.name || appt.doctorEmployeeId}
-                    </Text>
-                    {appt.doctor?.specialization ? (
-                      <Text style={styles.apptSpecialty}>{appt.doctor.specialization}</Text>
-                    ) : null}
-                    <Text style={styles.apptDatetime}>
-                      {formatApptDate(appt.appointmentDate)} · {appt.timeSlot}
-                    </Text>
-                  </View>
-                  <Text style={[styles.statusBadge, { color: STATUS_COLORS[appt.status] }]}>
-                    {appt.status}
-                  </Text>
-                </View>
-
-                {appt.status === "BOOKED" && (
-                  <View style={styles.actionRow}>
-                    <TouchableOpacity
-                      style={styles.cancelButton}
-                      activeOpacity={0.8}
-                      onPress={() => openCancel(appt)}
-                    >
-                      <Text style={styles.cancelButtonText}>Cancel</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.rescheduleButton}
-                      activeOpacity={0.8}
-                      onPress={() => reschedule(appt)}
-                    >
-                      <Text style={styles.rescheduleButtonText}>Reschedule</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-
-                {appt.status === "CANCELED" && appt.cancellationReason ? (
-                  <Text style={styles.cancelReason}>
-                    Reason: {appt.cancellationReason}
-                  </Text>
-                ) : null}
-              </View>
-            ))
-          )}
+          {listContent}
         </ScrollView>
       )}
 
@@ -374,31 +343,6 @@ const styles = StyleSheet.create({
   filterPillActive: { borderColor: TEAL, backgroundColor: "#f0fdf4" },
   filterPillText: { fontSize: 13, fontWeight: "500", color: "#6b7280" },
   filterPillTextActive: { color: TEAL, fontWeight: "700" },
-
-  apptCard: {
-    backgroundColor: "#fff",
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    padding: 14,
-    marginBottom: 12,
-  },
-  apptRow: { flexDirection: "row", alignItems: "center" },
-  apptAvatarBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#f0faf4",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
-  },
-  apptAvatarText: { fontSize: 13, fontWeight: "700", color: TEAL },
-  apptInfo: { flex: 1 },
-  apptDoctor: { fontSize: 15, fontWeight: "700", color: "#1f2937" },
-  apptSpecialty: { fontSize: 13, color: "#6b7280", marginBottom: 2 },
-  apptDatetime: { fontSize: 13, color: TEAL, fontWeight: "500" },
-  statusBadge: { fontSize: 12, fontWeight: "700" },
 
   actionRow: {
     flexDirection: "row",

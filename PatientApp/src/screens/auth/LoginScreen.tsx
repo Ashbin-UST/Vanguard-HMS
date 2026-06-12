@@ -11,10 +11,9 @@ import {
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { ALERT_TITLES } from "@/constants/messages";
 import { showError } from "@/utils/alerts";
+import { getEmailError, getRequiredError } from "@/utils/validation";
 import { useAuthStore } from "../../store/AuthStore";
 import { styles } from "./styles/LoginScreen.style";
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
@@ -42,12 +41,8 @@ const LoginScreen = () => {
   }, [isFocused, slideAnim, opacityAnim]);
 
   const errors = {
-    email: !email.trim()
-      ? "Required"
-      : !EMAIL_REGEX.test(email.trim())
-      ? "Enter a valid email address"
-      : undefined,
-    password: !password ? "Required" : undefined,
+    email: getEmailError(email),
+    password: getRequiredError(password),
   };
 
   const touch = (field: keyof typeof touched) =>

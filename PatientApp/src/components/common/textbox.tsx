@@ -19,7 +19,7 @@ export function Textbox({
   secureToggle,
   secureTextEntry,
   ...props
-}: TextboxProps) {
+}: Readonly<TextboxProps>) {
   const [hidden, setHidden] = useState(true);
   const isSecure = secureToggle ? hidden : secureTextEntry;
 

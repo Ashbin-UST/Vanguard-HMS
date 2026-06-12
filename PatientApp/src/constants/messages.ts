@@ -24,9 +24,9 @@ export const MESSAGES = {
   REQUEST_FAILED: (status: number) => `Request failed (${status})`,
 
   REGISTER_SUCCESS: "Your account has been created. You can now log in.",
-  FORGOT_PASSWORD_SENT: "If the email exists, a reset code has been sent.",
-  PASSWORD_RESET: "Your password has been reset. Please log in.",
-  PASSWORD_CHANGED: "Your password has been changed.",
+  FORGOT_PASSWORD_SENT: "If the email exists, a reset code has been sent.", // NOSONAR not a credential
+  PASSWORD_RESET: "Your password has been reset. Please log in.", // NOSONAR not a credential
+  PASSWORD_CHANGED: "Your password has been changed.", // NOSONAR not a credential
   PROFILE_UPDATED: "Your profile has been updated.",
   APPOINTMENT_BOOKED: "Your appointment has been booked.",
   APPOINTMENT_UPDATED: "Your appointment has been updated.",

@@ -9,12 +9,12 @@ export const APP_MESSAGES = {
   LOGIN_FAILED: 'Login failed. Please try again.',
   REGISTRATION_FAILED: 'Registration failed. Please try again.',
   REGISTRATION_SUBMITTED: 'Registration request submitted. Await admin approval.',
-  FORGOT_PASSWORD_FAILED: 'Failed to send reset link. Please try again.',
+  FORGOT_PASSWORD_FAILED: 'Failed to send reset link. Please try again.', // NOSONAR not a credential
   RESET_LINK_SENT: 'If the email exists, a reset link has been sent',
-  PASSWORD_RESET: 'Password reset successful.',
-  PASSWORD_RESET_FAILED: 'Failed to reset password. Please try again.',
-  PASSWORD_CHANGED: 'Password changed successfully.',
-  PASSWORD_CHANGE_FAILED: 'Failed to change password. Please try again.',
+  PASSWORD_RESET: 'Password reset successful.', // NOSONAR not a credential
+  PASSWORD_RESET_FAILED: 'Failed to reset password. Please try again.', // NOSONAR not a credential
+  PASSWORD_CHANGED: 'Password changed successfully.', // NOSONAR not a credential
+  PASSWORD_CHANGE_FAILED: 'Failed to change password. Please try again.', // NOSONAR not a credential
 
   // Loads
   LOAD_PATIENTS_FAILED: 'Failed to load patients.',

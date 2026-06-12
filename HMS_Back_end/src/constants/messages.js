@@ -19,7 +19,7 @@ const MESSAGES = Object.freeze({
         ACCESS_DENIED: "Access denied",
         ACCOUNT_INACTIVE: "Account is inactive",
         APPROVAL_PENDING: "Admin approval is pending",
-        CURRENT_PASSWORD_INCORRECT: "Current password is incorrect",
+        CURRENT_PASSWORD_INCORRECT: "Current password is incorrect", // NOSONAR not a credential
         EMPLOYEE_PROFILE_NOT_FOUND: "Employee profile not found",
         INVALID_CREDENTIALS: "Invalid email or password",
         INVALID_DESIGNATION: "Invalid designation. Cannot create admin or owner accounts.",
@@ -28,10 +28,10 @@ const MESSAGES = Object.freeze({
         LOGIN_SUCCESS: "Login successful",
         LOGOUT_SUCCESS: "User has been logged out successfully",
         NO_TOKEN: "No token provided",
-        PASSWORDS_DO_NOT_MATCH: "Passwords do not match",
-        PASSWORD_CHANGED: "Password changed successfully",
-        PASSWORD_RESET_SUCCESS: "Password reset successful",
-        PASSWORD_SAME_AS_CURRENT: "New password cannot be the same as current password",
+        PASSWORDS_DO_NOT_MATCH: "Passwords do not match", // NOSONAR not a credential
+        PASSWORD_CHANGED: "Password changed successfully", // NOSONAR not a credential
+        PASSWORD_RESET_SUCCESS: "Password reset successful", // NOSONAR not a credential
+        PASSWORD_SAME_AS_CURRENT: "New password cannot be the same as current password", // NOSONAR not a credential
         REGISTRATION_REJECTED: "Registration request is rejected",
         RESET_CODE_SENT: "If the email exists, a reset code has been sent",
         RESET_LINK_SENT: "If the email exists, a reset link has been sent",

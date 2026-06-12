@@ -18,18 +18,10 @@ import { BottomTabInset, KeyboardScrollPadding } from "@/constants/theme";
 import { useGuardedRouter } from "@/hooks/useGuardedRouter";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import { getMyProfile, updateMyProfile } from "@/services/patientService";
+import { getInitials } from "@/utils/format";
 import type { Patient } from "@/services/types";
 
 const TEAL = "#2e9466";
-
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-}
 
 const ProfileScreen = () => {
   const { logout } = useAuthStore();
@@ -280,13 +272,13 @@ function Field({
   onChange,
   keyboardType,
   autoCapitalize,
-}: {
+}: Readonly<{
   label: string;
   value: string;
   onChange: (t: string) => void;
   keyboardType?: "default" | "email-address" | "phone-pad";
   autoCapitalize?: "none" | "sentences";
-}) {
+}>) {
   return (
     <View style={styles.fieldGroup}>
       <Text style={styles.fieldLabel}>{label}</Text>

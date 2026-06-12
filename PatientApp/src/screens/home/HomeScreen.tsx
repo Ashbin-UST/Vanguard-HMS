@@ -1,6 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { ReactNode, useCallback, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -11,6 +11,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BottomTabInset } from "@/constants/theme";
+import AppointmentCard from "@/components/appointment/AppointmentCard";
+import { getInitials } from "@/utils/format";
 import { getMyAppointments } from "@/services/appointmentService";
 import { getMyProfile } from "@/services/patientService";
 import type { Appointment } from "@/services/types";
@@ -27,25 +29,6 @@ function getGreeting() {
   if (h < 12) return "GOOD MORNING";
   if (h < 17) return "GOOD AFTERNOON";
   return "GOOD EVENING";
-}
-
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-}
-
-function formatApptDate(iso: string) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("en-US", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  });
 }
 
 export default function HomeScreen() {
@@ -83,6 +66,28 @@ export default function HomeScreen() {
     }, [load]),
   );
 
+  let appointmentsContent: ReactNode;
+  if (loading) {
+    appointmentsContent = <ActivityIndicator color={TEAL} style={{ marginTop: 16 }} />;
+  } else if (appointments.length === 0) {
+    appointmentsContent = (
+      <View style={styles.emptyCard}>
+        <Ionicons name="calendar-outline" size={36} color="#d1d5db" />
+        <Text style={styles.emptyText}>No upcoming appointments</Text>
+        <TouchableOpacity
+          style={styles.emptyButton}
+          onPress={() => router.push("/book-appointment")}
+        >
+          <Text style={styles.emptyButtonText}>Book one now</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  } else {
+    appointmentsContent = appointments.map((appt) => (
+      <AppointmentCard key={appt.appointmentId} appointment={appt} />
+    ));
+  }
+
   return (
     <ScrollView
       style={styles.scrollView}
@@ -117,42 +122,7 @@ export default function HomeScreen() {
         </View>
 
         <Text style={styles.sectionTitle}>Upcoming appointments</Text>
-        {loading ? (
-          <ActivityIndicator color={TEAL} style={{ marginTop: 16 }} />
-        ) : appointments.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Ionicons name="calendar-outline" size={36} color="#d1d5db" />
-            <Text style={styles.emptyText}>No upcoming appointments</Text>
-            <TouchableOpacity
-              style={styles.emptyButton}
-              onPress={() => router.push("/book-appointment")}
-            >
-              <Text style={styles.emptyButtonText}>Book one now</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          appointments.map((appt) => (
-            <View key={appt.appointmentId} style={styles.apptCard}>
-              <View style={styles.apptAvatarBox}>
-                <Text style={styles.apptAvatarText}>
-                  {getInitials(appt.doctor?.name || "Dr")}
-                </Text>
-              </View>
-              <View style={styles.apptInfo}>
-                <Text style={styles.apptDoctor}>
-                  Dr. {appt.doctor?.name || appt.doctorEmployeeId}
-                </Text>
-                {appt.doctor?.specialization ? (
-                  <Text style={styles.apptSpecialty}>{appt.doctor.specialization}</Text>
-                ) : null}
-                <Text style={styles.apptDatetime}>
-                  {formatApptDate(appt.appointmentDate)} · {appt.timeSlot}
-                </Text>
-              </View>
-              <Text style={styles.statusBadge}>{appt.status}</Text>
-            </View>
-          ))
-        )}
+        {appointmentsContent}
       </SafeAreaView>
     </ScrollView>
   );
@@ -205,32 +175,6 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   actionLabel: { fontSize: 14, fontWeight: "500", color: "#374151" },
-
-  apptCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    padding: 14,
-    marginBottom: 10,
-  },
-  apptAvatarBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#f0faf4",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
-  },
-  apptAvatarText: { fontSize: 13, fontWeight: "700", color: TEAL },
-  apptInfo: { flex: 1 },
-  apptDoctor: { fontSize: 15, fontWeight: "700", color: "#1f2937" },
-  apptSpecialty: { fontSize: 13, color: "#6b7280", marginBottom: 2 },
-  apptDatetime: { fontSize: 13, color: TEAL, fontWeight: "500" },
-  statusBadge: { fontSize: 12, fontWeight: "700", color: TEAL },
 
   emptyCard: {
     alignItems: "center",

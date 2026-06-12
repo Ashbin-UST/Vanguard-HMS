@@ -13,8 +13,7 @@ import { ALERT_TITLES, MESSAGES } from "@/constants/messages";
 import { showError, showSuccess } from "@/utils/alerts";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { pwStyles as styles } from "@/styles/password.style";
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { getEmailError } from "@/utils/validation";
 
 export default function ForgotPassword() {
   const router = useRouter();
@@ -22,11 +21,7 @@ export default function ForgotPassword() {
   const [touched, setTouched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const emailError = !email.trim()
-    ? "Required"
-    : !EMAIL_REGEX.test(email.trim())
-    ? "Enter a valid email address"
-    : undefined;
+  const emailError = getEmailError(email);
 
   const handleSubmit = async () => {
     setTouched(true);

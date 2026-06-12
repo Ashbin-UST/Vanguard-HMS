@@ -75,11 +75,7 @@ export class FormDraftService {
   }
 
   private clone(value: any): any {
-    try {
-      return structuredClone(value);
-    } catch {
-      // JSON fallback for values structuredClone rejects
-      return JSON.parse(JSON.stringify(value));
-    }
+    // Drafts are sanitized plain form values, safe for structuredClone
+    return structuredClone(value);
   }
 }
