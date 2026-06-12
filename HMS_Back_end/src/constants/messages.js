@@ -172,8 +172,8 @@ const MESSAGES = Object.freeze({
         APPOINTMENT_COMPLETED: (id) => `Appointment ${id} was marked completed`,
         APPOINTMENT_RESCHEDULED_BY_PATIENT: (id, patientName) => `Appointment ${id} rescheduled by ${patientName}`,
         APPOINTMENT_UPDATED: (id) => `Appointment ${id} was updated`,
-        DOCTOR_DELETED_CANCELLATION: (id, doctorName, code, reason) =>
-            `Appointment ${id} was cancelled due to deletion of doctor ${doctorName} (${code}). Reason: ${reason}`,
+        DOCTOR_DELETED_CANCELLATION: (id, doctorName, code) =>
+            `Appointment ${id} was cancelled due to deletion of doctor ${doctorName} (${code})`,
         DOCTOR_SCHEDULE_CHANGE_CANCELLATION: (id, doctorName, code) =>
             `Appointment ${id} was cancelled due to a schedule change for doctor ${doctorName} (${code})`,
         EMPLOYEE_APPROVED: (code, username) => `Employee account ${code} (${username}) was approved`,
