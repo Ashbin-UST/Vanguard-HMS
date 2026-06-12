@@ -48,6 +48,7 @@ const MESSAGES = Object.freeze({
         DOCTORS_RETRIEVED: "Doctors retrieved successfully",
         DOESNT_EXIST: "Employee doesn't exist",
         EMAIL_EXISTS: "Employee with this email already exists",
+        JOINING_DATE_LOCKED: "The joining date cannot be changed once it has been reached",
         LIST_RETRIEVED: "Employees retrieved successfully",
         MED_REG_EXISTS: "Employee with this medical registration number already exists",
         NOT_DESIGNATION: (designation) => `The selected employee is not a ${designation}`,

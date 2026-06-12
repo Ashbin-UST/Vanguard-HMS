@@ -95,6 +95,30 @@
                   </li>
                 }
               </ul>
+
+              @if (auditTotalPages() > 1) {
+                <div class="pagination">
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-sm"
+                    (click)="prevAuditPage()"
+                    [disabled]="auditPage() === 1 || loadingAudit()">
+                    ← Previous
+                  </button>
+
+                  <span class="page-info">
+                    Page {{ auditPage() }} of {{ auditTotalPages() }} · {{ auditTotal() }} total
+                  </span>
+
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-sm"
+                    (click)="nextAuditPage()"
+                    [disabled]="auditPage() === auditTotalPages() || loadingAudit()">
+                    Next →
+                  </button>
+                </div>
+              }
             }
           </div>
         </div>

@@ -70,7 +70,7 @@
           <div class="card-body availability-block">
             <span class="profile-label">Availability</span>
             <ul class="slot-list">
-              @for (s of profile()!.availabilitySlots; track $index) {
+              @for (s of profile()!.availabilitySlots | sortAvailabilitySlots; track $index) {
                 <li>
                   <strong>{{ s.day }}:</strong> {{ s.startTime }} – {{ s.endTime }}
                 </li>

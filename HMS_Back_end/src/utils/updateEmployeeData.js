@@ -1,7 +1,17 @@
 const sanitizeQualifications = require("./qualificationSanitizer");
+const AppError = require("./AppError");
+const STATUS = require("../constants/statusCodes");
+const MESSAGES = require("../constants/messages");
 const { SPECIALIZATION_DESIGNATIONS_SET } = require("../constants/domain");
 
 const doctorOnlyFields = new Set(["consultationFee", "availabilitySlots"]);
+
+// Midnight epoch ms for the given date, for whole-day comparisons
+const startOfDayMs = (date) => {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+};
 
 // Apply allowed field updates to an employee document, enforcing designation-based restrictions
 const updateEmployeeData = (employee, updateData) => {
@@ -17,6 +27,16 @@ const updateEmployeeData = (employee, updateData) => {
     "consultationFee",
     "availabilitySlots",
   ];
+
+  // Joining date is locked once reached (on or after the day itself); only block an actual change
+  if (updateData.joiningDate !== undefined && employee.joiningDate) {
+    const todayStart = startOfDayMs(new Date());
+    const currentJoin = startOfDayMs(employee.joiningDate);
+    const incomingJoin = startOfDayMs(updateData.joiningDate);
+    if (currentJoin <= todayStart && incomingJoin !== currentJoin) {
+      throw new AppError(STATUS.BAD_REQUEST, MESSAGES.EMPLOYEE.JOINING_DATE_LOCKED);
+    }
+  }
 
   // Use the incoming designation if provided, otherwise keep the existing one
   const updatedDesignation = updateData.designation || employee.designation;
