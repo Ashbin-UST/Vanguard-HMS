@@ -1,6 +1,7 @@
 const Appointment = require("../models/Appointments");
 const recordAudit = require("./recordAudit");
 const slotInstantMs = require("./slotInstantMs");
+const { istDayStart } = require("./slotInstantMs");
 const MESSAGES = require("../constants/messages");
 
 const SYSTEM_ACTOR = { employeeCode: "SYSTEM", name: "System", designation: "SYSTEM" };
@@ -23,11 +24,10 @@ const autoCompleteDueAppointments = async () => {
     lastSweepAt = Date.now();
 
     try {
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
-
+        // IST calendar-day boundaries so bucketing is independent of the host timezone
+        const todayStart = istDayStart();
         const tomorrowStart = new Date(todayStart);
-        tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+        tomorrowStart.setUTCDate(tomorrowStart.getUTCDate() + 1);
 
         const [pastDue, todays] = await Promise.all([
             Appointment.find({ status: "BOOKED", appointmentDate: { $lt: todayStart } }),
