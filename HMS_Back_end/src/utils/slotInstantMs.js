@@ -15,4 +15,14 @@ const slotInstantMs = (appointmentDate, hhmm) => {
   );
 };
 
+// UTC-midnight Date of the IST calendar day containing `whenMs` (default now).
+// Matches how date-only appointmentDate values are stored, for bucketing by day.
+const istDayStart = (whenMs = Date.now()) => {
+  const shifted = new Date(whenMs + TZ_OFFSET_MS);
+  return new Date(
+    Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate()),
+  );
+};
+
 module.exports = slotInstantMs;
+module.exports.istDayStart = istDayStart;
