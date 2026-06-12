@@ -9,6 +9,7 @@ const getBookedSlots = require("../utils/getBookedSlots");
 const sendAppointmentEmail = require("../utils/sendAppointmentEmail");
 const cancelAppointmentRecord = require("../utils/cancelAppointmentRecord");
 const autoCompleteDueAppointments = require("../utils/autoCompleteDueAppointments");
+const slotInstantMs = require("../utils/slotInstantMs");
 const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/apiResponse");
 const STATUS = require("../constants/statusCodes");
@@ -243,14 +244,10 @@ exports.completeAppointment = async (req, res) => {
         throw new AppError(STATUS.BAD_REQUEST, MESSAGES.APPOINTMENT.ALREADY_COMPLETED);
     }
 
-    // Reject completion if the scheduled start time has not yet passed
+    // Reject completion if the scheduled start time has not yet passed (hospital time)
     const slotStart = (appointment.timeSlot || "").split("-")[0];
-    const [slotHour, slotMinute] = slotStart.split(":").map(Number);
-    const scheduledStart = new Date(appointment.appointmentDate);
-    if (!Number.isNaN(slotHour) && !Number.isNaN(slotMinute)) {
-        scheduledStart.setHours(slotHour, slotMinute, 0, 0);
-    }
-    if (scheduledStart.getTime() > Date.now()) {
+    const scheduledStartMs = slotInstantMs(appointment.appointmentDate, slotStart);
+    if (!Number.isNaN(scheduledStartMs) && scheduledStartMs > Date.now()) {
         throw new AppError(STATUS.BAD_REQUEST, MESSAGES.APPOINTMENT.CANNOT_COMPLETE_BEFORE_TIME);
     }
 
