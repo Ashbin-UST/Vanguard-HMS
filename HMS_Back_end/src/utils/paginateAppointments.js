@@ -1,5 +1,6 @@
 const Appointment = require("../models/Appointments");
 const enrichAppointments = require("./enrichAppointments");
+const listAppointments = require("./listAppointments");
 const parsePagination = require("./parsePagination");
 const { sendSuccess } = require("./apiResponse");
 const STATUS = require("../constants/statusCodes");
@@ -18,12 +19,7 @@ const paginateAppointments = async (filter, reqQuery, res) => {
 
     // Fetch page and total in parallel, then attach patient/doctor names
     const [appointments, total] = await Promise.all([
-        Appointment.find(filter)
-            .select("-__v")
-            .sort({ appointmentDate: -1, _id: -1 })
-            .skip(skip)
-            .limit(limit)
-            .lean(),
+        listAppointments(filter, skip, limit),
         Appointment.countDocuments(filter)
     ]);
 

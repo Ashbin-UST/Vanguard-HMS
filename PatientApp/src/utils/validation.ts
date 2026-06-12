@@ -3,7 +3,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/;
 const PHONE_REGEX = /^(\+\d{1,3} )?\d{10}$/;
 const NAME_REGEX = /^[a-zA-Z]+([ '-][a-zA-Z]+)*$/;
 
-export const PASSWORD_RULES = [
+const PASSWORD_RULES = [
   { test: (p: string) => p.length >= 8, msg: "at least 8 characters" },
   { test: (p: string) => /[A-Z]/.test(p), msg: "an uppercase letter" },
   { test: (p: string) => /[a-z]/.test(p), msg: "a lowercase letter" },

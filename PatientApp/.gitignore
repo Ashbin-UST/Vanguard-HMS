@@ -45,6 +45,7 @@ example
 /ios
 /android
 sonar-project.properties
+.scannerwork
 .scannerwork/.sonar_lock
 .scannerwork/report-task.txt
 UI_Guide.pdf

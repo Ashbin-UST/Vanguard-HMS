@@ -31,11 +31,6 @@ export class FormDraftService {
     return draft ? this.clone(draft) : null;
   }
 
-  // True if a draft exists for the key
-  has(key: string): boolean {
-    return this.drafts.has(key);
-  }
-
   // Clears the draft for a key (call after a successful submit)
   clear(key: string): void {
     this.drafts.delete(key);
