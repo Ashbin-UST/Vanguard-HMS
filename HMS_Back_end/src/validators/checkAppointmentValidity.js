@@ -94,20 +94,22 @@ const checkAppointmentValidity = async ({
     })
     .toUpperCase();
 
-  const matchingSlot = (doctor.availabilitySlots || []).find(
+  const dayWindows = (doctor.availabilitySlots || []).filter(
     (slot) => slot.day === appointmentDay,
   );
 
-  if (!matchingSlot) {
+  if (dayWindows.length === 0) {
     throw new AppError(STATUS.CONFLICT, MESSAGES.APPOINTMENT.DOCTOR_UNAVAILABLE_DAY);
   }
 
   const [appointmentStartTime, appointmentEndTime] = timeSlot.split("-");
 
-  // Check that the requested time slot falls within the doctor's availability window
-  const isValidTimeSlot =
-    appointmentStartTime >= matchingSlot.startTime &&
-    appointmentEndTime <= matchingSlot.endTime;
+  // Check that the requested time slot falls within any of the doctor's availability windows
+  const isValidTimeSlot = dayWindows.some(
+    (w) =>
+      appointmentStartTime >= w.startTime &&
+      appointmentEndTime <= w.endTime,
+  );
 
   if (!isValidTimeSlot) {
     throw new AppError(STATUS.CONFLICT, MESSAGES.APPOINTMENT.DOCTOR_UNAVAILABLE_SLOT);

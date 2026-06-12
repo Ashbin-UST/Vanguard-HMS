@@ -11,6 +11,7 @@ const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
 const deleteEmployeeAccount = require("../utils/deleteEmployeeAccount");
 const cancelDoctorAppointments = require("../utils/cancelDoctorAppointments");
+const cancelOutOfScheduleAppointments = require("../utils/cancelOutOfScheduleAppointments");
 const createAccountWithEmployee = require("../utils/createAccountWithEmployee");
 const parsePagination = require("../utils/parsePagination");
 const { RESTRICTED_ROLES_SET } = require("../constants/domain");
@@ -207,6 +208,10 @@ exports.rejectEmployee = async (req, res) => {
   return sendSuccess(res, STATUS.OK, MESSAGES.ADMIN.REGISTRATION_REJECTED);
 };
 
+// Normalized availability fingerprint for change detection (subdoc _ids churn on assignment)
+const availabilityKey = (slots) =>
+  (slots || []).map((s) => `${s.day} ${s.startTime}-${s.endTime}`).sort().join("|");
+
 // Update mutable fields on a STAFF employee record
 exports.updateEmployee = async (req, res) => {
   const { employeeCode } = req.params;
@@ -223,6 +228,8 @@ exports.updateEmployee = async (req, res) => {
     throw new AppError(STATUS.FORBIDDEN, MESSAGES.ADMIN.CANNOT_UPDATE_PRIVILEGED);
   }
 
+  const beforeAvailability = availabilityKey(employee.availabilitySlots);
+
   updateEmployeeData(employee, req.body);
 
   await employee.save();
@@ -236,6 +243,11 @@ exports.updateEmployee = async (req, res) => {
     targetId: employee.employeeCode,
     message: MESSAGES.AUDIT.EMPLOYEE_UPDATED(employee.name, employee.employeeCode)
   });
+
+  // Schedule change: cancel future booked appointments that no longer fit
+  if (availabilityKey(employee.availabilitySlots) !== beforeAvailability) {
+    await cancelOutOfScheduleAppointments(employee, actor);
+  }
 
   return sendSuccess(res, STATUS.OK, MESSAGES.ADMIN.EMPLOYEE_UPDATED, {
     employee: {

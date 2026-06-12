@@ -358,6 +358,7 @@ export class AppointmentBookComponent
     this.availableSlots.set(filtered);
 
     if (candidate.length === 0) {
+      this.restorePendingSlot();
       return;
     }
 
@@ -374,19 +375,29 @@ export class AppointmentBookComponent
           this.bookedSlots.set(res.data.bookedSlots || []);
           this.loadingSlots.set(false);
           // Restore the pre-selected slot after slots finish loading (edit mode)
-          if (this.pendingTimeSlot) {
-            this.form.patchValue(
-              { timeSlot: this.pendingTimeSlot },
-              { emitEvent: false },
-            );
-            this.pendingTimeSlot = null;
-          }
+          this.restorePendingSlot();
         },
         error: () => {
           this.loadingSlots.set(false);
           this.bookedSlots.set([]);
         },
       });
+  }
+
+  // Restores the edited appointment's slot only if it is still offered
+  private restorePendingSlot(): void {
+    if (!this.pendingTimeSlot) {
+      return;
+    }
+    if (this.availableSlots().includes(this.pendingTimeSlot)) {
+      this.form.patchValue(
+        { timeSlot: this.pendingTimeSlot },
+        { emitEvent: false },
+      );
+    } else {
+      this.toast.warning(APP_MESSAGES.APPOINTMENT_SLOT_UNAVAILABLE);
+    }
+    this.pendingTimeSlot = null;
   }
 
   // Expands availability windows into SLOT_MINUTES "HH:mm-HH:mm" chunks

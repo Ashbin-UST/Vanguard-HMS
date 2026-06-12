@@ -1,3 +1,5 @@
+process.env.TZ = process.env.TZ || "Asia/Kolkata"; // hospital-local time for all Date math
+
 require("dotenv").config();
 
 const app = require("../app");
