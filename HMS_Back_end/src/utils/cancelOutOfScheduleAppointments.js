@@ -4,17 +4,14 @@ const sendEmail = require("./sendEmail");
 const emailTemplates = require("./emailTemplates");
 const recordAudit = require("./recordAudit");
 const fitsAvailability = require("./fitsAvailability");
+const slotInstantMs = require("./slotInstantMs");
 const MESSAGES = require("../constants/messages");
 
-// True when the appointment's scheduled start (date + slot start) is still ahead
+// True when the appointment's scheduled start (date + slot start) is still ahead (hospital time)
 const startsInFuture = (appointment) => {
   const slotStart = (appointment.timeSlot || "").split("-")[0];
-  const [slotHour, slotMinute] = slotStart.split(":").map(Number);
-  if (Number.isNaN(slotHour) || Number.isNaN(slotMinute)) return false;
-
-  const scheduledStart = new Date(appointment.appointmentDate);
-  scheduledStart.setHours(slotHour, slotMinute, 0, 0);
-  return scheduledStart.getTime() > Date.now();
+  const startMs = slotInstantMs(appointment.appointmentDate, slotStart);
+  return !Number.isNaN(startMs) && startMs > Date.now();
 };
 
 // Cancels future BOOKED appointments that no longer fit the doctor's updated availability

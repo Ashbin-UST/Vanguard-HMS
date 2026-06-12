@@ -106,9 +106,7 @@
               <label class="form-label" for="emp-form-joining-date">Joining Date *</label>
               <input id="emp-form-joining-date" type="date" formControlName="joiningDate" class="form-input"
                 [class.form-input--readonly]="joiningDateLocked" />
-              @if (joiningDateLocked) {
-                <p class="muted">The joining date cannot be changed once it has been reached.</p>
-              } @else if (form.get('joiningDate')?.touched && form.get('joiningDate')?.invalid) {
+              @if (!joiningDateLocked && form.get('joiningDate')?.touched && form.get('joiningDate')?.invalid) {
                 <p class="form-error">Joining date is required</p>
               }
             </div>

@@ -1,5 +1,6 @@
 const Appointment = require("../models/Appointments");
 const recordAudit = require("./recordAudit");
+const slotInstantMs = require("./slotInstantMs");
 const MESSAGES = require("../constants/messages");
 
 const SYSTEM_ACTOR = { employeeCode: "SYSTEM", name: "System", designation: "SYSTEM" };
@@ -8,15 +9,11 @@ const SYSTEM_ACTOR = { employeeCode: "SYSTEM", name: "System", designation: "SYS
 const SWEEP_MIN_INTERVAL_MS = 60 * 1000;
 let lastSweepAt = 0;
 
-// True when the appointment's scheduled end (date + slot end) has passed
+// True when the appointment's scheduled end (date + slot end) has passed (hospital time)
 const endTimePassed = (appointment) => {
-    const slotEnd = (appointment.timeSlot || "").split("-")[1] || "";
-    const [slotHour, slotMinute] = slotEnd.split(":").map(Number);
-    if (Number.isNaN(slotHour) || Number.isNaN(slotMinute)) return false;
-
-    const scheduledEnd = new Date(appointment.appointmentDate);
-    scheduledEnd.setHours(slotHour, slotMinute, 0, 0);
-    return scheduledEnd.getTime() <= Date.now();
+    const slotEnd = (appointment.timeSlot || "").split("-")[1];
+    const endMs = slotInstantMs(appointment.appointmentDate, slotEnd);
+    return !Number.isNaN(endMs) && endMs <= Date.now();
 };
 
 // Marks BOOKED appointments whose end time has passed as COMPLETED; never throws
