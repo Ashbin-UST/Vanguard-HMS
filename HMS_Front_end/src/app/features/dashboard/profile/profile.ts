@@ -8,6 +8,7 @@ import {
 } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
+import { SortAvailabilitySlotsPipe } from '../../../shared/pipes/sort-availability-slots.pipe';
 import { AuthService } from '../../../core/services/auth.service';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -31,6 +32,7 @@ const DRAFT_KEY = 'draft:profile';
     CommonModule,
     ReactiveFormsModule,
     DashboardLayoutComponent,
+    SortAvailabilitySlotsPipe,
   ],
   templateUrl: './profile.html',
   styleUrl: './profile.css',

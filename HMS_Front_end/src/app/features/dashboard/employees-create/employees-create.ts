@@ -39,6 +39,7 @@ import {
   slotTimeOrder,
   slotsNoConflict,
   medicalRegistrationValidator,
+  todayIsoDate,
 } from '../../../core/validators/app-validators';
 
 // Reusable employee form for create (staff/admin) and edit modes
@@ -75,6 +76,8 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
   isDoctor = false;
   showMedical = false;
   showSpecialization = false;
+  // Joining date is locked in edit mode once it has passed
+  joiningDateLocked = false;
 
   constructor() {
     this.form = this.fb.group({
@@ -181,6 +184,13 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
       specialization: emp.specialization ?? '',
       consultationFee: emp.consultationFee ?? null,
     });
+
+    // Lock the joining date once reached, on or after the day itself (yyyy-mm-dd compares lexicographically)
+    const joinIso = emp.joiningDate ? emp.joiningDate.substring(0, 10) : '';
+    if (joinIso && joinIso <= todayIsoDate()) {
+      this.joiningDateLocked = true;
+      this.form.get('joiningDate')?.disable();
+    }
 
     this.refreshDesignationsForDepartment(false);
     // Sets isDoctor/showMedical/showSpecialization, validators, and clears slots

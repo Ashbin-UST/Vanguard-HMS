@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { LastLoginCellComponent } from '../../../shared/ui/last-login-cell/last-login-cell';
+import { SortAvailabilitySlotsPipe } from '../../../shared/pipes/sort-availability-slots.pipe';
 import { AdminService } from '../../../core/services/admin.service';
 import { OwnerService } from '../../../core/services/owner.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -28,6 +29,7 @@ import {
     DashboardLayoutComponent,
     DatePipe,
     LastLoginCellComponent,
+    SortAvailabilitySlotsPipe,
   ],
   templateUrl: './employees.html',
   styleUrl: './employees.css',
