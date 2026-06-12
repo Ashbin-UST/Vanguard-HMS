@@ -164,6 +164,7 @@ const MESSAGES = Object.freeze({
         ADMIN_CREATED: (name, code) => `Admin account created for ${name} (${code})`,
         ADMIN_DELETED: (name, code) => `Admin ${name} (${code}) was deleted`,
         ADMIN_UPDATED: (name, code) => `Admin ${name} (${code}) was updated`,
+        APPOINTMENT_AUTO_COMPLETED: (id) => `Appointment ${id} was automatically marked completed after its scheduled end time`,
         APPOINTMENT_BOOKED: (id, patientName, doctorName) => `Appointment ${id} booked for ${patientName} with ${doctorName}`,
         APPOINTMENT_BOOKED_BY_PATIENT: (id, patientName, doctorName) => `Appointment ${id} booked by ${patientName} with ${doctorName}`,
         APPOINTMENT_CANCELLED: (id, reason) => `Appointment ${id} was cancelled. Reason: ${reason}`,
@@ -173,6 +174,8 @@ const MESSAGES = Object.freeze({
         APPOINTMENT_UPDATED: (id) => `Appointment ${id} was updated`,
         DOCTOR_DELETED_CANCELLATION: (id, doctorName, code, reason) =>
             `Appointment ${id} was cancelled due to deletion of doctor ${doctorName} (${code}). Reason: ${reason}`,
+        DOCTOR_SCHEDULE_CHANGE_CANCELLATION: (id, doctorName, code) =>
+            `Appointment ${id} was cancelled due to a schedule change for doctor ${doctorName} (${code})`,
         EMPLOYEE_APPROVED: (code, username) => `Employee account ${code} (${username}) was approved`,
         EMPLOYEE_CREATED: (name, code, designation) => `Employee ${name} (${code}) was created as ${designation}`,
         EMPLOYEE_DELETED: (name, code) => `Employee ${name} (${code}) was deleted`,

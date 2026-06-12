@@ -70,4 +70,6 @@ export const APP_MESSAGES = {
   APPOINTMENT_CANCEL_FAILED: 'Failed to cancel.',
   APPOINTMENT_COMPLETED: 'Appointment marked as completed.',
   APPOINTMENT_COMPLETE_FAILED: 'Failed to complete appointment.',
+  APPOINTMENT_SLOT_UNAVAILABLE:
+    'The original time slot is no longer available. Please select a new slot.',
 } as const;

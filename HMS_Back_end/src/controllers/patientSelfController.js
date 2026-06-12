@@ -8,6 +8,7 @@ const paginateAppointments = require("../utils/paginateAppointments");
 const getBookedSlots = require("../utils/getBookedSlots");
 const sendAppointmentEmail = require("../utils/sendAppointmentEmail");
 const cancelAppointmentRecord = require("../utils/cancelAppointmentRecord");
+const autoCompleteDueAppointments = require("../utils/autoCompleteDueAppointments");
 const recordAudit = require("../utils/recordAudit");
 const { toSafePatient, PATIENT_SAFE_PROJECTION } = require("../utils/toSafePatient");
 const AppError = require("../utils/AppError");
@@ -104,6 +105,8 @@ exports.getBookedSlots = getBookedSlots;
 
 // List the authenticated patient's own appointments (paginated, enriched)
 exports.getMyAppointments = async (req, res) => {
+
+    await autoCompleteDueAppointments();
 
     const filter = { patientId: req.patient.patientId };
     if (req.query.status) {

@@ -8,6 +8,7 @@ const paginateAppointments = require("../utils/paginateAppointments");
 const getBookedSlots = require("../utils/getBookedSlots");
 const sendAppointmentEmail = require("../utils/sendAppointmentEmail");
 const cancelAppointmentRecord = require("../utils/cancelAppointmentRecord");
+const autoCompleteDueAppointments = require("../utils/autoCompleteDueAppointments");
 const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/apiResponse");
 const STATUS = require("../constants/statusCodes");
@@ -68,6 +69,8 @@ exports.createAppointment = async (req, res) => {
 // List all appointments with optional status/doctor/patient filters (paginated)
 exports.getAppointments = async (req, res) => {
 
+    await autoCompleteDueAppointments();
+
     const filter = {};
 
     if (req.query.status) {
@@ -88,6 +91,8 @@ exports.getAppointments = async (req, res) => {
 // List appointments belonging to the authenticated doctor
 exports.getMyAppointments = async (req, res) => {
 
+    await autoCompleteDueAppointments();
+
     const filter = { doctorEmployeeId: req.user.employeeCode };
 
     if (req.query.status) {
@@ -99,6 +104,8 @@ exports.getMyAppointments = async (req, res) => {
 
 // Fetch a single appointment
 exports.getAppointmentById = async (req, res) => {
+
+    await autoCompleteDueAppointments();
 
     const { appointmentId } = req.params;
 
